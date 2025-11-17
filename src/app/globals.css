@@ -1,0 +1,1449 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans), "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: JetBrains Mono, monospace;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --font-serif: serif;
+  --radius: 0.75rem;
+  --tracking-tighter: calc(var(--tracking-normal) - 0.05em);
+  --tracking-tight: calc(var(--tracking-normal) - 0.025em);
+  --tracking-wide: calc(var(--tracking-normal) + 0.025em);
+  --tracking-wider: calc(var(--tracking-normal) + 0.05em);
+  --tracking-widest: calc(var(--tracking-normal) + 0.1em);
+  --tracking-normal: var(--tracking-normal);
+  --shadow-2xl: var(--shadow-2xl);
+  --shadow-xl: var(--shadow-xl);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-md: var(--shadow-md);
+  --shadow: var(--shadow);
+  --shadow-sm: var(--shadow-sm);
+  --shadow-xs: var(--shadow-xs);
+  --shadow-2xs: var(--shadow-2xs);
+  --spacing: var(--spacing);
+  --letter-spacing: var(--letter-spacing);
+  --shadow-offset-y: var(--shadow-offset-y);
+  --shadow-offset-x: var(--shadow-offset-x);
+  --shadow-spread: var(--shadow-spread);
+  --shadow-blur: var(--shadow-blur);
+  --shadow-opacity: var(--shadow-opacity);
+  --color-shadow-color: var(--shadow-color);
+  --color-destructive-foreground: var(--destructive-foreground);
+}
+
+:root {
+  --radius: 0.875rem; /* 14px */
+  /* Seed Light Mode Colors */
+  --background: #F4F6FB;
+  --foreground: #0B1320;
+  --card: #FFFFFF;
+  --card-foreground: #0B1320;
+  --popover: #FFFFFF;
+  --popover-foreground: #0B1320;
+  --primary: #246BFD; /* Seed Blue accent */
+  --primary-foreground: #FFFFFF;
+  --secondary: #627184;
+  --secondary-foreground: #FFFFFF;
+  --muted: #F7F9FB;
+  --muted-foreground: #627184;
+  --accent: #246BFD; /* Seed Blue */
+  --accent-foreground: #0B1320;
+  --destructive: oklch(0.6368 0.2078 25.3313);
+  --border: #E4E9EE;
+  --input: #E4E9EE;
+  --ring: #246BFD;
+  --chart-1: oklch(0.5940 0.0443 196.0233);
+  --chart-2: oklch(0.7214 0.1337 49.9802);
+  --chart-3: oklch(0.8721 0.0864 68.5474);
+  --chart-4: oklch(0.6268 0 0);
+  --chart-5: oklch(0.6830 0 0);
+  --sidebar: rgba(0, 0, 0, 0.02); /* Glass surface - light mode (noir 2%) */
+  --sidebar-foreground: #0B1320;
+  --sidebar-primary: #246BFD;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: rgba(0, 0, 0, 0.02);
+  --sidebar-accent-foreground: #0B1320;
+  --sidebar-border: rgba(228, 233, 238, 0.5);
+
+  /* Header uses same surface color as sidebar */
+  --header: #FFFFFF;
+  --sidebar-ring: #005DE7;
+  --destructive-foreground: oklch(0.9851 0 0);
+  --font-sans: var(--font-sans), "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  /* Seed specific variables */
+  --seed-surface: #FFFFFF;
+  --seed-card-alt: #F7F9FB;
+  --seed-glass-bg: rgba(255, 255, 255, 0.75);
+  --seed-glass-border: rgba(228, 233, 238, 0.6);
+  --seed-glass-hover-bg: rgba(247, 249, 251, 0.65);
+  --seed-glass-hover-border: rgba(228, 233, 238, 0.5);
+  --font-serif: serif;
+  --font-mono: JetBrains Mono, monospace;
+  --shadow-color: #000000;
+  --shadow-opacity: 0.05;
+  --shadow-blur: 4px;
+  --shadow-spread: 0px;
+  --shadow-offset-x: 0px;
+  --shadow-offset-y: 1px;
+  --letter-spacing: 0rem;
+  --spacing: 0.25rem;
+  --shadow-2xs: 0px 1px 4px 0px hsl(0 0% 0% / 0.03);
+  --shadow-xs: 0px 1px 4px 0px hsl(0 0% 0% / 0.03);
+  --shadow-sm: 0px 1px 4px 0px hsl(0 0% 0% / 0.05), 0px 1px 2px -1px hsl(0 0% 0% / 0.05);
+  --shadow: 0px 1px 4px 0px hsl(0 0% 0% / 0.05), 0px 1px 2px -1px hsl(0 0% 0% / 0.05);
+  --shadow-md: 0px 1px 4px 0px hsl(0 0% 0% / 0.05), 0px 2px 4px -1px hsl(0 0% 0% / 0.05);
+  --shadow-lg: 0px 1px 4px 0px hsl(0 0% 0% / 0.05), 0px 4px 6px -1px hsl(0 0% 0% / 0.05);
+  --shadow-xl: 0px 1px 4px 0px hsl(0 0% 0% / 0.05), 0px 8px 10px -1px hsl(0 0% 0% / 0.05);
+  --shadow-2xl: 0px 1px 4px 0px hsl(0 0% 0% / 0.13);
+  --tracking-normal: 0rem;
+}
+
+.dark {
+  /* Seed Dark Mode Colors */
+  --background: #0C111D;
+  --foreground: #E6EDF3;
+  --card: #11151F;
+  --card-foreground: #E6EDF3;
+  --popover: #11151F;
+  --popover-foreground: #E6EDF3;
+  --primary: #246BFD; /* Seed Blue accent */
+  --primary-foreground: #FFFFFF;
+  --secondary: #9FB0C3;
+  --secondary-foreground: #0C111D;
+  --muted: #11151F;
+  --muted-foreground: #9FB0C3;
+  --accent: #246BFD; /* Seed Blue */
+  --accent-foreground: #E6EDF3;
+  --destructive: oklch(0.5940 0.0443 196.0233);
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.08);
+  --ring: #246BFD;
+  --chart-1: oklch(0.5940 0.0443 196.0233);
+  --chart-2: oklch(0.7214 0.1337 49.9802);
+  --chart-3: oklch(0.8721 0.0864 68.5474);
+  --chart-4: oklch(0.6268 0 0);
+  --chart-5: oklch(0.6830 0 0);
+  --sidebar: rgba(255, 255, 255, 0.02); /* Glass surface - dark mode (blanc 2%) */
+  --sidebar-foreground: rgba(255, 255, 255, 0.95);
+  --sidebar-primary: #246BFD;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: rgba(255, 255, 255, 0.05);
+  --sidebar-accent-foreground: rgba(255, 255, 255, 0.95);
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+
+  /* Header uses same surface color as sidebar */
+  --header: #131A21;
+  --sidebar-ring: #005DE7;
+  --destructive-foreground: oklch(0.1797 0.0043 308.1928);
+  --radius: 0.875rem; /* 14px */
+  --font-sans: var(--font-sans), "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  /* Seed specific variables */
+  --seed-surface: #131A21;
+  --seed-card-alt: #161C24;
+  --seed-glass-bg: rgba(22, 28, 36, 0.75);
+  --seed-glass-border: rgba(30, 38, 48, 0.6);
+  --seed-glass-hover-bg: rgba(22, 28, 36, 0.5);
+  --seed-glass-hover-border: rgba(30, 38, 48, 0.4);
+  --font-serif: serif;
+  --font-mono: JetBrains Mono, monospace;
+  --shadow-color: #000000;
+  --shadow-opacity: 0.05;
+  --shadow-blur: 4px;
+  --shadow-spread: 0px;
+  --shadow-offset-x: 0px;
+  --shadow-offset-y: 1px;
+  --letter-spacing: 0rem;
+  --spacing: 0.25rem;
+  /* Seed soft shadows - vertical, never "crushed" */
+  --shadow-2xs: 0px 1px 2px 0px rgba(0, 0, 0, 0.03);
+  --shadow-xs: 0px 1px 3px 0px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0px 1px 4px 0px rgba(0, 0, 0, 0.05);
+  --shadow: 0px 2px 6px 0px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0px 3px 8px 0px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0px 4px 12px 0px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0px 6px 16px 0px rgba(0, 0, 0, 0.1);
+  --shadow-2xl: 0px 8px 24px 0px rgba(0, 0, 0, 0.12);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    letter-spacing: var(--tracking-normal);
+    font-family: var(--font-sans);
+  }
+
+  /* ============================================
+     CLASSES RÉUTILISABLES - GLASSMORPHISM
+     ============================================ */
+  
+  /* Header - Style glass-tech */
+  header {
+    background: rgba(255, 255, 255, 0.02) !important;
+    backdrop-filter: blur(24px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  /* Sidebar background glassmorphism */
+  [data-sidebar="sidebar"],
+  [data-slot="sidebar-inner"] {
+    background: rgba(0, 0, 0, 0.02) !important;
+    backdrop-filter: blur(18px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(160%) !important;
+    border-right: 1px solid rgba(228, 233, 238, 0.5) !important;
+  }
+  
+  .dark [data-sidebar="sidebar"],
+  .dark [data-slot="sidebar-inner"] {
+    background: rgba(255, 255, 255, 0.02) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+  }
+  
+  /* Sidebar item - État normal (réutilisable partout) */
+  .sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-radius: 8px;
+    transition: all 0.20s cubic-bezier(0.16, 1, 0.3, 1);
+    background: transparent;
+    border: 1px solid transparent;
+    position: relative;
+  }
+  
+  /* Sidebar item - État hover (NEUTRE glass avec bordure gradient) - Light mode par défaut */
+  .sidebar-item:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.90) 0%, rgba(255, 255, 255, 0.75) 100%);
+    border: 1px solid transparent;
+    backdrop-filter: blur(18px) saturate(180%);
+    -webkit-backdrop-filter: blur(18px) saturate(180%);
+    transform: scale(1.015);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.4),
+      0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+  
+  .sidebar-item:hover::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+    padding: 1px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.12) 0%, rgba(0, 0, 0, 0.05) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+  
+  /* Dark mode hover */
+  .dark .sidebar-item:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.06) 100%);
+    border: 1px solid transparent;
+    backdrop-filter: blur(18px) saturate(180%);
+    -webkit-backdrop-filter: blur(18px) saturate(180%);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.1),
+      0 1px 2px rgba(0, 0, 0, 0.2);
+  }
+  
+  .dark .sidebar-item:hover::after {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%);
+  }
+  
+  /* Sidebar item - État actif (BLEU avec bordure gradient) - Light mode par défaut */
+  .sidebar-item-active {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.88) 100%);
+    border: 1px solid transparent;
+    backdrop-filter: blur(12px) saturate(160%);
+    -webkit-backdrop-filter: blur(12px) saturate(160%);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.5),
+      0 1px 3px rgba(0, 0, 0, 0.08);
+  }
+  
+  .sidebar-item-active::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+    padding: 1px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.08) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+  
+  /* Dark mode actif */
+  .dark .sidebar-item-active {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.08) 100%);
+    border: 1px solid transparent;
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.12),
+      0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+  
+  .dark .sidebar-item-active::after {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.20) 0%, rgba(255, 255, 255, 0.12) 100%);
+  }
+  
+  /* Supprimer tout point bleu créé par ::before sur les items actifs */
+  .sidebar-item-active::before,
+  [data-active="true"]::before,
+  [data-active=true]::before {
+    display: none !important;
+    content: none !important;
+  }
+  
+  /* Glass panel réutilisable (pour tous les containers) */
+  .glass-panel {
+    background: rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 14px;
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  }
+  
+  .dark .glass-panel {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /* Dégradé texte - Light mode (noir avec dégradé visible) */
+  .text-gradient-light {
+    background: linear-gradient(180deg, #0B1320 0%, rgba(11, 19, 32, 0.50) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: #0B1320; /* Fallback */
+    display: inline-block;
+    background-size: 100% 100%;
+  }
+  
+  /* Dégradé texte - Dark mode (blanc avec dégradé visible) */
+  .dark .text-gradient-light {
+    background: linear-gradient(180deg, #FFFFFF 0%, rgba(255, 255, 255, 0.55) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: #FFFFFF; /* Fallback */
+    background-size: 100% 100%;
+  }
+  
+  /* Dégradé texte actif (bleu) - pour sidebar items actifs */
+  .text-gradient-active {
+    background: linear-gradient(180deg, #FFFFFF 0%, rgba(255, 255, 255, 0.85) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: #246BFD; /* Fallback */
+    font-weight: 600;
+    display: inline-block;
+    background-size: 100% 100%;
+  }
+  
+  /* Dégradé texte accent (blanc sur fond bleu) */
+  .text-gradient-accent {
+    background: linear-gradient(180deg, #FFFFFF 0%, rgba(255, 255, 255, 0.85) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: #FFFFFF; /* Fallback */
+    font-weight: 600;
+    display: inline-block;
+    background-size: 100% 100%;
+  }
+  
+  /* Dégradé texte destructive (blanc sur fond rouge) */
+  .text-gradient-destructive {
+    background: linear-gradient(180deg, #FFFFFF 0%, rgba(255, 255, 255, 0.75) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: #FFFFFF; /* Fallback */
+    font-weight: 600;
+    display: inline-block;
+    background-size: 100% 100%;
+  }
+  
+  /* Dégradé icône SVG - Light mode (noir avec vrai dégradé via mask-image) */
+  .icon-gradient-light {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    background: linear-gradient(180deg, #0B1320 0%, rgba(11, 19, 32, 0.55) 100%);
+    -webkit-mask-image: var(--icon-mask-url);
+    mask-image: var(--icon-mask-url);
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+    -webkit-mask-position: center;
+    mask-position: center;
+    flex-shrink: 0;
+  }
+  
+  /* Dark mode */
+  .dark .icon-gradient-light {
+    background: linear-gradient(180deg, #FFFFFF 0%, rgba(255, 255, 255, 0.60) 100%);
+  }
+  
+  /* Dégradé icône SVG actif (bleu avec vrai dégradé via mask-image) - pour sidebar items actifs */
+  .icon-gradient-active {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    background: linear-gradient(180deg, #FFFFFF 0%, rgba(255, 255, 255, 0.85) 100%);
+    -webkit-mask-image: var(--icon-mask-url);
+    mask-image: var(--icon-mask-url);
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+    -webkit-mask-position: center;
+    mask-position: center;
+    filter: drop-shadow(0 0 1px rgba(36, 107, 253, 0.15));
+  }
+  
+  /* Dégradé icône SVG accent (blanc avec vrai dégradé via mask-image) */
+  .icon-gradient-accent {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    background: linear-gradient(180deg, #FFFFFF 0%, rgba(255, 255, 255, 0.85) 100%);
+    -webkit-mask-image: var(--icon-mask-url);
+    mask-image: var(--icon-mask-url);
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+    -webkit-mask-position: center;
+    mask-position: center;
+    flex-shrink: 0;
+  }
+  
+  /* Dégradé icône SVG destructive (blanc avec vrai dégradé via mask-image) */
+  .icon-gradient-destructive {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    background: linear-gradient(180deg, #FFFFFF 0%, rgba(255, 255, 255, 0.75) 100%);
+    -webkit-mask-image: var(--icon-mask-url);
+    mask-image: var(--icon-mask-url);
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+    -webkit-mask-position: center;
+    mask-position: center;
+    flex-shrink: 0;
+  }
+  
+  /* Cacher le SVG original pour les icônes avec gradient (partout, y compris dans les boutons) */
+  .icon-gradient-light svg,
+  .icon-gradient-active svg,
+  .icon-gradient-accent svg,
+  .icon-gradient-destructive svg {
+    display: none;
+  }
+
+  /* Animation hover sur icône */
+  .sidebar-item:hover .icon-gradient-light {
+    transform: translateX(2px);
+  }
+  
+  /* Animation hover sur icône dans les boutons - SUPPRIMÉE */
+  
+  /* Sidebar action button (Création rapide) - style spécial avec bordure gradient - Light mode par défaut */
+  .sidebar-action-button {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.80) 0%, rgba(255, 255, 255, 0.65) 100%);
+    border: 1px solid transparent;
+    backdrop-filter: blur(12px) saturate(160%);
+    -webkit-backdrop-filter: blur(12px) saturate(160%);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
+      0 1px 2px rgba(0, 0, 0, 0.04);
+  }
+  
+  .sidebar-action-button::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+    padding: 1px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.04) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+  
+  /* Dark mode action button */
+  .dark .sidebar-action-button {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+    border: 1px solid transparent;
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.08),
+      0 1px 2px rgba(0, 0, 0, 0.15);
+  }
+  
+  .dark .sidebar-action-button::after {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.06) 100%);
+  }
+  
+  .sidebar-action-button:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.90) 0%, rgba(255, 255, 255, 0.75) 100%);
+    transform: scale(1.015) translateY(-1px);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.4),
+      0 2px 4px rgba(0, 0, 0, 0.06);
+  }
+  
+  .sidebar-action-button:hover::after {
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.12) 0%, rgba(0, 0, 0, 0.06) 100%);
+  }
+  
+  .dark .sidebar-action-button:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.06) 100%);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.1),
+      0 2px 4px rgba(0, 0, 0, 0.25);
+  }
+  
+  .dark .sidebar-action-button:hover::after {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%);
+  }
+
+  /* ============================================
+     BUTTON RÉUTILISABLE - STYLE GLASS
+     ============================================ */
+  
+  /* Button glass - Style par défaut (neutre glass) */
+  .button-glass {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 8px;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.70) 0%, rgba(255, 255, 255, 0.60) 100%);
+    border: 1px solid transparent;
+    backdrop-filter: blur(12px) saturate(160%);
+    -webkit-backdrop-filter: blur(12px) saturate(160%);
+  }
+  
+  /* Bordure dégradé légère en état normal - Light mode */
+  .button-glass::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+    padding: 1px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.06) 0%, rgba(0, 0, 0, 0.03) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+    transition: background 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .dark .button-glass {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.04) 100%);
+  }
+  
+  /* Bordure dégradé légère en état normal - Dark mode */
+  .dark .button-glass::after {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+  }
+  
+  .button-glass:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.90) 0%, rgba(255, 255, 255, 0.75) 100%);
+    transform: scale(1.015);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.4),
+      0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+  
+  /* Bordure dégradé plus prononcée au hover - Light mode (le ::after existe déjà, on change juste le background) */
+  .button-glass:hover::after {
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.12) 0%, rgba(0, 0, 0, 0.05) 100%);
+  }
+  
+  .dark .button-glass:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.06) 100%);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.1),
+      0 1px 2px rgba(0, 0, 0, 0.2);
+  }
+  
+  .dark .button-glass:hover::after {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%);
+  }
+  
+  /* État focus pour button-glass */
+  .button-glass:focus-visible {
+    outline: none;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.70) 100%);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.5),
+      0 0 0 2px rgba(36, 107, 253, 0.2),
+      0 2px 4px rgba(0, 0, 0, 0.08);
+  }
+  
+  .button-glass:focus-visible::after {
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.10) 0%, rgba(0, 0, 0, 0.04) 100%);
+  }
+  
+  .dark .button-glass:focus-visible {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.06) 100%);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.12),
+      0 0 0 2px rgba(36, 107, 253, 0.3),
+      0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+  
+  .dark .button-glass:focus-visible::after {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.06) 100%);
+  }
+  
+  /* État active (clic) pour button-glass */
+  .button-glass:active {
+    transform: scale(0.98);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.80) 0%, rgba(255, 255, 255, 0.65) 100%);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
+      inset 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .button-glass:active::after {
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.03) 100%);
+  }
+  
+  .dark .button-glass:active {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.05) 100%);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.08),
+      inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  
+  .dark .button-glass:active::after {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.05) 100%);
+  }
+  
+  /* Button accent - Style bleu primary avec gradient plein */
+  .button-accent {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 8px;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: linear-gradient(135deg, #246BFD 0%, #1A5DE8 100%);
+    border: 1px solid transparent;
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.2),
+      0 2px 6px rgba(36, 107, 253, 0.2);
+  }
+  
+  .button-accent::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+    padding: 1px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.1) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+    transition: background 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .button-accent:hover {
+    background: linear-gradient(135deg, #3A7CFF 0%, #246BFD 100%);
+    transform: scale(1.015) translateY(-1px);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
+      0 3px 8px rgba(36, 107, 253, 0.25);
+  }
+  
+  .button-accent:hover::after {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.15) 100%);
+  }
+  
+  .dark .button-accent {
+    background: linear-gradient(135deg, #246BFD 0%, #1A5DE8 100%);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.15),
+      0 2px 6px rgba(36, 107, 253, 0.25);
+  }
+  
+  .dark .button-accent:hover {
+    background: linear-gradient(135deg, #3A7CFF 0%, #246BFD 100%);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.2),
+      0 3px 8px rgba(36, 107, 253, 0.3);
+  }
+  
+  /* État focus pour button-accent */
+  .button-accent:focus-visible {
+    outline: none;
+    background: linear-gradient(135deg, #3A7CFF 0%, #246BFD 100%);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.35),
+      0 0 0 3px rgba(36, 107, 253, 0.3),
+      0 3px 8px rgba(36, 107, 253, 0.3);
+  }
+  
+  .button-accent:focus-visible::after {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.20) 100%);
+  }
+  
+  .dark .button-accent:focus-visible {
+    background: linear-gradient(135deg, #3A7CFF 0%, #246BFD 100%);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.25),
+      0 0 0 3px rgba(36, 107, 253, 0.4),
+      0 3px 8px rgba(36, 107, 253, 0.4);
+  }
+  
+  .dark .button-accent:focus-visible::after {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.20) 100%);
+  }
+  
+  /* État active (clic) pour button-accent */
+  .button-accent:active {
+    transform: scale(0.98) translateY(0px);
+    background: linear-gradient(135deg, #1A5DE8 0%, #246BFD 100%);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.15),
+      inset 0 2px 4px rgba(0, 0, 0, 0.2),
+      0 1px 3px rgba(36, 107, 253, 0.3);
+  }
+  
+  .button-accent:active::after {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.10) 100%);
+  }
+  
+  .dark .button-accent:active {
+    background: linear-gradient(135deg, #1A5DE8 0%, #246BFD 100%);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.10),
+      inset 0 2px 4px rgba(0, 0, 0, 0.3),
+      0 1px 3px rgba(36, 107, 253, 0.4);
+  }
+  
+  .dark .button-accent:active::after {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.10) 100%);
+  }
+  
+  /* Button destructive - Style rouge avec gradient plein */
+  .button-destructive {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 8px;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+    border: 1px solid transparent;
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.2),
+      0 2px 6px rgba(239, 68, 68, 0.2);
+  }
+  
+  .button-destructive::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+    padding: 1px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.1) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+    transition: background 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .button-destructive:hover {
+    background: linear-gradient(135deg, #F87171 0%, #EF4444 100%);
+    transform: scale(1.015) translateY(-1px);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
+      0 3px 8px rgba(239, 68, 68, 0.25);
+  }
+  
+  .button-destructive:hover::after {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.15) 100%);
+  }
+  
+  .dark .button-destructive {
+    background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.15),
+      0 2px 6px rgba(239, 68, 68, 0.25);
+  }
+  
+  .dark .button-destructive:hover {
+    background: linear-gradient(135deg, #F87171 0%, #EF4444 100%);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.2),
+      0 3px 8px rgba(239, 68, 68, 0.3);
+  }
+  
+  /* État focus pour button-destructive */
+  .button-destructive:focus-visible {
+    outline: none;
+    background: linear-gradient(135deg, #F87171 0%, #EF4444 100%);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.35),
+      0 0 0 3px rgba(239, 68, 68, 0.3),
+      0 3px 8px rgba(239, 68, 68, 0.3);
+  }
+  
+  .button-destructive:focus-visible::after {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.20) 100%);
+  }
+  
+  .dark .button-destructive:focus-visible {
+    background: linear-gradient(135deg, #F87171 0%, #EF4444 100%);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.25),
+      0 0 0 3px rgba(239, 68, 68, 0.4),
+      0 3px 8px rgba(239, 68, 68, 0.4);
+  }
+  
+  .dark .button-destructive:focus-visible::after {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.20) 100%);
+  }
+  
+  /* État active (clic) pour button-destructive */
+  .button-destructive:active {
+    transform: scale(0.98) translateY(0px);
+    background: linear-gradient(135deg, #DC2626 0%, #EF4444 100%);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.15),
+      inset 0 2px 4px rgba(0, 0, 0, 0.2),
+      0 1px 3px rgba(239, 68, 68, 0.3);
+  }
+  
+  .button-destructive:active::after {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.10) 100%);
+  }
+  
+  .dark .button-destructive:active {
+    background: linear-gradient(135deg, #DC2626 0%, #EF4444 100%);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.10),
+      inset 0 2px 4px rgba(0, 0, 0, 0.3),
+      0 1px 3px rgba(239, 68, 68, 0.4);
+  }
+  
+  .dark .button-destructive:active::after {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.10) 100%);
+  }
+  
+  /* Animation hover sur icône dans les boutons destructive - SUPPRIMÉE */
+  
+  /* Textes et icônes des boutons en gradient */
+  
+  /* Texte dans button-glass - Light mode */
+  .button-glass span {
+    background: linear-gradient(180deg, #0B1320 0%, rgba(11, 19, 32, 0.55) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: inline-block;
+    background-size: 100% 100%;
+  }
+  
+  /* Texte dans button-glass - Dark mode */
+  .dark .button-glass span {
+    background: linear-gradient(180deg, #FFFFFF 0%, rgba(255, 255, 255, 0.60) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: inline-block;
+    background-size: 100% 100%;
+  }
+  
+  /* Texte dans button-accent - utilise la classe text-gradient-accent */
+  
+  
+  /* Les icônes avec classes gradient utilisent mask-image (comme dans la sidebar) */
+  /* Le SVG est automatiquement caché et remplacé par le gradient via mask-image */
+  
+  /* S'assurer que les spans avec icônes ne cachent pas les SVG */
+  .button-glass span,
+  .button-accent span,
+  .button-destructive span,
+  .button-glass [class*="icon"],
+  .button-accent [class*="icon"],
+  .button-destructive [class*="icon"],
+  .button-glass .button-icon-wrapper,
+  .button-accent .button-icon-wrapper,
+  .button-destructive .button-icon-wrapper {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  /* Les icônes avec gradient utilisent mask-image, le SVG est caché automatiquement */
+  /* Le wrapper button-icon-wrapper sert juste pour le positionnement et les animations */
+  
+  /* Si les icônes ont les classes gradient, utiliser les styles existants icon-gradient-light et icon-gradient-active */
+
+  /* ============================================
+     SCROLLBAR - STYLE DISCRET ET MODERNE
+     ============================================ */
+  
+  /* Scrollbar pour Webkit (Chrome, Safari, Edge) */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    transition: background 0.2s ease;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.3);
+    background-clip: padding-box;
+  }
+  
+  /* Dark mode scrollbar */
+  .dark ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    background-clip: padding-box;
+  }
+  
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+    background-clip: padding-box;
+  }
+  
+  /* Scrollbar pour Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+  }
+  
+  .dark * {
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  }
+
+  /* ============================================
+     COMPOSANTS UI - STYLE GLASS-TECH
+     ============================================ */
+  
+  /* Card - Style glass-tech */
+  [data-slot="card"] {
+    background: rgba(var(--fg), 0.05);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    border: 1px solid rgba(var(--fg), 0.08);
+    border-radius: 14px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  /* Card - Bordure gradient subtile */
+  [data-slot="card"]::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 14px;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(var(--fg), 0.12) 0%, rgba(var(--fg), 0.04) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  
+  [data-slot="card"]:hover::after {
+    opacity: 1;
+  }
+  
+  /* Card Title - Dégradé texte */
+  [data-slot="card-title"] {
+    background: linear-gradient(180deg, var(--text-strong) 0%, var(--text-soft) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  
+  /* Card Description - Opacité réduite */
+  [data-slot="card-description"] {
+    opacity: 0.7;
+  }
+  
+  /* Input - Style glass-tech sophistiqué (comme les boutons) */
+  [data-slot="input"] {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    border-radius: 10px;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.70) 0%, rgba(255, 255, 255, 0.60) 100%);
+    border: 1px solid transparent;
+    backdrop-filter: blur(12px) saturate(160%);
+    -webkit-backdrop-filter: blur(12px) saturate(160%);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
+      0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+  
+  /* Bordure dégradé légère en état normal - Light mode */
+  [data-slot="input"]::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 10px;
+    padding: 1px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.06) 0%, rgba(0, 0, 0, 0.03) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+    transition: background 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .dark [data-slot="input"] {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.04) 100%);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.05),
+      0 1px 2px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Bordure dégradé légère en état normal - Dark mode */
+  .dark [data-slot="input"]::after {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+  }
+  
+  /* Input hover */
+  [data-slot="input"]:hover:not(:disabled):not(:focus-visible) {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.90) 0%, rgba(255, 255, 255, 0.75) 100%);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.4),
+      0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+  
+  /* Bordure dégradé plus prononcée au hover - Light mode */
+  [data-slot="input"]:hover:not(:disabled):not(:focus-visible)::after {
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.12) 0%, rgba(0, 0, 0, 0.05) 100%);
+  }
+  
+  .dark [data-slot="input"]:hover:not(:disabled):not(:focus-visible) {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.06) 100%);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.1),
+      0 1px 2px rgba(0, 0, 0, 0.2);
+  }
+  
+  .dark [data-slot="input"]:hover:not(:disabled):not(:focus-visible)::after {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%);
+  }
+  
+  /* État focus pour input */
+  [data-slot="input"]:focus-visible {
+    outline: none;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.70) 100%);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.5),
+      0 0 0 2px rgba(36, 107, 253, 0.2),
+      0 2px 4px rgba(0, 0, 0, 0.08);
+  }
+  
+  [data-slot="input"]:focus-visible::after {
+    background: linear-gradient(180deg, rgba(36, 107, 253, 0.15) 0%, rgba(36, 107, 253, 0.05) 100%);
+  }
+  
+  .dark [data-slot="input"]:focus-visible {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.06) 100%);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.12),
+      0 0 0 2px rgba(36, 107, 253, 0.3),
+      0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+  
+  .dark [data-slot="input"]:focus-visible::after {
+    background: linear-gradient(180deg, rgba(36, 107, 253, 0.20) 0%, rgba(36, 107, 253, 0.08) 100%);
+  }
+  
+  /* État active (clic) pour input */
+  [data-slot="input"]:active:not(:disabled) {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.80) 0%, rgba(255, 255, 255, 0.65) 100%);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
+      inset 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  [data-slot="input"]:active:not(:disabled)::after {
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.10) 0%, rgba(0, 0, 0, 0.04) 100%);
+  }
+  
+  .dark [data-slot="input"]:active:not(:disabled) {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.05) 100%);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.08),
+      inset 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+  
+  .dark [data-slot="input"]:active:not(:disabled)::after {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.05) 100%);
+  }
+  
+  /* Placeholder avec opacité */
+  [data-slot="input"]::placeholder {
+    opacity: 0.5;
+    transition: opacity 0.2s ease;
+  }
+  
+  [data-slot="input"]:focus-visible::placeholder {
+    opacity: 0.4;
+  }
+  
+  /* Texte dans l'input - couleur normale (pas de dégradé pour le texte) */
+  [data-slot="input"] {
+    color: var(--foreground);
+  }
+  
+  /* Avatar - Style glass-tech */
+  [data-slot="avatar"] {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  /* Badge - Style glass-tech */
+  [data-slot="badge"] {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(180deg, #0B1320 0%, rgba(11, 19, 32, 0.50) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  
+  /* Badge - Dark mode (dégradé blanc) */
+  .dark [data-slot="badge"] {
+    background: linear-gradient(180deg, #FFFFFF 0%, rgba(255, 255, 255, 0.55) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  
+  /* Badge - Fond glass (via pseudo-element pour ne pas interférer avec le dégradé texte) */
+  [data-slot="badge"]::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(var(--bg), 0.95);
+    backdrop-filter: blur(12px) saturate(140%);
+    -webkit-backdrop-filter: blur(12px) saturate(140%);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    z-index: -1;
+  }
+  
+  /* Badge - Bordure dégradé hyper légère et fine (comme les boutons) */
+  [data-slot="badge"]::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+    padding: 1px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.03) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: -1;
+  }
+  
+  /* Badge - Dark mode bordure dégradé */
+  .dark [data-slot="badge"]::after {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+  }
+  
+  /* Badge variant outline - fond plus opaque */
+  [data-slot="badge"][class*="variant-outline"]::before {
+    background: rgba(var(--bg), 0.95);
+  }
+  
+  /* Badge variant accent (bleu) - fond glass bleu */
+  [data-slot="badge"][class*="bg-primary"]::before,
+  [data-slot="badge"][class*="variant-default"]::before {
+    background: linear-gradient(135deg, rgba(36, 107, 253, 0.15) 0%, rgba(36, 107, 253, 0.08) 100%);
+    border-color: rgba(36, 107, 253, 0.25);
+  }
+  
+  /* Badge variant accent - dégradé texte bleu */
+  [data-slot="badge"][class*="bg-primary"],
+  [data-slot="badge"][class*="variant-default"] {
+    background: linear-gradient(180deg, #246BFD 0%, #1A5DE8 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  
+  /* Separator - Style glass-tech */
+  [data-slot="separator"] {
+    background: linear-gradient(90deg, transparent 0%, rgba(var(--fg), 0.08) 50%, transparent 100%);
+    height: 1px;
+  }
+  
+  [data-slot="separator"][data-orientation="vertical"] {
+    background: linear-gradient(180deg, transparent 0%, rgba(var(--fg), 0.08) 50%, transparent 100%);
+    width: 1px;
+  }
+  
+  /* Dialog - Style glass-tech */
+  [data-slot="dialog-overlay"] {
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+  }
+  
+  /* Dialog background avec bg-background */
+  [data-slot="dialog-content"] {
+    background: var(--background) !important;
+    backdrop-filter: blur(24px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+    border: 1px solid rgba(var(--fg), 0.15) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+    position: fixed !important;
+    overflow-y: auto !important;
+  }
+  
+  /* Dialog - Bordure gradient subtile */
+  [data-slot="dialog-content"]::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(var(--fg), 0.20) 0%, rgba(var(--fg), 0.08) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 1;
+  }
+  
+  /* Dialog Title - Dégradé texte */
+  [data-slot="dialog-title"] {
+    background: linear-gradient(180deg, var(--text-strong) 0%, var(--text-soft) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  
+  /* Dialog Description - Opacité réduite */
+  [data-slot="dialog-description"] {
+    opacity: 0.7;
+  }
+  
+  /* Label - Dégradé texte */
+  [data-slot="label"] {
+    background: linear-gradient(180deg, var(--text-strong) 0%, var(--text-soft) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  
+  /* Popover - Style glass-tech */
+  /* Popover background avec bg-background */
+  [data-slot="popover-content"] {
+    background: var(--background) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    border: 1px solid rgba(var(--fg), 0.15) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+    position: relative !important;
+    overflow: hidden !important;
+  }
+  
+  /* Popover - Bordure gradient subtile */
+  [data-slot="popover-content"]::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 12px;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(var(--fg), 0.20) 0%, rgba(var(--fg), 0.08) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 1;
+  }
+  
+  /* Dropdown Menu - Style glass-tech */
+  /* Dropdown background avec bg-background */
+  [data-slot="dropdown-menu-content"] {
+    background: var(--background) !important;
+    backdrop-filter: blur(30px) saturate(200%) !important;
+    -webkit-backdrop-filter: blur(30px) saturate(200%) !important;
+    border: 1px solid rgba(var(--fg), 0.15) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+    padding: 4px !important;
+    position: relative !important;
+    isolation: isolate !important;
+    will-change: backdrop-filter !important;
+  }
+  
+  /* Dropdown Menu - Bordure gradient subtile */
+  [data-slot="dropdown-menu-content"]::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 12px;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(var(--fg), 0.20) 0%, rgba(var(--fg), 0.08) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 1;
+  }
+  
+  /* Dropdown Menu Item - Style glass hover */
+  [data-slot="dropdown-menu-item"] {
+    border-radius: 8px;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  
+  [data-slot="dropdown-menu-item"]:focus {
+    background: rgba(var(--fg), 0.10);
+    border: 1px solid rgba(var(--fg), 0.12);
+    backdrop-filter: blur(12px) saturate(160%);
+    -webkit-backdrop-filter: blur(12px) saturate(160%);
+  }
+  
+  /* Dropdown Menu Label - Dégradé texte */
+  [data-slot="dropdown-menu-label"] {
+    background: linear-gradient(180deg, var(--text-strong) 0%, var(--text-soft) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    opacity: 0.7;
+  }
+  
+  /* Tooltip - Style glass-tech */
+  [data-slot="tooltip-content"] {
+    position: relative;
+    background: linear-gradient(180deg, var(--text-strong) 0%, var(--text-soft) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    padding: 8px 12px;
+  }
+  
+  /* Tooltip - Fond glass (via pseudo-element) */
+  [data-slot="tooltip-content"]::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(var(--fg), 0.08);
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    border: 1px solid rgba(var(--fg), 0.15);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    z-index: -1;
+  }
+  
+  /* Tooltip Arrow - Style glass */
+  [data-slot="tooltip-content"] [class*="Arrow"] {
+    background: rgba(var(--fg), 0.08);
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    border: 1px solid rgba(var(--fg), 0.15);
+  }
+  
+  /* Respect prefers-reduced-motion */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

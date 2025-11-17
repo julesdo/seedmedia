@@ -1,0 +1,128 @@
+"use client";
+
+import { useQuery } from "convex/react";
+import { api } from "../../../../../../convex/_generated/api";
+import { useParams, useRouter } from "next/navigation";
+import { Id } from "../../../../../../convex/_generated/dataModel";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { useState } from "react";
+import { OrganizationHeader } from "@/components/organization/OrganizationHeader";
+import { FeedTab } from "@/components/organization/FeedTab";
+import { ArticlesTab } from "@/components/organization/ArticlesTab";
+import { ProjectsTab } from "@/components/organization/ProjectsTab";
+import { ActionsTab } from "@/components/organization/ActionsTab";
+import { MembersTab } from "@/components/organization/MembersTab";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card } from "@/components/ui/card";
+
+export default function OrganizationDetailPage() {
+  const params = useParams();
+  const router = useRouter();
+  const organizationId = params.id as Id<"organizations">;
+  const [activeTab, setActiveTab] = useState("feed");
+
+  // Récupérer les données publiques
+  const organization = useQuery(api.organizations.getOrganizationPublic, { organizationId });
+  const stats = useQuery(api.organizations.getOrganizationStats, { organizationId });
+
+
+  // États de chargement
+  if (organization === undefined || stats === undefined) {
+    return (
+      <div className="container mx-auto px-4 py-6 max-w-6xl">
+        <div className="space-y-8">
+          {/* Header skeleton */}
+          <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+            <Skeleton className="h-24 w-24 rounded-full" />
+            <div className="flex-1 space-y-3">
+              <Skeleton className="h-8 w-64" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-2/3" />
+            </div>
+          </div>
+
+          {/* Stats skeleton */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <Card key={i}>
+                <div className="p-4 space-y-2">
+                  <Skeleton className="h-8 w-8 mx-auto" />
+                  <Skeleton className="h-6 w-12 mx-auto" />
+                  <Skeleton className="h-4 w-16 mx-auto" />
+                </div>
+              </Card>
+            ))}
+          </div>
+
+          {/* Tabs skeleton */}
+          <Skeleton className="h-10 w-full" />
+        </div>
+      </div>
+    );
+  }
+
+  // Organisation non trouvée
+  if (organization === null) {
+    return (
+      <div className="container mx-auto px-4 py-6 max-w-6xl">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center space-y-4">
+            <h1 className="text-2xl font-bold text-gradient-light">Organisation non trouvée</h1>
+            <p className="text-muted-foreground opacity-70">
+              L'organisation que vous recherchez n'existe pas ou a été supprimée.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-6 max-w-6xl">
+      <div className="space-y-6">
+        {/* Header avec logo, nom, description, badges, stats intégrées, boutons d'action et onglets */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-0">
+          <OrganizationHeader 
+            organization={organization} 
+            stats={stats || null}
+            isMember={organization.isMember}
+            canEdit={organization.canEdit}
+            onEdit={() => router.push(`/discover/organizations/${organizationId}/settings`)}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+          />
+
+          {/* Contenu des onglets */}
+          <div className="pt-6">
+            <TabsContent value="feed" className="mt-0">
+              <FeedTab organizationId={organizationId} />
+            </TabsContent>
+
+            <TabsContent value="articles" className="mt-0">
+              <ArticlesTab organizationId={organizationId} />
+            </TabsContent>
+
+            <TabsContent value="projects" className="mt-0">
+              <ProjectsTab organizationId={organizationId} />
+            </TabsContent>
+
+            <TabsContent value="actions" className="mt-0">
+              <ActionsTab organizationId={organizationId} />
+            </TabsContent>
+
+            {organization.isMember && (
+              <TabsContent value="members" className="mt-0">
+                <MembersTab
+                  organizationId={organizationId}
+                  isMember={organization.isMember}
+                  canInvite={organization.canInvite}
+                />
+              </TabsContent>
+            )}
+          </div>
+        </Tabs>
+      </div>
+    </div>
+  );
+}
+

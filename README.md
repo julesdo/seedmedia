@@ -360,6 +360,12 @@ pnpm convex env set GOOGLE_CLIENT_ID 34786906762-dbd2j6d7qa59u3cb1105oo8ie5tabnm
 pnpm convex env set GOOGLE_CLIENT_SECRET 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
 pnpm convex env set GITHUB_CLIENT_ID Ov23ctblXHlGzyCv9ulo
 pnpm convex env set GITHUB_CLIENT_SECRET 659fb5c458c4fd61a4761b6075d530e2c721238a
-pnpm convex env set RESEND_API_KEY re_Nob7st7b_A54QcAU4yQSXgVfaEkD5bj7A#   s e e d m e d i a  
- #   s e e d m e d i a  
+pnpm convex env set RESEND_API_KEY re_Nob7st7b_A54QcAU4yQSXgVfaEkD5bj7A#   s e e d m e d i a 
  
+ #   s e e d m e d i a 
+ 
+ 
+
+git add .
+git commit -m "maj 1.0 prod"
+git push -u origin main
