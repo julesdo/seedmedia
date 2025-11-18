@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useTransitionRouter } from "next-view-transitions";
 
 export default function OrganizationsDiscoverRedirect() {
-  const router = useRouter();
+  const router = useTransitionRouter();
 
   useEffect(() => {
     router.replace("/discover");

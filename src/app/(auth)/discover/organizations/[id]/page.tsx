@@ -2,7 +2,8 @@
 
 import { useQuery } from "convex/react";
 import { api } from "../../../../../../convex/_generated/api";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useTransitionRouter } from "next-view-transitions";
 import { Id } from "../../../../../../convex/_generated/dataModel";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useState } from "react";
@@ -17,13 +18,26 @@ import { Card } from "@/components/ui/card";
 
 export default function OrganizationDetailPage() {
   const params = useParams();
-  const router = useRouter();
+  const router = useTransitionRouter();
   const organizationId = params.id as Id<"organizations">;
   const [activeTab, setActiveTab] = useState("feed");
 
   // Récupérer les données publiques
   const organization = useQuery(api.organizations.getOrganizationPublic, { organizationId });
   const stats = useQuery(api.organizations.getOrganizationStats, { organizationId });
+  
+  // Précharger toutes les données des tabs pour éviter les refetch à chaque changement
+  // Convex gère les mises à jour en temps réel, donc ces queries restent actives
+  const articles = useQuery(api.organizations.getOrganizationArticlesPublic, { organizationId });
+  const projects = useQuery(api.organizations.getOrganizationProjectsPublic, { organizationId });
+  const actions = useQuery(api.organizations.getOrganizationActionsPublic, { organizationId });
+  
+  // Pour MembersTab, on a besoin de l'organisation complète si l'utilisateur est membre
+  // Utiliser une query conditionnelle avec "skip" si l'utilisateur n'est pas membre
+  const organizationWithMembers = useQuery(
+    api.organizations.getOrganization,
+    organization?.isMember ? { organizationId } : "skip"
+  );
 
 
   // États de chargement
@@ -95,27 +109,31 @@ export default function OrganizationDetailPage() {
           {/* Contenu des onglets */}
           <div className="pt-6">
             <TabsContent value="feed" className="mt-0">
-              <FeedTab organizationId={organizationId} />
+              <FeedTab 
+                articles={articles}
+                projects={projects}
+                actions={actions}
+              />
             </TabsContent>
 
             <TabsContent value="articles" className="mt-0">
-              <ArticlesTab organizationId={organizationId} />
+              <ArticlesTab articles={articles} />
             </TabsContent>
 
             <TabsContent value="projects" className="mt-0">
-              <ProjectsTab organizationId={organizationId} />
+              <ProjectsTab projects={projects} />
             </TabsContent>
 
             <TabsContent value="actions" className="mt-0">
-              <ActionsTab organizationId={organizationId} />
+              <ActionsTab actions={actions} />
             </TabsContent>
 
             {organization.isMember && (
               <TabsContent value="members" className="mt-0">
                 <MembersTab
-                  organizationId={organizationId}
                   isMember={organization.isMember}
                   canInvite={organization.canInvite}
+                  members={organizationWithMembers?.members}
                 />
               </TabsContent>
             )}

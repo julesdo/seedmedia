@@ -14,8 +14,9 @@ import { Label } from "@/components/ui/label";
 import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
-import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useTransitionRouter } from "next-view-transitions";
+import { Link } from "next-view-transitions";
 
 interface StoredAccount {
   id: string;
@@ -30,7 +31,7 @@ const STORAGE_KEY = "seed_active_accounts";
 const CURRENT_ACCOUNT_KEY = "seed_current_account_id";
 
 export default function SignIn() {
-  const router = useRouter();
+  const router = useTransitionRouter();
   const searchParams = useSearchParams();
   const isAddingAccount = searchParams.get("add_account") === "true";
   const switchToAccount = searchParams.get("switch_to_account");

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useTransitionRouter } from "next-view-transitions";
 import { useQuery, useMutation } from "convex/react";
 
 import { Button } from "@/components/ui/button";
@@ -22,7 +23,7 @@ import { RichTextEditor } from "@/components/articles/RichTextEditor";
 import { ClaimsManager } from "@/components/articles/ClaimsManager";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-import Link from "next/link";
+import { Link } from "next-view-transitions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "../../../../../../../convex/_generated/api";
 
@@ -36,7 +37,7 @@ const ARTICLE_TYPES = [
 ] as const;
 
 export default function EditArticlePage() {
-  const router = useRouter();
+  const router = useTransitionRouter();
   const params = useParams();
   const slug = params.slug as string;
 

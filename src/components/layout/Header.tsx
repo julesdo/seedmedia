@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import Link from "next/link";
+import { Link } from "next-view-transitions";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Breadcrumb } from "./Breadcrumb";

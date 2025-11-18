@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
-import { useRouter } from "next/navigation";
+import { useTransitionRouter } from "next-view-transitions";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -11,11 +11,11 @@ import { SolarIcon } from "@/components/icons/SolarIcon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 import { toast } from "sonner";
-import Link from "next/link";
+import { Link } from "next-view-transitions";
 import { cn } from "@/lib/utils";
 
 export default function InvitationsPage() {
-  const router = useRouter();
+  const router = useTransitionRouter();
   const invitations = useQuery(api.invitations.getUserInvitations);
   const acceptInvitation = useMutation(api.invitations.acceptInvitation);
   const rejectInvitation = useMutation(api.invitations.rejectInvitation);

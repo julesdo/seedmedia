@@ -1179,6 +1179,138 @@
     color: var(--foreground);
   }
   
+  /* Textarea - mêmes styles que input */
+  [data-slot="textarea"] {
+    position: relative;
+    display: inline-flex;
+    align-items: flex-start;
+    border-radius: 10px;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.70) 0%, rgba(255, 255, 255, 0.60) 100%);
+    border: 1px solid transparent;
+    backdrop-filter: blur(12px) saturate(160%);
+    -webkit-backdrop-filter: blur(12px) saturate(160%);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
+      0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+  
+  /* Bordure dégradé légère en état normal - Light mode */
+  [data-slot="textarea"]::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 10px;
+    padding: 1px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.06) 0%, rgba(0, 0, 0, 0.03) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+    transition: background 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .dark [data-slot="textarea"] {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.04) 100%);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.05),
+      0 1px 2px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Bordure dégradé légère en état normal - Dark mode */
+  .dark [data-slot="textarea"]::after {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+  }
+  
+  /* Textarea hover */
+  [data-slot="textarea"]:hover:not(:disabled):not(:focus-visible) {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.90) 0%, rgba(255, 255, 255, 0.75) 100%);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.4),
+      0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+  
+  /* Bordure dégradé plus prononcée au hover - Light mode */
+  [data-slot="textarea"]:hover:not(:disabled):not(:focus-visible)::after {
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.12) 0%, rgba(0, 0, 0, 0.05) 100%);
+  }
+  
+  .dark [data-slot="textarea"]:hover:not(:disabled):not(:focus-visible) {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.06) 100%);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.1),
+      0 1px 2px rgba(0, 0, 0, 0.2);
+  }
+  
+  .dark [data-slot="textarea"]:hover:not(:disabled):not(:focus-visible)::after {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%);
+  }
+  
+  /* État focus pour textarea */
+  [data-slot="textarea"]:focus-visible {
+    outline: none;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.70) 100%);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.5),
+      0 0 0 2px rgba(36, 107, 253, 0.2),
+      0 2px 4px rgba(0, 0, 0, 0.08);
+  }
+  
+  [data-slot="textarea"]:focus-visible::after {
+    background: linear-gradient(180deg, rgba(36, 107, 253, 0.15) 0%, rgba(36, 107, 253, 0.05) 100%);
+  }
+  
+  .dark [data-slot="textarea"]:focus-visible {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.06) 100%);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.12),
+      0 0 0 2px rgba(36, 107, 253, 0.3),
+      0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+  
+  .dark [data-slot="textarea"]:focus-visible::after {
+    background: linear-gradient(180deg, rgba(36, 107, 253, 0.20) 0%, rgba(36, 107, 253, 0.08) 100%);
+  }
+  
+  /* État active (clic) pour textarea */
+  [data-slot="textarea"]:active:not(:disabled) {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.80) 0%, rgba(255, 255, 255, 0.65) 100%);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
+      inset 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  [data-slot="textarea"]:active:not(:disabled)::after {
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.10) 0%, rgba(0, 0, 0, 0.04) 100%);
+  }
+  
+  .dark [data-slot="textarea"]:active:not(:disabled) {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.05) 100%);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.08),
+      inset 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+  
+  .dark [data-slot="textarea"]:active:not(:disabled)::after {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.05) 100%);
+  }
+  
+  /* Placeholder avec opacité pour textarea */
+  [data-slot="textarea"]::placeholder {
+    opacity: 0.5;
+    transition: opacity 0.2s ease;
+  }
+  
+  [data-slot="textarea"]:focus-visible::placeholder {
+    opacity: 0.4;
+  }
+  
+  /* Texte dans le textarea - couleur normale */
+  [data-slot="textarea"] {
+    color: var(--foreground);
+  }
+  
   /* Avatar - Style glass-tech */
   [data-slot="avatar"] {
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -1208,13 +1340,18 @@
     content: "";
     position: absolute;
     inset: 0;
-    background: rgba(var(--bg), 0.95);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.70) 0%, rgba(255, 255, 255, 0.60) 100%);
     backdrop-filter: blur(12px) saturate(140%);
     -webkit-backdrop-filter: blur(12px) saturate(140%);
     border: 1px solid transparent;
     border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.3), 0 1px 2px rgba(0, 0, 0, 0.05);
     z-index: -1;
+  }
+  
+  .dark [data-slot="badge"]::before {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.04) 100%);
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05), 0 1px 2px rgba(0, 0, 0, 0.2);
   }
   
   /* Badge - Bordure dégradé hyper légère et fine (comme les boutons) */
@@ -1230,12 +1367,17 @@
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask-composite: exclude;
     pointer-events: none;
-    z-index: -1;
+    z-index: 0;
   }
   
-  /* Badge - Dark mode bordure dégradé */
   .dark [data-slot="badge"]::after {
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+  }
+  
+  /* Badge - Texte au-dessus de la bordure */
+  [data-slot="badge"] > * {
+    position: relative;
+    z-index: 1;
   }
   
   /* Badge variant outline - fond plus opaque */
@@ -1250,15 +1392,53 @@
     border-color: rgba(36, 107, 253, 0.25);
   }
   
-  /* Badge variant accent - dégradé texte bleu */
+  /* Badge variant accent - dégradé texte bleu (par défaut pour tous les badges) */
   [data-slot="badge"][class*="bg-primary"],
-  [data-slot="badge"][class*="variant-default"] {
+  [data-slot="badge"][class*="variant-default"],
+  [data-slot="badge"]:not([class*="variant-"]) {
     background: linear-gradient(180deg, #246BFD 0%, #1A5DE8 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
   
+  /* Forcer le dégradé bleu pour les hashtags dans l'éditeur */
+  [data-lexical-hashtag][data-slot="badge"] {
+    background: linear-gradient(180deg, #246BFD 0%, #1A5DE8 100%) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    color: transparent !important;
+  }
+  
+  .dark [data-lexical-hashtag][data-slot="badge"] {
+    background: linear-gradient(180deg, #FFFFFF 0%, rgba(255, 255, 255, 0.55) 100%) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    color: transparent !important;
+  }
+  
+  /* Hashtag dans l'éditeur - Forcer le style badge et éviter le style de lien */
+  [data-lexical-hashtag] {
+    text-decoration: none !important;
+    display: inline-flex !important;
+  }
+  
+  [data-lexical-hashtag]:hover {
+    text-decoration: none !important;
+  }
+  
+  /* Éviter que les styles de lien s'appliquent aux hashtags */
+  .ContentEditable__root [data-lexical-hashtag],
+  .prose [data-lexical-hashtag] {
+    text-decoration: none !important;
+  }
+  
+  /* S'assurer que le badge s'affiche correctement pour les hashtags */
+  [data-lexical-hashtag][data-slot="badge"] {
+    display: inline-flex !important;
+    position: relative !important;
+  }
+
   /* Separator - Style glass-tech */
   [data-slot="separator"] {
     background: linear-gradient(90deg, transparent 0%, rgba(var(--fg), 0.08) 50%, transparent 100%);
@@ -1436,6 +1616,106 @@
     border: 1px solid rgba(var(--fg), 0.15);
   }
   
+  /* View Transitions pour les Tabs */
+  @view-transition {
+    navigation: auto;
+  }
+
+  /* Transition douce lors du changement de tab */
+  ::view-transition-old(tab-content),
+  ::view-transition-new(tab-content) {
+    animation-duration: 0.25s;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Animation fade pour le contenu des tabs */
+  ::view-transition-old(tab-content) {
+    animation-name: fade-out;
+  }
+
+  ::view-transition-new(tab-content) {
+    animation-name: fade-in;
+  }
+
+  @keyframes fade-out {
+    from {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Système de layout pour tous les blocs dans l'éditeur */
+  .ContentEditable__root {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 1rem;
+    align-items: start;
+  }
+  
+  /* Par défaut, tous les blocs occupent toute la largeur (1/1) */
+  .ContentEditable__root > * {
+    grid-column: 1 / -1;
+  }
+  
+  /* Layout 1/2 (moitié) - 6 colonnes sur desktop */
+  .ContentEditable__root > [data-layout="half"] {
+    grid-column: span 6 / span 6;
+  }
+  
+  /* Layout 1/1 (pleine largeur) - toutes les colonnes */
+  .ContentEditable__root > [data-layout="full"] {
+    grid-column: 1 / -1;
+  }
+  
+  /* Sur mobile, tous les blocs occupent toute la largeur */
+  @media (max-width: 1024px) {
+    .ContentEditable__root > [data-layout="half"] {
+      grid-column: 1 / -1;
+    }
+  }
+
+  /* Prism.js syntax highlighting styles */
+  pre[class*="language-"] {
+    margin: 0;
+    padding: 1rem;
+    overflow: auto;
+    border-radius: 0.5rem;
+  }
+
+  code[class*="language-"] {
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    line-height: 1.6;
+    tab-size: 2;
+  }
+
+  /* Mermaid diagram styles */
+  .mermaid {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .mermaid svg {
+    max-width: 100%;
+    height: auto;
+  }
+
   /* Respect prefers-reduced-motion */
   @media (prefers-reduced-motion: reduce) {
     *,
@@ -1445,5 +1725,11 @@
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
     }
+    
+    ::view-transition-old(tab-content),
+    ::view-transition-new(tab-content) {
+      animation-duration: 0.01ms !important;
+    }
+
   }
 }

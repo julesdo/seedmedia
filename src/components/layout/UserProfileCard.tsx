@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useRouter } from "next/navigation";
+import { useTransitionRouter } from "next-view-transitions";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { cn } from "@/lib/utils";
@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { authClient } from "@/lib/auth-client";
-import Link from "next/link";
+import { Link } from "next-view-transitions";
 import { Id } from "../../../convex/_generated/dataModel";
 
 interface UserProfileCardProps {
@@ -55,7 +55,7 @@ const STORAGE_KEY = "seed_active_accounts";
 const CURRENT_ACCOUNT_KEY = "seed_current_account_id";
 
 export function UserProfileCard({ user, accounts = [] }: UserProfileCardProps) {
-  const router = useRouter();
+  const router = useTransitionRouter();
   const organizations = useQuery(api.organizations.getUserOrganizations);
   const [storedAccounts, setStoredAccounts] = React.useState<StoredAccount[]>([]);
   const [currentAccountId, setCurrentAccountId] = React.useState<string | null>(null);

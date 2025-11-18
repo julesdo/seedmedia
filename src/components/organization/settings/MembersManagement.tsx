@@ -29,7 +29,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
-import Link from "next/link";
+import { Link } from "next-view-transitions";
+import { useTransitionRouter } from "next-view-transitions";
 
 interface MembersManagementProps {
   organizationId: Id<"organizations">;
@@ -44,6 +45,7 @@ export function MembersManagement({
   canInvite,
   role,
 }: MembersManagementProps) {
+  const router = useTransitionRouter();
   const [memberToRemove, setMemberToRemove] = useState<Id<"users"> | null>(null);
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
   const [memberToTransfer, setMemberToTransfer] = useState<Id<"users"> | null>(null);
@@ -79,7 +81,7 @@ export function MembersManagement({
       toast.success("Vous avez quitté l'organisation");
       setShowLeaveDialog(false);
       // Rediriger vers la page des organisations
-      window.location.href = "/organizations";
+      router.push("/organizations");
     } catch (error: any) {
       toast.error(error.message || "Erreur lors de la sortie de l'organisation");
     }
@@ -91,7 +93,7 @@ export function MembersManagement({
       toast.success("Propriété transférée avec succès");
       setMemberToTransfer(null);
       // Recharger la page pour voir les changements
-      window.location.reload();
+      router.refresh();
     } catch (error: any) {
       toast.error(error.message || "Erreur lors du transfert de propriété");
     }

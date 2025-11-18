@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "next-view-transitions";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -92,85 +92,88 @@ export function FeaturedOrganizationCard({ organization }: FeaturedOrganizationC
 
   return (
     <Link href={`/discover/organizations/${organization._id}`}>
-      <Card className="group relative overflow-hidden hover:border-primary/30 transition-all duration-300 cursor-pointer p-0">
+      <Card className="group relative overflow-hidden hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 cursor-pointer p-0 border-0 bg-gradient-to-br from-background/85 to-background/50 backdrop-blur-xl">
         {/* Image de couverture en arrière-plan */}
         {hasCoverImage ? (
           <div className="relative w-full overflow-hidden">
+            {/* Effet de brillance au survol */}
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/0 to-primary/0 group-hover:from-primary/6 group-hover:via-primary/3 group-hover:to-primary/0 transition-all duration-700 pointer-events-none z-20" />
+            
             <OptimizedImage
               src={organization.coverImage || undefined}
               storageId={coverStorageId}
               alt={`Couverture de ${organization.name}`}
-              className="w-full h-[320px] object-cover group-hover:scale-105 transition-transform duration-500"
+              className="w-full h-[400px] object-cover group-hover:scale-[1.03] transition-transform duration-500 ease-out"
               quality="high"
               priority
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
             />
-            {/* Overlay gradient pour meilleure lisibilité - plus visible */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/0 via-black/30 to-black/80" />
+            {/* Overlay gradient élégant avec plus de profondeur */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/25 to-black/80 group-hover:via-black/28 transition-all duration-400" />
             
             {/* Contenu positionné sur l'image */}
-            <div className="absolute inset-0 flex flex-col justify-end pb-5 px-5">
-              {/* Badges en haut */}
-              <div className="absolute top-4 left-4 right-4 flex items-start justify-between gap-3 z-10">
-                <div className="flex items-center gap-3 flex-wrap">
+            <div className="absolute inset-0 flex flex-col justify-end pb-6 px-6">
+              {/* Badges en haut avec animation */}
+              <div className="absolute top-5 left-5 right-5 flex items-start justify-between gap-3 z-10">
+                <div className="flex items-center gap-2 flex-wrap">
                   {organization.seedRegion && (
-                    <Badge variant="outline" className="backdrop-blur-md bg-background/90 border-background/50">
-                      {seedRegionLabels[organization.seedRegion] || organization.seedRegion}
+                    <Badge variant="outline" className="backdrop-blur-xl bg-background/80 border-background/40 shadow-lg group-hover:bg-background/90 transition-all duration-300">
+                      <span className="text-xs font-medium">{seedRegionLabels[organization.seedRegion] || organization.seedRegion}</span>
                     </Badge>
                   )}
                   {organization.organizationType && (
-                    <Badge variant="outline" className="backdrop-blur-md bg-background/90 border-background/50">
-                      {organization.organizationType}
+                    <Badge variant="outline" className="backdrop-blur-xl bg-background/80 border-background/40 shadow-lg group-hover:bg-background/90 transition-all duration-300">
+                      <span className="text-xs font-medium">{organization.organizationType}</span>
                     </Badge>
                   )}
                 </div>
                 {organization.verified && (
                   <Badge
                     variant="outline"
-                    className="bg-green-500/20 text-green-500 border-green-500/30 backdrop-blur-md shrink-0"
+                    className="bg-green-500/25 text-green-400 border-green-500/40 backdrop-blur-xl shadow-lg shrink-0 group-hover:bg-green-500/30 transition-all duration-300"
                   >
-                    <SolarIcon icon="verified-check-bold" className="h-3 w-3 mr-1" />
-                    Vérifiée
+                    <SolarIcon icon="verified-check-bold" className="h-3.5 w-3.5 mr-1.5" />
+                    <span className="text-xs font-semibold">Vérifiée</span>
                   </Badge>
                 )}
               </div>
 
-              {/* Logo, nom et description en bas */}
-              <div className="space-y-3 relative z-10">
-                <div className="flex items-start gap-4">
-                  <Avatar className="h-16 w-16 ring-3 ring-background shadow-xl shrink-0">
+              {/* Logo, nom et description en bas - design amélioré */}
+              <div className="space-y-4 relative z-10">
+                <div className="flex items-start gap-5">
+                  <Avatar className="h-20 w-20 ring-4 ring-background/70 shadow-xl shrink-0 group-hover:ring-primary/30 group-hover:scale-102 transition-all duration-400">
                     <AvatarImage src={logoUrl || undefined} alt={organization.name} />
-                    <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-gradient-light text-2xl font-bold">
+                    <AvatarFallback className="bg-gradient-to-br from-primary/30 to-primary/10 text-gradient-light text-3xl font-bold">
                       {organization.name[0]?.toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex-1 min-w-0 pt-1">
-                    <h2 className="text-xl md:text-2xl font-bold text-white group-hover:text-primary transition-colors mb-2 line-clamp-2 drop-shadow-lg">
+                  <div className="flex-1 min-w-0 pt-1.5">
+                    <h2 className="text-2xl md:text-3xl font-bold text-white transition-colors duration-300 mb-3 line-clamp-2 drop-shadow-2xl tracking-tight">
                       {organization.name}
                     </h2>
-                    <p className="text-sm md:text-base text-white/90 line-clamp-2 leading-relaxed drop-shadow-md">
+                    <p className="text-sm md:text-base text-white/95 line-clamp-3 leading-relaxed drop-shadow-lg font-medium">
                       {organization.description}
                     </p>
                   </div>
                 </div>
 
-                {/* Tags et stats en bas */}
-                <div className="flex items-center justify-between pt-3 border-t border-white/20">
-                  <div className="flex flex-wrap gap-1.5">
+                {/* Tags et stats en bas - design raffiné avec séparateur subtil */}
+                <div className="flex items-center justify-between pt-4 border-t border-white/10 group-hover:border-white/15 transition-colors duration-300">
+                  <div className="flex flex-wrap gap-2">
                     {organization.tags.slice(0, 3).map((tag) => (
-                      <Badge key={tag} variant="outline" className="text-xs bg-background/90 backdrop-blur-md border-background/50 text-foreground">
+                      <Badge key={tag} variant="outline" className="text-xs bg-background/70 backdrop-blur-xl border-background/30 text-foreground shadow-md group-hover:bg-background/80 group-hover:border-primary/20 transition-all duration-300">
                         #{tag}
                       </Badge>
                     ))}
                   </div>
-                  <div className="flex items-center gap-3 text-xs text-white/90">
-                    <div className="flex items-center gap-1.5 backdrop-blur-md bg-background/50 px-2.5 py-1 rounded-full">
-                      <SolarIcon icon="users-group-two-rounded-bold" className="h-3.5 w-3.5" />
-                      <span className="font-medium">{organization.membersCount}</span>
+                  <div className="flex items-center gap-3 text-xs text-white/95">
+                    <div className="flex items-center gap-2 backdrop-blur-xl bg-background/60 px-3 py-1.5 rounded-full shadow-lg group-hover:bg-background/80 transition-all duration-300">
+                      <SolarIcon icon="users-group-two-rounded-bold" className="h-4 w-4 text-primary/80" />
+                      <span className="font-semibold">{organization.membersCount}</span>
                     </div>
-                    <div className="flex items-center gap-1.5 backdrop-blur-md bg-background/50 px-2.5 py-1 rounded-full">
-                      <SolarIcon icon="user-bold" className="h-3.5 w-3.5" />
-                      <span className="font-medium">{organization.followersCount}</span>
+                    <div className="flex items-center gap-2 backdrop-blur-xl bg-background/60 px-3 py-1.5 rounded-full shadow-lg group-hover:bg-background/80 transition-all duration-300">
+                      <SolarIcon icon="user-bold" className="h-4 w-4 text-primary/80" />
+                      <span className="font-semibold">{organization.followersCount}</span>
                     </div>
                   </div>
                 </div>

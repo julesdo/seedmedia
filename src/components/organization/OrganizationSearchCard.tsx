@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "next-view-transitions";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -91,33 +91,34 @@ export function OrganizationSearchCard({ organization }: OrganizationSearchCardP
 
   return (
     <Link href={`/discover/organizations/${organization._id}`}>
-      <Card className="group relative overflow-hidden hover:border-primary/30 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 h-full flex flex-col p-0">
-        {/* Effet de brillance au survol */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/0 to-primary/0 group-hover:from-primary/5 group-hover:via-primary/2 group-hover:to-primary/0 transition-all duration-500 pointer-events-none z-10" />
+      <Card className="group relative overflow-hidden hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 h-full flex flex-col p-0 border-0 bg-gradient-to-br from-background/75 to-background/35 backdrop-blur-lg">
+        {/* Effet de brillance subtil */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/0 to-primary/0 group-hover:from-primary/5 group-hover:via-primary/2 group-hover:to-primary/0 transition-all duration-500 pointer-events-none z-10 rounded-lg" />
         
-        {/* Image de couverture - design horizontal compact */}
+        {/* Image de couverture - design amélioré */}
         {organization.coverImage && (
-          <div className="relative h-32 w-full overflow-hidden bg-muted/20">
+          <div className="relative h-36 w-full overflow-hidden bg-gradient-to-br from-muted/25 to-muted/10">
             <OptimizedImage
               src={organization.coverImage || undefined}
               storageId={coverStorageId}
               alt={`Couverture de ${organization.name}`}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-              quality="medium"
+              className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-400 ease-out"
+              quality="high"
               priority
               sizes="(max-width: 768px) 100vw, 50vw"
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/0 via-black/10 to-black/40 pointer-events-none z-10" />
+            {/* Overlay gradient plus subtil */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/18 to-black/55 group-hover:via-black/22 transition-all duration-400 pointer-events-none z-10" />
             
-            {/* Badge vérifié en overlay si présent */}
+            {/* Badge vérifié en overlay si présent - design amélioré */}
             {organization.verified && (
               <div className="absolute top-3 right-3 z-20">
                 <Badge
                   variant="outline"
-                  className="bg-green-500/20 text-green-500 border-green-500/30 backdrop-blur-md shadow-lg"
+                  className="bg-green-500/25 text-green-400 border-green-500/40 backdrop-blur-xl shadow-xl group-hover:bg-green-500/30 transition-all duration-300"
                 >
-                  <SolarIcon icon="verified-check-bold" className="h-3 w-3 mr-1" />
-                  Vérifiée
+                  <SolarIcon icon="verified-check-bold" className="h-3.5 w-3.5 mr-1.5" />
+                  <span className="text-xs font-semibold">Vérifiée</span>
                 </Badge>
               </div>
             )}
@@ -132,11 +133,11 @@ export function OrganizationSearchCard({ organization }: OrganizationSearchCardP
                 {/* Header avec logo et nom - design compact */}
                 <div className="flex items-start gap-3">
                   <Avatar className={cn(
-                    "h-12 w-12 ring-2 ring-border/50 group-hover:ring-primary/40 transition-all duration-300 shrink-0 group-hover:scale-105",
+                    "h-12 w-12 ring-2 ring-background/40 backdrop-blur-md shadow-lg group-hover:ring-primary/30 group-hover:shadow-xl transition-all duration-300 shrink-0 group-hover:scale-105",
                     organization.coverImage && "-mt-6"
                   )}>
                     <AvatarImage src={logoUrl || undefined} alt={organization.name} />
-                    <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-gradient-light text-base font-bold">
+                    <AvatarFallback className="bg-gradient-to-br from-primary/25 to-primary/10 text-gradient-light text-base font-bold backdrop-blur-md">
                       {organization.name[0]?.toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
@@ -146,15 +147,15 @@ export function OrganizationSearchCard({ organization }: OrganizationSearchCardP
                       {organization.name}
                     </h3>
                 
-                {/* Type et région - badges compacts */}
+                {/* Type et région - badges glassy */}
                 <div className="flex flex-wrap items-center gap-1.5">
                   {organization.organizationType && (
-                    <Badge variant="outline" className="text-xs px-2 py-0.5 h-5 bg-background/60 backdrop-blur-sm">
+                    <Badge variant="outline" className="text-xs px-2 py-0.5 h-5 bg-background/50 backdrop-blur-md border-border/30">
                       {organization.organizationType}
                     </Badge>
                   )}
                   {organization.seedRegion && (
-                    <Badge variant="outline" className="text-xs px-2 py-0.5 h-5 bg-background/60 backdrop-blur-sm">
+                    <Badge variant="outline" className="text-xs px-2 py-0.5 h-5 bg-background/50 backdrop-blur-md border-border/30">
                       {seedRegionLabels[organization.seedRegion] || organization.seedRegion}
                     </Badge>
                   )}
@@ -169,28 +170,28 @@ export function OrganizationSearchCard({ organization }: OrganizationSearchCardP
               </p>
             )}
 
-            {/* Tags - design compact */}
+            {/* Tags - design glassy */}
             {organization.tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {organization.tags.slice(0, 2).map((tag) => (
                   <Badge
                     key={tag}
                     variant="outline"
-                    className="text-xs px-2 py-0.5 bg-background/40 backdrop-blur-sm border-border/50"
+                    className="text-xs px-2 py-0.5 bg-background/40 backdrop-blur-md border-border/20 group-hover:bg-background/50 group-hover:border-primary/20 transition-all duration-300"
                   >
                     #{tag}
                   </Badge>
                 ))}
                 {organization.tags.length > 2 && (
-                  <Badge variant="outline" className="text-xs px-2 py-0.5 bg-background/40 backdrop-blur-sm border-border/50">
+                  <Badge variant="outline" className="text-xs px-2 py-0.5 bg-background/40 backdrop-blur-md border-border/20 group-hover:bg-background/50 group-hover:border-primary/20 transition-all duration-300">
                     +{organization.tags.length - 2}
                   </Badge>
                 )}
               </div>
             )}
 
-            {/* Stats - design compact en bas */}
-            <div className="flex items-center justify-between pt-3 mt-auto border-t border-border/30">
+            {/* Stats - design compact en bas avec séparateur subtil */}
+            <div className="flex items-center justify-between pt-3 mt-auto border-t border-border/10 group-hover:border-border/20 transition-colors duration-300">
               <div className="flex items-center gap-3 text-xs text-muted-foreground/70">
                 <div className="flex items-center gap-1.5">
                   <SolarIcon icon="users-group-two-rounded-bold" className="h-3.5 w-3.5 shrink-0 text-primary/60" />
@@ -204,9 +205,10 @@ export function OrganizationSearchCard({ organization }: OrganizationSearchCardP
               {!organization.coverImage && organization.verified && (
                 <Badge
                   variant="outline"
-                  className="bg-green-500/20 text-green-500 border-green-500/30 backdrop-blur-sm text-xs"
+                  className="bg-green-500/20 text-green-400 border-green-500/30 backdrop-blur-md text-xs shadow-sm"
                 >
-                  <SolarIcon icon="verified-check-bold" className="h-3 w-3 mr-1" />
+                  <SolarIcon icon="verified-check-bold" className="h-3.5 w-3.5 mr-1.5" />
+                  <span className="font-semibold">Vérifiée</span>
                 </Badge>
               )}
             </div>

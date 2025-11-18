@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
+import { ViewTransitions } from "next-view-transitions";
 import "./globals.css";
 import { ThemeProvider } from "@/components/next-theme/theme-provider";
 import { Footer } from "@/components/footer";
@@ -23,10 +24,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${plusJakartaSans.variable} min-h-[calc(100vh-2rem)] flex flex-col gap-4 antialiased font-sans`}
-      >
+    <ViewTransitions>
+      <html lang="en" suppressHydrationWarning>
+        <body
+          className={`${plusJakartaSans.variable} min-h-[calc(100vh-2rem)] flex flex-col gap-4 antialiased font-sans`}
+        >
         {/* SVG Gradients pour les icônes */}
         <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
           <defs>
@@ -63,7 +65,8 @@ export default function RootLayout({
             </ConvexClientProvider>
             
           </ThemeProvider>
-      </body>
-    </html>
+        </body>
+      </html>
+    </ViewTransitions>
   );
 }

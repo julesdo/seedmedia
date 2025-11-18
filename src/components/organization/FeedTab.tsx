@@ -1,19 +1,17 @@
 "use client";
 
-import { useQuery } from "convex/react";
-import { api } from "../../../convex/_generated/api";
-import { Id } from "../../../convex/_generated/dataModel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { SolarIcon } from "@/components/icons/SolarIcon";
-import Link from "next/link";
+import { Link } from "next-view-transitions";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
-import { Skeleton } from "@/components/ui/skeleton";
 
 interface FeedTabProps {
-  organizationId: Id<"organizations">;
+  articles?: any[] | undefined;
+  projects?: any[] | undefined;
+  actions?: any[] | undefined;
 }
 
 type FeedItem = {
@@ -31,44 +29,13 @@ type FeedItem = {
   slug?: string;
 };
 
-export function FeedTab({ organizationId }: FeedTabProps) {
-  const articles = useQuery(api.organizations.getOrganizationArticlesPublic, {
-    organizationId,
-  });
-  const projects = useQuery(api.organizations.getOrganizationProjectsPublic, {
-    organizationId,
-  });
-  const actions = useQuery(api.organizations.getOrganizationActionsPublic, {
-    organizationId,
-  });
-
-  const isLoading = articles === undefined || projects === undefined || actions === undefined;
-
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        {[1, 2, 3].map((i) => (
-          <Card key={i}>
-            <CardHeader>
-              <div className="flex items-start gap-4">
-                <Skeleton className="h-12 w-12 rounded-full" />
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="h-6 w-3/4" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-2/3" />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-48 w-full" />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
+export function FeedTab({ articles, projects, actions }: FeedTabProps) {
+  // Ne pas afficher de skeleton, utiliser les données en cache ou afficher vide
+  // Si les données sont undefined, ne rien afficher pour éviter de casser la transition
+  if (articles === undefined || projects === undefined || actions === undefined) {
+    return null;
   }
 
-  // Combiner tous les éléments dans un feed chronologique
   const feedItems: FeedItem[] = [
     ...(articles || []).map((article) => ({
       type: "article" as const,

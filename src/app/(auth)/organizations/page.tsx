@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SolarIcon } from "@/components/icons/SolarIcon";
-import Link from "next/link";
+import { Link } from "next-view-transitions";
 import { useState } from "react";
 import { toast } from "sonner";
 import {

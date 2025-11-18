@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import Link from "next/link";
+import { Link } from "next-view-transitions";
 import { cn } from "@/lib/utils";
 import { SolarIcon } from "@/components/icons/SolarIcon";
 import { useQuery } from "convex/react";

@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SolarIcon } from "@/components/icons/SolarIcon";
-import Link from "next/link";
+import { Link } from "next-view-transitions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Id } from "../../../convex/_generated/dataModel";
@@ -135,55 +135,50 @@ export function DiscoverSidebar({
         </Card>
       )}
 
-      {/* Newsletter / Abonnement */}
-      <Card className="relative overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 via-primary/3 to-background group hover:border-primary/30 transition-all duration-300">
-        {/* Effet de brillance au survol */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/0 to-primary/0 group-hover:from-primary/10 group-hover:via-primary/5 group-hover:to-primary/0 transition-all duration-500 pointer-events-none" />
+      {/* Newsletter / Abonnement - Design glassy subtil */}
+      <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-background/70 to-background/30 backdrop-blur-lg group hover:shadow-lg hover:shadow-primary/5 transition-all duration-500">
+        {/* Effet de brillance au survol - très subtil */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/0 to-primary/0 group-hover:from-primary/5 group-hover:via-primary/2 group-hover:to-primary/0 transition-all duration-700 pointer-events-none" />
         
         <CardContent className="p-4 relative">
-          <div className="space-y-3">
-            {/* Header avec icône */}
+          <div className="space-y-3.5">
+            {/* Header avec icône - design discret */}
             <div className="flex items-start gap-3">
-              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center shrink-0 ring-2 ring-primary/20 group-hover:ring-primary/30 transition-all duration-300 group-hover:scale-105">
-                <SolarIcon icon="bell-bold" className="h-5 w-5 icon-gradient-active" />
+              <div className="h-9 w-9 rounded-lg bg-background/50 backdrop-blur-md flex items-center justify-center shrink-0 ring-1 ring-border/20 group-hover:ring-primary/20 transition-all duration-300">
+                <SolarIcon icon="bell-bold" className="h-4 w-4 text-primary/70 group-hover:text-primary transition-colors duration-300" />
               </div>
               <div className="flex-1 min-w-0 pt-0.5">
-                <h3 className="text-base font-bold text-gradient-light mb-1">
+                <h3 className="text-sm font-semibold text-gradient-light mb-1.5">
                   Restez informé
                 </h3>
-                <p className="text-xs text-muted-foreground/80 leading-relaxed">
-                  Recevez les dernières actualités et découvertes directement dans votre boîte mail
+                <p className="text-xs text-muted-foreground/75 leading-relaxed">
+                  Recevez les dernières actualités directement dans votre boîte mail
                 </p>
               </div>
             </div>
 
-            {/* Formulaire d'abonnement */}
-            <div className="space-y-2 pt-1">
-              <div className="relative">
+            {/* Formulaire d'abonnement - style glassy subtil */}
+            <div className="flex gap-2 pt-0.5">
+              <div className="relative flex-1">
                 <Input
                   type="email"
                   placeholder="votre@email.com"
-                  className="bg-background/90 backdrop-blur-sm border-border/50 focus:border-primary/50 h-9 pr-9 text-sm"
-                />
-                <SolarIcon 
-                  icon="mailbox-bold" 
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50 pointer-events-none" 
+                  className="bg-background/60 backdrop-blur-md border-border/30 focus:border-primary/30 h-9 pr-3 text-sm placeholder:text-muted-foreground/50"
                 />
               </div>
               <Button 
-                variant="accent" 
+                variant="glass" 
                 size="sm"
-                className="w-full h-9 font-medium shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 transition-all duration-300" 
-                icon="arrow-right-bold"
+                className="h-9 px-4 font-medium text-sm shrink-0" 
               >
                 S'abonner
               </Button>
             </div>
 
-            {/* Badge de confiance */}
-            <div className="flex items-center gap-1.5 pt-1.5 border-t border-border/30">
-              <SolarIcon icon="shield-check-bold" className="h-3.5 w-3.5 text-primary/70 shrink-0" />
-              <p className="text-xs text-muted-foreground/70">
+            {/* Badge de confiance - séparateur subtil */}
+            <div className="flex items-center gap-1.5 pt-2 border-t border-border/10">
+              <SolarIcon icon="shield-check-bold" className="h-3.5 w-3.5 text-primary/50 shrink-0" />
+              <p className="text-xs text-muted-foreground/60">
                 Sans spam, désinscription à tout moment
               </p>
             </div>

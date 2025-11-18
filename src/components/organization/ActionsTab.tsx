@@ -1,41 +1,20 @@
 "use client";
 
-import { useQuery } from "convex/react";
-import { api } from "../../../convex/_generated/api";
-import { Id } from "../../../convex/_generated/dataModel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SolarIcon } from "@/components/icons/SolarIcon";
-import Link from "next/link";
+import { Link } from "next-view-transitions";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
-import { Skeleton } from "@/components/ui/skeleton";
 
 interface ActionsTabProps {
-  organizationId: Id<"organizations">;
+  actions?: any[] | undefined;
 }
 
-export function ActionsTab({ organizationId }: ActionsTabProps) {
-  const actions = useQuery(api.organizations.getOrganizationActionsPublic, {
-    organizationId,
-  });
-
+export function ActionsTab({ actions }: ActionsTabProps) {
+  // Ne pas afficher de skeleton, utiliser les données en cache ou afficher vide
   if (actions === undefined) {
-    return (
-      <div className="space-y-4">
-        {[1, 2, 3].map((i) => (
-          <Card key={i}>
-            <CardHeader>
-              <Skeleton className="h-6 w-3/4" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-2/3 mt-2" />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
+    return null;
   }
 
   if (actions.length === 0) {

@@ -2,7 +2,8 @@
 
 import { useQuery } from "convex/react";
 import { api } from "../../../../../../../convex/_generated/api";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useTransitionRouter } from "next-view-transitions";
 import { Id } from "../../../../../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { SolarIcon } from "@/components/icons/SolarIcon";
@@ -16,7 +17,7 @@ import { InvitationsManagement } from "@/components/organization/settings/Invita
 
 export default function OrganizationSettingsPage() {
   const params = useParams();
-  const router = useRouter();
+  const router = useTransitionRouter();
   const organizationId = params.id as Id<"organizations">;
 
   // Vérifier que l'utilisateur est membre et a les permissions

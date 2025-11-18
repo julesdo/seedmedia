@@ -7,12 +7,28 @@ import { cn } from "@/lib/utils"
 
 function Tabs({
   className,
+  onValueChange,
   ...props
 }: React.ComponentProps<typeof TabsPrimitive.Root>) {
+  const handleValueChange = React.useCallback(
+    (value: string) => {
+      // Utiliser View Transitions API si disponible
+      if (typeof document !== "undefined" && "startViewTransition" in document) {
+        (document as any).startViewTransition(() => {
+          onValueChange?.(value);
+        });
+      } else {
+        onValueChange?.(value);
+      }
+    },
+    [onValueChange]
+  );
+
   return (
     <TabsPrimitive.Root
       data-slot="tabs"
       className={cn("flex flex-col gap-2", className)}
+      onValueChange={handleValueChange}
       {...props}
     />
   )
@@ -52,12 +68,57 @@ function TabsTrigger({
 
 function TabsContent({
   className,
+  value,
   ...props
 }: React.ComponentProps<typeof TabsPrimitive.Content>) {
+  const contentRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (contentRef.current) {
+      // Utiliser un nom de transition commun uniquement pour le contenu actif
+      // Cela permet à View Transitions de créer une transition fluide entre les différents contenus
+      const isActive = contentRef.current.getAttribute("data-state") === "active";
+      if (isActive) {
+        contentRef.current.style.viewTransitionName = "tab-content";
+      } else {
+        contentRef.current.style.viewTransitionName = "none";
+      }
+    }
+  });
+
+  // Observer les changements d'état pour mettre à jour le view-transition-name
+  React.useEffect(() => {
+    const element = contentRef.current;
+    if (!element) return;
+
+    const observer = new MutationObserver(() => {
+      const isActive = element.getAttribute("data-state") === "active";
+      if (isActive) {
+        element.style.viewTransitionName = "tab-content";
+      } else {
+        element.style.viewTransitionName = "none";
+      }
+    });
+
+    observer.observe(element, {
+      attributes: true,
+      attributeFilter: ["data-state"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <TabsPrimitive.Content
+      ref={contentRef}
       data-slot="tabs-content"
-      className={cn("flex-1 outline-none", className)}
+      className={cn(
+        "flex-1 outline-none",
+        "data-[state=active]:animate-in data-[state=active]:fade-in-0 data-[state=active]:duration-200",
+        "data-[state=inactive]:animate-out data-[state=inactive]:fade-out-0 data-[state=inactive]:duration-150",
+        className
+      )}
+      value={value}
       {...props}
     />
   )
