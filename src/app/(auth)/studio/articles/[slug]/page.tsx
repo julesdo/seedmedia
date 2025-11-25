@@ -65,6 +65,7 @@ export default function EditArticlePage() {
   );
   const article = articleBySlug || articleById;
   const updateArticle = useMutation(api.articles.updateArticle);
+  const updateArticleCategories = useMutation(api.categories.updateArticleCategories);
   const credibilityPoints = useCredibilityPoints();
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -155,6 +156,7 @@ export default function EditArticlePage() {
 
     setLoading(true);
     try {
+      // Mettre à jour l'article
       await updateArticle({
         articleId: article._id,
         title,
@@ -171,6 +173,19 @@ export default function EditArticlePage() {
         conclusion,
         sourcesCount: sources.length,
       });
+
+      // Mettre à jour les catégories avec la mutation dédiée pour mettre à jour les compteurs d'utilisation
+      if (categoryIds.length > 0) {
+        try {
+          await updateArticleCategories({
+            articleId: article._id,
+            categoryIds: categoryIds as any,
+          });
+        } catch (categoryError: any) {
+          // Ne pas bloquer la sauvegarde si la mise à jour des catégories échoue
+          console.warn("Erreur lors de la mise à jour des catégories:", categoryError);
+        }
+      }
 
       toast.success(
         status === "pending"

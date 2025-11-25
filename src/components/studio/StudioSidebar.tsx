@@ -121,6 +121,11 @@ const studioNavSections: NavSection[] = [
         href: "/studio/gouvernance/regles",
         icon: "list-check-bold",
       },
+      {
+        title: "Statistiques",
+        href: "/studio/stats",
+        icon: "chart-2-bold",
+      },
     ],
   },
       {

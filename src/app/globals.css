@@ -1069,6 +1069,68 @@
   .button-ghost {
     position: relative;
     transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    color: hsl(var(--foreground));
+  }
+
+  /* Texte et icônes dans button-ghost par défaut (pas au hover) - Light mode */
+  /* Cibler tous les enfants directs et indirects pour gérer asChild */
+  .button-ghost:not(:hover),
+  .button-ghost:not(:hover) > *,
+  .button-ghost:not(:hover) a,
+  .button-ghost:not(:hover) .text-gradient-accent,
+  .button-ghost:not(:hover) span:not([class*="icon"]) {
+    color: hsl(var(--foreground)) !important;
+  }
+
+  .button-ghost:not(:hover) .text-gradient-accent,
+  .button-ghost:not(:hover) span:not([class*="icon"]) {
+    background: hsl(var(--foreground)) !important;
+    -webkit-background-clip: unset !important;
+    -webkit-text-fill-color: hsl(var(--foreground)) !important;
+    background-clip: unset !important;
+  }
+
+  .button-ghost:not(:hover) .icon-gradient-accent,
+  .button-ghost:not(:hover) .button-icon-wrapper .icon-gradient-accent {
+    background: hsl(var(--foreground)) !important;
+    -webkit-mask-image: var(--icon-mask-url) !important;
+    mask-image: var(--icon-mask-url) !important;
+  }
+
+  .button-ghost:not(:hover) svg,
+  .button-ghost:not(:hover) [class*="SolarIcon"],
+  .button-ghost:not(:hover) [class*="SolarIcon"] svg {
+    color: hsl(var(--foreground)) !important;
+  }
+
+  /* Dark mode - texte et icônes utilisent foreground par défaut */
+  .dark .button-ghost:not(:hover),
+  .dark .button-ghost:not(:hover) > *,
+  .dark .button-ghost:not(:hover) a,
+  .dark .button-ghost:not(:hover) .text-gradient-accent,
+  .dark .button-ghost:not(:hover) span:not([class*="icon"]) {
+    color: hsl(var(--foreground)) !important;
+  }
+
+  .dark .button-ghost:not(:hover) .text-gradient-accent,
+  .dark .button-ghost:not(:hover) span:not([class*="icon"]) {
+    background: hsl(var(--foreground)) !important;
+    -webkit-background-clip: unset !important;
+    -webkit-text-fill-color: hsl(var(--foreground)) !important;
+    background-clip: unset !important;
+  }
+
+  .dark .button-ghost:not(:hover) .icon-gradient-accent,
+  .dark .button-ghost:not(:hover) .button-icon-wrapper .icon-gradient-accent {
+    background: hsl(var(--foreground)) !important;
+    -webkit-mask-image: var(--icon-mask-url) !important;
+    mask-image: var(--icon-mask-url) !important;
+  }
+
+  .dark .button-ghost:not(:hover) svg,
+  .dark .button-ghost:not(:hover) [class*="SolarIcon"],
+  .dark .button-ghost:not(:hover) [class*="SolarIcon"] svg {
+    color: hsl(var(--foreground)) !important;
   }
 
   .button-ghost:hover {
@@ -1078,7 +1140,6 @@
       inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
       0 3px 8px rgba(36, 107, 253, 0.25) !important;
     border: 1px solid transparent !important;
-    color: transparent !important;
   }
 
   .button-ghost:hover::after {
@@ -1103,6 +1164,14 @@
   }
 
   /* Texte et icônes dans button-ghost au hover */
+  /* Cibler tous les enfants directs et indirects pour gérer asChild */
+  .button-ghost:hover,
+  .button-ghost:hover > *,
+  .button-ghost:hover a,
+  .button-ghost:hover * {
+    color: #FFFFFF !important;
+  }
+
   .button-ghost:hover .text-gradient-accent,
   .button-ghost:hover span:not([class*="icon"]) {
     background: linear-gradient(180deg, #FFFFFF 0%, rgba(255, 255, 255, 0.85) 100%) !important;

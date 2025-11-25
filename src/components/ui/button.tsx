@@ -66,8 +66,12 @@ function Button({
     }
 
     // Déterminer la classe gradient pour le texte selon la variante
+    // Pour ghost, on applique text-gradient-accent seulement au hover (via CSS), pas par défaut
     let textGradientClass = ""
-    if (isAccentVariant || isGhostVariant) {
+    if (isAccentVariant) {
+      textGradientClass = "text-gradient-accent"
+    } else if (isGhostVariant) {
+      // Ghost n'utilise pas de gradient par défaut, seulement au hover
       textGradientClass = "text-gradient-accent"
     } else if (isDestructiveVariant) {
       textGradientClass = "text-gradient-destructive"
@@ -148,8 +152,12 @@ function Button({
     if (!icon) return null
 
     // Déterminer la classe gradient selon la variante
+    // Pour ghost, on applique icon-gradient-accent seulement au hover (via CSS), pas par défaut
     let gradientClass = ""
-    if (isAccentVariant || isGhostVariant) {
+    if (isAccentVariant) {
+      gradientClass = "icon-gradient-accent"
+    } else if (isGhostVariant) {
+      // Ghost n'utilise pas de gradient par défaut, seulement au hover
       gradientClass = "icon-gradient-accent"
     } else if (isDestructiveVariant) {
       gradientClass = "icon-gradient-destructive"

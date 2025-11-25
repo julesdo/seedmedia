@@ -2,6 +2,7 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { betterAuthComponent } from "./auth";
 import { internal } from "./_generated/api";
+import { updateCredibilityScoreWithAction } from "./credibility";
 
 /**
  * Récupère les corrections en attente (pour les éditeurs)
@@ -332,7 +333,6 @@ export const approveCorrection = mutation({
     // - Si fact-check : modifier l'article ou créer un claim
 
     // Mettre à jour le score de crédibilité du proposant
-    const { updateCredibilityScoreWithAction } = await import("./credibility");
     await updateCredibilityScoreWithAction(
       ctx,
       correction.proposerId,

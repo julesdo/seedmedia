@@ -63,7 +63,59 @@ export const getActiveCategories = query({
       }
     }
 
-    return categories.sort((a, b) => a.name.localeCompare(b.name));
+    // Calculer dynamiquement le usageCount pour chaque catégorie
+    // Compter TOUTES les occurrences dans TOUS les types de contenus, peu importe appliesTo
+    const categoriesWithUsage = await Promise.all(
+      categories.map(async (category) => {
+        let usageCount = 0;
+
+        // Si la catégorie a un _id (existe en base), compter les occurrences dans TOUS les contenus
+        if (category._id) {
+          // Compter dans les articles
+          const allArticles = await ctx.db.query("articles").collect();
+          usageCount += allArticles.filter(
+            (article) => article.categoryIds?.includes(category._id)
+          ).length;
+
+          // Compter dans les projets
+          const allProjects = await ctx.db.query("projects").collect();
+          usageCount += allProjects.filter(
+            (project) => project.categoryIds?.includes(category._id)
+          ).length;
+
+          // Compter dans les actions
+          const allActions = await ctx.db.query("actions").collect();
+          usageCount += allActions.filter(
+            (action) => action.categoryIds?.includes(category._id)
+          ).length;
+
+          // Compter dans les débats
+          const allDebates = await ctx.db.query("debates").collect();
+          usageCount += allDebates.filter(
+            (debate) => debate.categoryIds?.includes(category._id)
+          ).length;
+
+          // Compter dans les dossiers
+          const allDossiers = await ctx.db.query("dossiers").collect();
+          usageCount += allDossiers.filter(
+            (dossier) => dossier.categoryIds?.includes(category._id)
+          ).length;
+
+          // Compter dans les organisations
+          const allOrganizations = await ctx.db.query("organizations").collect();
+          usageCount += allOrganizations.filter(
+            (org) => org.categoryIds?.includes(category._id)
+          ).length;
+        }
+
+        return {
+          ...category,
+          usageCount,
+        };
+      })
+    );
+
+    return categoriesWithUsage.sort((a, b) => a.name.localeCompare(b.name));
   },
 });
 
@@ -166,7 +218,7 @@ export const getMyCategories = query({
 
 
 /**
- * Archive une catégorie (réservé aux éditeurs)
+ * Archive une catégorie (réservé aux super admins)
  */
 export const archiveCategory = mutation({
   args: {
@@ -174,21 +226,26 @@ export const archiveCategory = mutation({
   },
   handler: async (ctx, args) => {
     const betterAuthUser = await betterAuthComponent.safeGetAuthUser(ctx as any);
-    if (!betterAuthUser) {
+    if (!betterAuthUser || !betterAuthUser.email) {
       throw new Error("Not authenticated");
     }
 
-    const appUser = await ctx.db
-      .query("users")
-      .withIndex("email", (q) => q.eq("email", betterAuthUser.email))
+    // Vérifier si l'utilisateur est un super admin
+    const normalizedEmail = betterAuthUser.email.toLowerCase().trim();
+    const superAdmin = await ctx.db
+      .query("superAdmins")
+      .withIndex("email", (q) => q.eq("email", normalizedEmail))
       .first();
 
-    if (!appUser) {
-      throw new Error("User not found");
-    }
-
-    if (appUser.role !== "editeur") {
-      throw new Error("Seuls les éditeurs peuvent archiver des catégories");
+    if (!superAdmin) {
+      // Si pas trouvé avec l'index, chercher manuellement
+      const allAdmins = await ctx.db.query("superAdmins").collect();
+      const found = allAdmins.find(
+        (admin) => admin.email.toLowerCase().trim() === normalizedEmail
+      );
+      if (!found) {
+        throw new Error("Seuls les super admins peuvent archiver des catégories");
+      }
     }
 
     const category = await ctx.db.get(args.categoryId);
@@ -252,30 +309,7 @@ export const updateArticleCategories = mutation({
       updatedAt: Date.now(),
     });
 
-    // Mettre à jour les compteurs d'utilisation des catégories
-    const oldCategoryIds = article.categoryIds || [];
-    const removedCategories = oldCategoryIds.filter((id) => !args.categoryIds.includes(id));
-    const addedCategories = args.categoryIds.filter((id) => !oldCategoryIds.includes(id));
-
-    for (const categoryId of removedCategories) {
-      const category = await ctx.db.get(categoryId);
-      if (category) {
-        await ctx.db.patch(categoryId, {
-          usageCount: Math.max(0, category.usageCount - 1),
-          updatedAt: Date.now(),
-        });
-      }
-    }
-
-    for (const categoryId of addedCategories) {
-      const category = await ctx.db.get(categoryId);
-      if (category) {
-        await ctx.db.patch(categoryId, {
-          usageCount: category.usageCount + 1,
-          updatedAt: Date.now(),
-        });
-      }
-    }
+    // Le usageCount est maintenant calculé dynamiquement, pas besoin de le mettre à jour
 
     return { success: true };
   },

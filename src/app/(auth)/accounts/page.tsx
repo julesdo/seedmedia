@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState } from "react";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
+import { Id } from "../../../../convex/_generated/dataModel";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { SolarIcon } from "@/components/icons/SolarIcon";
-import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -16,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -27,200 +29,132 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 
-interface StoredAccount {
-  id: string;
-  email: string;
-  name: string;
-  image: string | null;
-  provider?: string;
-  addedAt: number;
-}
-
-const STORAGE_KEY = "seed_active_accounts";
-const CURRENT_ACCOUNT_KEY = "seed_current_account_id";
+const ACCOUNT_TYPE_LABELS = {
+  personal: "Personnel",
+  professional: "Professionnel",
+  organization: "Organisation",
+} as const;
 
 export default function AccountsPage() {
-  const router = useRouter();
-  const [storedAccounts, setStoredAccounts] = useState<StoredAccount[]>([]);
-  const [currentAccountId, setCurrentAccountId] = useState<string | null>(null);
-  const [accountToRemove, setAccountToRemove] = useState<string | null>(null);
-  const [isAddingAccount, setIsAddingAccount] = useState(false);
+  const accounts = useQuery(api.accounts.getUserAccounts);
+  const currentUser = useQuery(api.users.getCurrentUser);
+  const [accountToRemove, setAccountToRemove] = useState<Id<"userAccounts"> | null>(null);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingAccountId, setEditingAccountId] = useState<Id<"userAccounts"> | null>(null);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
+  const createAccount = useMutation(api.accounts.createAccount);
+  const updateAccount = useMutation(api.accounts.updateAccount);
+  const deleteAccount = useMutation(api.accounts.deleteAccount);
 
-    const loadAccounts = () => {
-      const currentId = localStorage.getItem(CURRENT_ACCOUNT_KEY);
-      const stored = localStorage.getItem(STORAGE_KEY);
-      let parsedAccounts: StoredAccount[] = [];
-      
-      if (stored) {
-        try {
-          parsedAccounts = JSON.parse(stored) as StoredAccount[];
-        } catch (error) {
-          console.error("Failed to parse stored accounts:", error);
-        }
-      }
+  // Form state
+  const [formData, setFormData] = useState({
+    name: "",
+    accountEmail: "",
+    type: "personal" as "personal" | "professional" | "organization",
+    region: "",
+  });
 
-      setStoredAccounts(parsedAccounts);
-      setCurrentAccountId(currentId);
-    };
-
-    loadAccounts();
-
-    // Écouter les changements de localStorage
-    const handleStorageChange = () => loadAccounts();
-    window.addEventListener("storage", handleStorageChange);
-    window.addEventListener("accountsUpdated", handleStorageChange);
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-      window.removeEventListener("accountsUpdated", handleStorageChange);
-    };
-  }, []);
-
-  const handleSwitchAccount = async (accountId: string) => {
-    const account = storedAccounts.find((acc) => acc.id === accountId);
-    if (!account) {
-      toast.error("Compte introuvable");
+  const handleCreateAccount = async () => {
+    if (!formData.name || !formData.accountEmail) {
+      toast.error("Veuillez remplir tous les champs obligatoires");
       return;
     }
-
-    if (currentAccountId === accountId) {
-      toast.info("Ce compte est déjà actif");
-      return;
-    }
-
-    // Détecter le provider
-    let detectedProvider = account.provider;
-    if (!detectedProvider || detectedProvider === "email" || detectedProvider === "unknown") {
-      const accountWithSameEmail = storedAccounts.find(
-        (acc) => acc.email === account.email && acc.provider && (acc.provider === "github" || acc.provider === "google")
-      );
-      if (accountWithSameEmail?.provider) {
-        detectedProvider = accountWithSameEmail.provider;
-      } else {
-        detectedProvider = "email";
-      }
-    }
-
-    localStorage.setItem(CURRENT_ACCOUNT_KEY, accountId);
-    localStorage.setItem("pending_account_switch", accountId);
 
     try {
-      await authClient.signOut();
-      const redirectUrl = `/sign-in?switch_to_account=${encodeURIComponent(account.email)}&provider=${detectedProvider}&auto_reconnect=true`;
-      setTimeout(() => {
-        window.location.href = redirectUrl;
-      }, 200);
-    } catch (error) {
-      console.error("Error signing out:", error);
-      toast.error("Erreur lors du changement de compte");
+      await createAccount({
+        name: formData.name,
+        accountEmail: formData.accountEmail,
+        type: formData.type,
+        region: formData.region || undefined,
+      });
+      toast.success("Compte créé avec succès");
+      setIsCreateDialogOpen(false);
+      setFormData({ name: "", accountEmail: "", type: "personal", region: "" });
+    } catch (error: any) {
+      toast.error(error.message || "Erreur lors de la création du compte");
     }
   };
 
-  const handleRemoveAccount = async (accountId: string) => {
-    if (accountId === currentAccountId) {
-      toast.error("Vous ne pouvez pas supprimer le compte actuellement actif");
+  const handleEditAccount = async () => {
+    if (!editingAccountId || !formData.name) {
+      toast.error("Veuillez remplir tous les champs obligatoires");
       return;
     }
 
-    const updatedAccounts = storedAccounts.filter((acc) => acc.id !== accountId);
-    setStoredAccounts(updatedAccounts);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedAccounts));
-    window.dispatchEvent(new Event("accountsUpdated"));
-    toast.success("Compte supprimé");
-    setAccountToRemove(null);
+    try {
+      await updateAccount({
+        accountId: editingAccountId,
+        name: formData.name,
+        bio: formData.region ? undefined : undefined, // On peut ajouter bio plus tard
+        region: formData.region || undefined,
+      });
+      toast.success("Compte mis à jour avec succès");
+      setIsEditDialogOpen(false);
+      setEditingAccountId(null);
+      setFormData({ name: "", accountEmail: "", type: "personal", region: "" });
+    } catch (error: any) {
+      toast.error(error.message || "Erreur lors de la mise à jour du compte");
+    }
   };
 
-  const handleAddAccount = () => {
-    setIsAddingAccount(true);
-    const popup = window.open(
-      "/sign-in?add_account=true",
-      "addAccount",
-      "width=500,height=700,scrollbars=yes,resizable=yes"
+  const handleDeleteAccount = async () => {
+    if (!accountToRemove) return;
+
+    try {
+      await deleteAccount({ accountId: accountToRemove });
+      toast.success("Compte supprimé avec succès");
+      setAccountToRemove(null);
+    } catch (error: any) {
+      toast.error(error.message || "Erreur lors de la suppression du compte");
+    }
+  };
+
+  const openEditDialog = (account: any) => {
+    setEditingAccountId(account.id);
+    setFormData({
+      name: account.name || "",
+      accountEmail: account.email || "",
+      type: account.type || "personal",
+      region: account.region || "",
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  if (accounts === undefined || currentUser === undefined) {
+    return (
+      <div className="container mx-auto px-4 py-6 max-w-6xl">
+        <div className="space-y-6">
+          <Skeleton className="h-10 w-64" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {[1, 2].map((i) => (
+              <Card key={i}>
+                <CardContent className="p-6">
+                  <Skeleton className="h-20 w-full" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </div>
     );
+  }
 
-    if (!popup) {
-      toast.error("Veuillez autoriser les popups pour ajouter un compte");
-      setIsAddingAccount(false);
-      return;
-    }
+  // Créer un compte par défaut si aucun compte n'existe
+  const ensureDefaultAccount = useMutation(api.accounts.createDefaultAccount);
+  const hasNoAccounts = accounts.length === 0;
 
-    const handleMessage = async (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return;
-
-      if (event.data.type === "ACCOUNT_ADDED" && event.data.account) {
-        const newAccount: StoredAccount = {
-          id: `account-${Date.now()}`,
-          email: event.data.account.email,
-          name: event.data.account.name || event.data.account.email.split("@")[0],
-          image: event.data.account.image || null,
-          provider: event.data.account.provider || "unknown",
-          addedAt: Date.now(),
-        };
-
-        const existingAccount = storedAccounts.find((acc) => acc.email === newAccount.email);
-        if (existingAccount) {
-          // Mettre à jour le provider si nécessaire
-          if (newAccount.provider && (newAccount.provider === "github" || newAccount.provider === "google")) {
-            if (!existingAccount.provider || existingAccount.provider === "email" || existingAccount.provider === "unknown") {
-              existingAccount.provider = newAccount.provider;
-              const updatedAccounts = storedAccounts.map((acc) =>
-                acc.id === existingAccount.id ? existingAccount : acc
-              );
-              setStoredAccounts(updatedAccounts);
-              localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedAccounts));
-            }
-          }
-          toast.info("Ce compte est déjà lié");
-        } else {
-          const updatedAccounts = [...storedAccounts, newAccount];
-          setStoredAccounts(updatedAccounts);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedAccounts));
-          toast.success("Compte ajouté avec succès");
-        }
-
-        window.dispatchEvent(new Event("accountsUpdated"));
-        window.removeEventListener("message", handleMessage);
-        popup?.close();
-        setIsAddingAccount(false);
-      }
-    };
-
-    window.addEventListener("message", handleMessage);
-
-    // Nettoyer si la popup est fermée manuellement
-    const checkClosed = setInterval(() => {
-      if (popup?.closed) {
-        clearInterval(checkClosed);
-        window.removeEventListener("message", handleMessage);
-        setIsAddingAccount(false);
-      }
-    }, 500);
-  };
-
-  // Regrouper les comptes par email (un seul compte par email)
-  const uniqueAccountsByEmail = new Map<string, StoredAccount>();
-  storedAccounts.forEach((account) => {
-    if (!uniqueAccountsByEmail.has(account.email)) {
-      uniqueAccountsByEmail.set(account.email, account);
-    }
-  });
-  const uniqueAccounts = Array.from(uniqueAccountsByEmail.values());
-
-  const getProviderIcon = (provider?: string) => {
-    if (provider === "github") return "github-bold";
-    if (provider === "google") return "google-bold";
-    return "email-bold";
-  };
-
-  const getProviderLabel = (provider?: string) => {
-    if (provider === "github") return "GitHub";
-    if (provider === "google") return "Google";
-    return "Email";
-  };
+  if (hasNoAccounts && currentUser) {
+    // Créer automatiquement le compte par défaut
+    ensureDefaultAccount({}).catch(() => {
+      // Ignorer les erreurs silencieusement
+    });
+  }
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-6xl">
@@ -228,20 +162,85 @@ export default function AccountsPage() {
         <div>
           <h1 className="text-3xl font-bold text-gradient-light mb-2">Gestion des comptes</h1>
           <p className="text-muted-foreground opacity-70">
-            Gérez vos comptes connectés et basculez entre eux facilement
+            Gérez vos comptes multiples et basculez entre eux facilement
           </p>
         </div>
-        <Button
-          variant="accent"
-          onClick={handleAddAccount}
-          disabled={isAddingAccount}
-          icon="user-plus-bold"
-        >
-          {isAddingAccount ? "Ajout en cours..." : "Ajouter un compte"}
-        </Button>
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button
+              variant="accent"
+              onClick={() => {
+                setFormData({ name: "", accountEmail: "", type: "personal", region: "" });
+              }}
+              icon="user-plus-bold"
+            >
+              Créer un compte
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Créer un nouveau compte</DialogTitle>
+              <DialogDescription>
+                Créez un nouveau profil pour gérer différents aspects de votre activité.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nom du compte *</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Mon compte professionnel"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.accountEmail}
+                  onChange={(e) => setFormData({ ...formData, accountEmail: e.target.value })}
+                  placeholder="compte@example.com"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="type">Type de compte *</Label>
+                <Select
+                  value={formData.type}
+                  onValueChange={(value: any) => setFormData({ ...formData, type: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="personal">Personnel</SelectItem>
+                    <SelectItem value="professional">Professionnel</SelectItem>
+                    <SelectItem value="organization">Organisation</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="region">Région (optionnel)</Label>
+                <Input
+                  id="region"
+                  value={formData.region}
+                  onChange={(e) => setFormData({ ...formData, region: e.target.value })}
+                  placeholder="France, Europe, etc."
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                Annuler
+              </Button>
+              <Button onClick={handleCreateAccount}>Créer</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
-      {uniqueAccounts.length === 0 ? (
+      {accounts.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <SolarIcon
@@ -252,23 +251,26 @@ export default function AccountsPage() {
               Aucun compte
             </h3>
             <p className="text-muted-foreground opacity-70 text-center mb-6 max-w-md">
-              Ajoutez votre premier compte pour commencer. Vous pouvez connecter plusieurs comptes
-              (GitHub, Google, Email) et basculer entre eux facilement.
+              Créez votre premier compte pour commencer. Vous pouvez créer plusieurs comptes
+              (personnel, professionnel, organisation) et gérer chacun indépendamment.
             </p>
-            <Button variant="accent" onClick={handleAddAccount} icon="user-plus-bold">
-              Ajouter un compte
+            <Button
+              variant="accent"
+              onClick={() => setIsCreateDialogOpen(true)}
+              icon="user-plus-bold"
+            >
+              Créer un compte
             </Button>
           </CardContent>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {uniqueAccounts.map((account) => {
-            const isCurrent = account.id === currentAccountId;
+          {accounts.map((account) => {
             return (
               <Card
                 key={account.id}
                 className={`relative transition-all ${
-                  isCurrent
+                  account.isDefault
                     ? "ring-2 ring-primary/50 bg-primary/5"
                     : "hover:scale-[1.02] hover:shadow-lg"
                 }`}
@@ -277,7 +279,7 @@ export default function AccountsPage() {
                   <div className="flex items-start gap-4">
                     <Avatar className="h-14 w-14 ring-2 ring-border/50">
                       <AvatarImage src={account.image || undefined} alt={account.name || ""} />
-                      <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-gradient-light text-lg">
+                      <AvatarFallback className="bg-linear-to-br from-primary/20 to-primary/10 text-gradient-light text-lg">
                         {account.name?.[0]?.toUpperCase() || "U"}
                       </AvatarFallback>
                     </Avatar>
@@ -286,43 +288,45 @@ export default function AccountsPage() {
                         <CardTitle className="text-gradient-light truncate">
                           {account.name || account.email}
                         </CardTitle>
-                        {isCurrent && (
+                        {account.isDefault && (
                           <Badge variant="default" className="bg-primary/20 text-primary border-primary/30">
-                            Actif
+                            Par défaut
                           </Badge>
                         )}
                       </div>
                       <CardDescription className="truncate">{account.email}</CardDescription>
                       <div className="flex items-center gap-2 mt-2">
-                        <SolarIcon
-                          icon={getProviderIcon(account.provider)}
-                          className="h-4 w-4 icon-gradient-light"
-                        />
-                        <span className="text-xs text-muted-foreground">
-                          {getProviderLabel(account.provider)}
-                        </span>
-                        <span className="text-xs text-muted-foreground opacity-50">•</span>
-                        <span className="text-xs text-muted-foreground">
-                          Ajouté le {new Date(account.addedAt).toLocaleDateString("fr-FR")}
-                        </span>
+                        <Badge variant="outline" className="text-xs">
+                          {ACCOUNT_TYPE_LABELS[account.type as keyof typeof ACCOUNT_TYPE_LABELS]}
+                        </Badge>
+                        {account.region && (
+                          <>
+                            <span className="text-xs text-muted-foreground opacity-50">•</span>
+                            <span className="text-xs text-muted-foreground">{account.region}</span>
+                          </>
+                        )}
+                        {account.level && (
+                          <>
+                            <span className="text-xs text-muted-foreground opacity-50">•</span>
+                            <span className="text-xs text-muted-foreground">Niveau {account.level}</span>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-2">
-                    {!isCurrent && (
-                      <Button
-                        variant="accent"
-                        size="sm"
-                        onClick={() => handleSwitchAccount(account.id)}
-                        className="flex-1"
-                        icon="swap-bold"
-                      >
-                        Activer ce compte
-                      </Button>
-                    )}
-                    {!isCurrent && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openEditDialog(account)}
+                      className="flex-1"
+                      icon="pen-new-round-bold"
+                    >
+                      Modifier
+                    </Button>
+                    {!account.isDefault && (
                       <Button
                         variant="destructive"
                         size="sm"
@@ -332,9 +336,9 @@ export default function AccountsPage() {
                         Supprimer
                       </Button>
                     )}
-                    {isCurrent && (
+                    {account.isDefault && (
                       <div className="flex-1 text-sm text-muted-foreground text-center py-2">
-                        Ce compte est actuellement actif
+                        Compte par défaut
                       </div>
                     )}
                   </div>
@@ -345,20 +349,61 @@ export default function AccountsPage() {
         </div>
       )}
 
+      {/* Dialog de modification */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Modifier le compte</DialogTitle>
+            <DialogDescription>
+              Modifiez les informations de votre compte.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">Nom du compte *</Label>
+              <Input
+                id="edit-name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Mon compte professionnel"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-region">Région (optionnel)</Label>
+              <Input
+                id="edit-region"
+                value={formData.region}
+                onChange={(e) => setFormData({ ...formData, region: e.target.value })}
+                placeholder="France, Europe, etc."
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Annuler
+            </Button>
+            <Button onClick={handleEditAccount}>Enregistrer</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Dialog de confirmation de suppression */}
-      <AlertDialog open={accountToRemove !== null} onOpenChange={(open) => !open && setAccountToRemove(null)}>
+      <AlertDialog
+        open={accountToRemove !== null}
+        onOpenChange={(open) => !open && setAccountToRemove(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="text-gradient-light">Supprimer ce compte ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action supprimera le compte de votre liste. Vous pourrez toujours le reconnecter plus tard.
-              Cette action n'est pas irréversible.
+              Cette action supprimera définitivement ce compte. Vous ne pourrez plus l'utiliser.
+              Cette action est irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => accountToRemove && handleRemoveAccount(accountToRemove)}
+              onClick={handleDeleteAccount}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Supprimer
@@ -369,4 +414,3 @@ export default function AccountsPage() {
     </div>
   );
 }
-
