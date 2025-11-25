@@ -44,12 +44,12 @@ export function TagsInput({
 
   return (
     <div className="space-y-2">
-      <Label>{label}</Label>
+      {label && <Label>{label}</Label>}
       {description && (
         <p className="text-sm text-muted-foreground">{description}</p>
       )}
 
-      <div className="flex flex-wrap gap-2 p-3 min-h-[3rem] border border-border rounded-md bg-background">
+      <div className="flex flex-wrap gap-2 p-2 min-h-[2.5rem] border border-border/20 rounded-md bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
         {value.map((tag) => (
           <Badge
             key={tag}
@@ -68,19 +68,21 @@ export function TagsInput({
             </Button>
           </Badge>
         ))}
-        <Input
+        <input
           type="text"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={value.length === 0 ? placeholder : ""}
-          className="flex-1 min-w-[200px] border-0 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-auto"
+          className="flex-1 min-w-[120px] border-0 bg-transparent outline-none placeholder:text-muted-foreground/50 text-sm h-7 px-2"
         />
       </div>
-      <p className="text-xs text-muted-foreground">
-        {value.length} tag{value.length !== 1 ? "s" : ""} ajouté
-        {value.length !== 1 ? "s" : ""}
-      </p>
+      {value.length > 0 && (
+        <p className="text-xs text-muted-foreground">
+          {value.length} tag{value.length !== 1 ? "s" : ""} ajouté
+          {value.length !== 1 ? "s" : ""}
+        </p>
+      )}
     </div>
   );
 }

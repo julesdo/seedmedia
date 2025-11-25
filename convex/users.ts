@@ -2,6 +2,7 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { betterAuthComponent } from "./auth";
 import { Id } from "./_generated/dataModel";
+import { internal } from "./_generated/api";
 
 /**
  * Récupère l'utilisateur connecté avec toutes ses données
@@ -45,12 +46,12 @@ export const getCurrentUser = query({
     }
 
     // Merge app user data with Better Auth user data
-    // Better Auth data prend la priorité pour email, name, image
+    // Pour name et image, on utilise la valeur de la table users si elle existe, sinon Better Auth
     return {
       ...appUser,
       email: betterAuthUser.email,
-      name: betterAuthUser.name || appUser.email.split("@")[0],
-      image: betterAuthUser.image || null,
+      name: appUser.name || betterAuthUser.name || appUser.email.split("@")[0],
+      image: appUser.image || betterAuthUser.image || null,
       emailVerified: betterAuthUser.emailVerified || false,
     };
   },
@@ -76,7 +77,7 @@ export const ensureUserExists = mutation({
     // Si l'utilisateur n'existe pas, le créer
     if (!appUser) {
       const now = Date.now();
-      const userId = await ctx.db.insert("users", {
+      const userData: any = {
         email: betterAuthUser.email,
         level: 1,
         reachRadius: 10,
@@ -85,18 +86,54 @@ export const ensureUserExists = mutation({
         profileCompletion: 0,
         premiumTier: "free",
         boostCredits: 0,
+        credibilityScore: 0,
+        role: "explorateur",
+        expertiseDomains: [],
         createdAt: now,
         updatedAt: now,
+      };
+      
+      // Ajouter name et image depuis Better Auth si disponibles
+      if (betterAuthUser.name) {
+        userData.name = betterAuthUser.name;
+      }
+      if (betterAuthUser.image) {
+        userData.image = betterAuthUser.image;
+      }
+      
+      const userId = await ctx.db.insert("users", userData);
+      
+      // Initialiser les missions pour le nouvel utilisateur
+      await ctx.runMutation(internal.missions.initializeMissionsInternal, {
+        userId,
       });
+      
       return userId;
     }
 
-    // Sinon, mettre à jour l'email si nécessaire
+    // Sinon, synchroniser les données depuis Better Auth si nécessaire
+    const updates: any = {
+      updatedAt: Date.now(),
+    };
+    
+    // Synchroniser l'email si nécessaire
     if (appUser.email !== betterAuthUser.email) {
-      await ctx.db.patch(appUser._id, {
-        email: betterAuthUser.email,
-        updatedAt: Date.now(),
-      });
+      updates.email = betterAuthUser.email;
+    }
+    
+    // Synchroniser le nom si l'utilisateur n'en a pas ou si Better Auth en a un
+    if (betterAuthUser.name && (!appUser.name || appUser.name === appUser.email.split("@")[0])) {
+      updates.name = betterAuthUser.name;
+    }
+    
+    // Synchroniser l'image si l'utilisateur n'en a pas et que Better Auth en a une
+    if (betterAuthUser.image && !appUser.image) {
+      updates.image = betterAuthUser.image;
+    }
+    
+    // Appliquer les mises à jour si nécessaire
+    if (Object.keys(updates).length > 1) { // Plus que updatedAt
+      await ctx.db.patch(appUser._id, updates);
     }
 
     return appUser._id;
@@ -104,7 +141,43 @@ export const ensureUserExists = mutation({
 });
 
 /**
- * Récupère un profil utilisateur public
+ * Récupère un profil utilisateur public (amélioré avec Better Auth)
+ */
+export const getUserPublic = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+    if (!user) {
+      return null;
+    }
+
+    // Vérifier si c'est le profil de l'utilisateur connecté
+    const betterAuthUser = await betterAuthComponent.safeGetAuthUser(ctx as any);
+    const isOwnProfile = betterAuthUser ? await ctx.db
+      .query("users")
+      .withIndex("email", (q) => q.eq("email", betterAuthUser.email))
+      .first()
+      .then((appUser) => appUser?._id === args.userId) : false;
+
+    // Récupérer les données Better Auth pour le nom et l'image
+    // Pour l'instant, on utilise l'email comme nom par défaut
+    const name = user.email.split("@")[0] || "Utilisateur";
+    const image = isOwnProfile && betterAuthUser?.image ? betterAuthUser.image : null;
+
+    return {
+      ...user,
+      name,
+      image,
+      isOwnProfile,
+      // Données publiques uniquement
+      email: isOwnProfile ? user.email : undefined, // Email seulement si c'est son propre profil
+    };
+  },
+});
+
+/**
+ * Récupère un profil utilisateur public (version simple, pour compatibilité)
+ * Délègue à getUserPublic
  */
 export const getUserProfile = query({
   args: { userId: v.id("users") },
@@ -114,67 +187,122 @@ export const getUserProfile = query({
       return null;
     }
 
-    // Get Better Auth user data if available
+    // Vérifier si c'est le profil de l'utilisateur connecté
     const betterAuthUser = await betterAuthComponent.safeGetAuthUser(ctx as any);
-    
-    // Only return public profile data
+    const isOwnProfile = betterAuthUser ? await ctx.db
+      .query("users")
+      .withIndex("email", (q) => q.eq("email", betterAuthUser.email))
+      .first()
+      .then((appUser) => appUser?._id === args.userId) : false;
+
+    // Récupérer les données Better Auth pour le nom et l'image
+    const name = user.email.split("@")[0] || "Utilisateur";
+    const image = isOwnProfile && betterAuthUser?.image ? betterAuthUser.image : null;
+
     return {
-      _id: user._id,
-      email: user.email,
-      level: user.level,
-      region: user.region,
-      location: user.location,
-      bio: user.bio,
-      tags: user.tags,
-      links: user.links,
-      profileCompletion: user.profileCompletion,
-      premiumTier: user.premiumTier,
-      createdAt: user.createdAt,
-      // Add name and image from Better Auth if current user
-      name: betterAuthUser?.name,
-      image: betterAuthUser?.image,
+      ...user,
+      name,
+      image,
+      isOwnProfile,
+      // Données publiques uniquement
+      email: isOwnProfile ? user.email : undefined,
     };
   },
 });
 
 /**
- * Récupère les statistiques d'activité d'un utilisateur
+ * Récupère les statistiques publiques d'un utilisateur
  */
 export const getUserStats = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
-    const now = Date.now();
-    const oneMonthAgo = now - 30 * 24 * 60 * 60 * 1000;
-
-    // Vues de profil
-    const profileViews = await ctx.db
-      .query("views")
+    // Compter les followers
+    const followers = await ctx.db
+      .query("follows")
       .withIndex("targetType_targetId", (q) =>
-        q.eq("targetType", "profile").eq("targetId", args.userId)
+        q.eq("targetType", "user").eq("targetId", args.userId)
       )
-      .filter((q) => q.gte(q.field("createdAt"), oneMonthAgo))
       .collect();
 
-    // Articles de l'utilisateur
+    // Articles publiés
     const articles = await ctx.db
       .query("articles")
       .withIndex("authorId", (q) => q.eq("authorId", args.userId))
       .filter((q) => q.eq(q.field("status"), "published"))
       .collect();
 
-    // Calcul des moyennes
-    const totalArticleViews = articles.reduce((sum, a) => sum + a.views, 0);
-    const totalArticleComments = articles.reduce((sum, a) => sum + a.comments, 0);
-    const totalArticleReactions = articles.reduce((sum, a) => sum + a.reactions, 0);
+    // Projets (si l'utilisateur a des projets)
+    const projects = await ctx.db
+      .query("projects")
+      .withIndex("authorId", (q) => q.eq("authorId", args.userId))
+      .collect();
 
-    const articleCount = articles.length;
+    // Actions (si l'utilisateur a des actions)
+    const actions = await ctx.db
+      .query("actions")
+      .withIndex("authorId", (q) => q.eq("authorId", args.userId))
+      .filter((q) => q.eq(q.field("status"), "active"))
+      .collect();
+
+    // Corrections approuvées
+    const corrections = await ctx.db
+      .query("articleCorrections")
+      .collect();
+    const approvedCorrections = corrections.filter(
+      (c) => c.proposerId === args.userId && c.status === "approved"
+    );
 
     return {
-      profileViews: profileViews.length,
-      averageViewsPerArticle: articleCount > 0 ? Math.round(totalArticleViews / articleCount) : 0,
-      averageCommentsPerArticle: articleCount > 0 ? Math.round(totalArticleComments / articleCount) : 0,
-      averageReactionsPerArticle: articleCount > 0 ? Math.round(totalArticleReactions / articleCount) : 0,
+      followersCount: followers.length,
+      articlesCount: articles.length,
+      projectsCount: projects.length,
+      actionsCount: actions.length,
+      correctionsCount: approvedCorrections.length,
+      credibilityScore: (await ctx.db.get(args.userId))?.credibilityScore || 0,
     };
+  },
+});
+
+/**
+ * Récupère les articles publics d'un utilisateur
+ */
+export const getUserArticlesPublic = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const articles = await ctx.db
+      .query("articles")
+      .withIndex("authorId", (q) => q.eq("authorId", args.userId))
+      .filter((q) => q.eq(q.field("status"), "published"))
+      .collect();
+
+    return articles.sort((a, b) => (b.publishedAt || b.createdAt) - (a.publishedAt || a.createdAt));
+  },
+});
+
+/**
+ * Récupère les corrections publiques d'un utilisateur avec les slugs des articles
+ */
+export const getUserCorrectionsPublic = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const corrections = await ctx.db
+      .query("articleCorrections")
+      .collect();
+
+    const userCorrections = corrections.filter((c) => c.proposerId === args.userId);
+
+    // Enrichir avec les slugs des articles
+    const correctionsWithSlugs = await Promise.all(
+      userCorrections.map(async (correction) => {
+        const article = await ctx.db.get(correction.articleId);
+        return {
+          ...correction,
+          articleSlug: article?.slug || null,
+        };
+      })
+    );
+
+    return correctionsWithSlugs.sort((a, b) => b.createdAt - a.createdAt);
   },
 });
 
@@ -191,6 +319,36 @@ export const getUserName = query({
     // Utiliser l'email comme nom par défaut (le nom est dans Better Auth, mais on utilise l'email ici pour simplifier)
     const name = user.email.split("@")[0] || "Utilisateur";
     return { name };
+  },
+});
+
+/**
+ * Récupère tous les utilisateurs (pour les sélecteurs, réservé aux éditeurs)
+ */
+export const getAllUsers = query({
+  args: {},
+  handler: async (ctx) => {
+    const betterAuthUser = await betterAuthComponent.safeGetAuthUser(ctx as any);
+    if (!betterAuthUser) {
+      return [];
+    }
+
+    const appUser = await ctx.db
+      .query("users")
+      .withIndex("email", (q) => q.eq("email", betterAuthUser.email))
+      .first();
+
+    // Seuls les éditeurs peuvent voir tous les utilisateurs
+    if (!appUser || appUser.role !== "editeur") {
+      return [];
+    }
+
+    const users = await ctx.db.query("users").collect();
+    return users.map((user) => ({
+      _id: user._id,
+      email: user.email,
+      name: user.name || user.email.split("@")[0],
+    }));
   },
 });
 
@@ -230,6 +388,10 @@ export const getUserReach = query({
  */
 export const updateProfile = mutation({
   args: {
+    name: v.optional(v.string()), // Nom d'affichage (synchronisé avec Better Auth si possible)
+    username: v.optional(v.string()), // Nom d'utilisateur unique
+    image: v.optional(v.string()), // URL de l'image de profil (synchronisé avec Better Auth si possible)
+    coverImage: v.optional(v.string()), // URL de l'image de couverture
     bio: v.optional(v.string()),
     location: v.optional(
       v.object({
@@ -273,6 +435,9 @@ export const updateProfile = mutation({
         profileCompletion: 0,
         premiumTier: "free",
         boostCredits: 0,
+        credibilityScore: 0,
+        role: "explorateur",
+        expertiseDomains: [],
         createdAt: now,
         updatedAt: now,
       });
@@ -286,6 +451,18 @@ export const updateProfile = mutation({
       updatedAt: Date.now(),
     };
 
+    // Note: name et image sont stockés localement mais Better Auth reste la source de vérité
+    // Pour une synchronisation complète, il faudrait utiliser l'API Better Auth
+    if (args.name !== undefined) {
+      // On pourrait synchroniser avec Better Auth ici, mais pour l'instant on stocke juste localement
+      updates.name = args.name;
+    }
+    if (args.username !== undefined) updates.username = args.username;
+    if (args.image !== undefined) {
+      // On pourrait synchroniser avec Better Auth ici
+      updates.image = args.image;
+    }
+    if (args.coverImage !== undefined) updates.coverImage = args.coverImage;
     if (args.bio !== undefined) updates.bio = args.bio;
     if (args.location !== undefined) updates.location = args.location;
     if (args.tags !== undefined) updates.tags = args.tags;
@@ -298,10 +475,13 @@ export const updateProfile = mutation({
     if (updatedUser) {
       let completion = 0;
       const fields = [
+        updatedUser.name || betterAuthUser.name,
+        updatedUser.image || betterAuthUser.image,
         updatedUser.bio,
         updatedUser.location,
         updatedUser.tags.length > 0,
         updatedUser.links.length > 0,
+        updatedUser.coverImage,
       ];
       const completedFields = fields.filter(Boolean).length;
       completion = Math.round((completedFields / fields.length) * 100);
@@ -345,6 +525,9 @@ export const updateRegion = mutation({
         profileCompletion: 0,
         premiumTier: "free",
         boostCredits: 0,
+        credibilityScore: 0,
+        role: "explorateur",
+        expertiseDomains: [],
         createdAt: now,
         updatedAt: now,
       });
@@ -422,6 +605,9 @@ export const upgradeLevel = mutation({
         profileCompletion: 0,
         premiumTier: "free",
         boostCredits: 0,
+        credibilityScore: 0,
+        role: "explorateur",
+        expertiseDomains: [],
         createdAt: now,
         updatedAt: now,
       });

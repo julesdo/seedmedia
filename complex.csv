@@ -1,0 +1,17 @@
+date,project,segment,region,device,traffic_sessions,signups,paid_users,churn_rate,nps,campaign
+2025-01-01,Seed Media,Reader,Europe,Desktop,1200,150,30,0.05,42,Launch V1
+2025-01-01,Seed Media,Contributor,Europe,Desktop,300,80,20,0.03,55,Launch V1
+2025-01-01,Seed Media,Reader,North America,Mobile,900,110,22,0.06,40,Launch V1
+2025-01-01,Pattern,Developer,Europe,Desktop,600,90,35,0.04,60,Alpha Access
+2025-01-15,Seed Media,Reader,Europe,Mobile,1600,220,45,0.04,48,Launch V1
+2025-01-15,Seed Media,Contributor,Europe,Desktop,380,100,25,0.03,58,Launch V1
+2025-01-15,Seed Media,Reader,North America,Desktop,1000,130,28,0.05,43,Launch V1
+2025-01-15,Pattern,Developer,Europe,Desktop,750,120,50,0.035,63,Alpha Access
+2025-02-01,Seed Media,Reader,Europe,Mobile,1900,260,60,0.045,50,Evergreen
+2025-02-01,Seed Media,Contributor,Europe,Mobile,420,120,32,0.028,62,Evergreen
+2025-02-01,Seed Media,Reader,North America,Desktop,1150,150,35,0.048,46,Evergreen
+2025-02-01,Pattern,Developer,Europe,Desktop,880,140,65,0.032,66,Beta Launch
+2025-02-15,Seed Media,Reader,Europe,Desktop,2100,300,75,0.042,52,Evergreen
+2025-02-15,Seed Media,Contributor,Europe,Mobile,460,135,38,0.027,64,Evergreen
+2025-02-15,Seed Media,Reader,North America,Mobile,1250,170,40,0.047,47,Evergreen
+2025-02-15,Pattern,Developer,Europe,Desktop,950,160,75,0.030,68,Beta Launch

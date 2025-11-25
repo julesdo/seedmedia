@@ -18,6 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { FollowButton } from "@/components/follow/FollowButton";
 
 /**
  * Hook pour obtenir l'URL d'une image (convertit storageId en URL si nécessaire)
@@ -64,12 +65,10 @@ interface OrganizationHeaderProps {
     } | null;
     seedRegion?: string | null;
     organizationType?: "association" | "entreprise" | "collectif" | "institution" | "autre" | null;
-    sector?: "tech" | "environnement" | "social" | "education" | "culture" | "sante" | "autre" | null;
     contactEmail?: string | null;
     contactPhone?: string | null;
     website?: string | null;
     languages?: string[] | null;
-    reachRadius?: number | null;
   };
   stats?: {
     followersCount: number;
@@ -86,8 +85,6 @@ interface OrganizationHeaderProps {
 }
 
 export function OrganizationHeader({ organization, stats, isMember, canEdit, onEdit, activeTab, onTabChange }: OrganizationHeaderProps) {
-  const [isPending, setIsPending] = useState(false);
-  const [optimisticFollowing, setOptimisticFollowing] = useState<boolean | null>(null);
 
   const premiumTierLabels: Record<string, string> = {
     free: "Gratuit",
@@ -101,16 +98,6 @@ export function OrganizationHeader({ organization, stats, isMember, canEdit, onE
     entreprise: "Entreprise",
     collectif: "Collectif",
     institution: "Institution",
-    autre: "Autre",
-  };
-
-  const sectorLabels: Record<string, string> = {
-    tech: "Tech",
-    environnement: "Environnement",
-    social: "Social",
-    education: "Éducation",
-    culture: "Culture",
-    sante: "Santé",
     autre: "Autre",
   };
 
@@ -155,38 +142,6 @@ export function OrganizationHeader({ organization, stats, isMember, canEdit, onE
   const coverImageUrl = useImageUrl(organization.coverImage, coverStorageId);
   const logoUrl = useImageUrl(organization.logo, logoStorageId);
 
-  // Suivi de l'organisation
-  const isFollowing = useQuery(api.follows.isFollowing, {
-    targetType: "organization",
-    targetId: organization._id,
-  });
-  const toggleFollow = useMutation(api.follows.toggleFollow);
-
-  const handleFollow = async () => {
-    if (isPending || isFollowing === undefined) return;
-
-    setIsPending(true);
-    const currentFollowing = optimisticFollowing ?? isFollowing;
-    setOptimisticFollowing(!currentFollowing);
-
-    try {
-      const result = await toggleFollow({
-        targetType: "organization",
-        targetId: organization._id,
-      });
-      setOptimisticFollowing(null);
-      toast.success(
-        result.following
-          ? "Vous suivez maintenant cette organisation"
-          : "Vous ne suivez plus cette organisation"
-      );
-    } catch (error: any) {
-      setOptimisticFollowing(null);
-      toast.error(error.message || "Erreur lors de la modification du suivi");
-    } finally {
-      setIsPending(false);
-    }
-  };
 
   const handleShare = async () => {
     const url = window.location.href;
@@ -208,7 +163,6 @@ export function OrganizationHeader({ organization, stats, isMember, canEdit, onE
     }
   };
 
-  const following = optimisticFollowing ?? isFollowing ?? false;
 
   return (
     <div className="relative w-full rounded-xl overflow-hidden">
@@ -231,16 +185,17 @@ export function OrganizationHeader({ organization, stats, isMember, canEdit, onE
             {/* Boutons d'action en haut à droite */}
             <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
               {!isMember && (
-                <Button
-                  variant={following ? "outline" : "accent"}
-                  size="sm"
-                  onClick={handleFollow}
-                  disabled={isPending || isFollowing === undefined}
-                  icon={following ? "user-check-bold" : "user-plus-bold"}
-                  className="backdrop-blur-sm bg-background/90 hover:bg-background"
-                >
-                  {following ? "Suivi" : "Suivre"}
-                </Button>
+                <div className="backdrop-blur-sm bg-background/90 rounded-md p-1">
+                  <FollowButton
+                    targetType="organization"
+                    targetId={organization._id}
+                    followersCount={stats?.followersCount}
+                    showCount={false}
+                    variant="accent"
+                    size="sm"
+                    hideIfNotAuthenticated={true}
+                  />
+                </div>
               )}
 
               <DropdownMenu>
@@ -302,15 +257,15 @@ export function OrganizationHeader({ organization, stats, isMember, canEdit, onE
         {!coverImageUrl && (
           <div className="flex items-center justify-end gap-2 mb-4">
             {!isMember && (
-              <Button
-                variant={following ? "outline" : "accent"}
+              <FollowButton
+                targetType="organization"
+                targetId={organization._id}
+                followersCount={stats?.followersCount}
+                showCount={false}
+                variant="accent"
                 size="sm"
-                onClick={handleFollow}
-                disabled={isPending || isFollowing === undefined}
-                icon={following ? "user-check-bold" : "user-plus-bold"}
-              >
-                {following ? "Suivi" : "Suivre"}
-              </Button>
+                hideIfNotAuthenticated={true}
+              />
             )}
 
             <DropdownMenu>
@@ -407,15 +362,6 @@ export function OrganizationHeader({ organization, stats, isMember, canEdit, onE
                     <SolarIcon icon="map-point-bold" className="h-4 w-4 shrink-0" />
                     <span>{seedRegionLabels[organization.seedRegion] || organization.seedRegion}</span>
                   </div>
-                )}
-                {organization.reachRadius !== null && organization.reachRadius !== undefined && (
-                  <>
-                    <span className="text-muted-foreground/40">•</span>
-                    <div className="flex items-center gap-1.5">
-                      <SolarIcon icon="radar-2-bold" className="h-4 w-4 shrink-0" />
-                      <span>{organization.reachRadius === 0 ? "Local" : `${organization.reachRadius} km`}</span>
-                    </div>
-                  </>
                 )}
                 {organization.languages && organization.languages.length > 0 && (
                   <>
@@ -568,6 +514,12 @@ export function OrganizationHeader({ organization, stats, isMember, canEdit, onE
                     className="rounded-md border-b-0 data-[state=active]:bg-background/50 data-[state=active]:shadow-sm"
                   >
                     Actions
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="followers" 
+                    className="rounded-md border-b-0 data-[state=active]:bg-background/50 data-[state=active]:shadow-sm"
+                  >
+                    Abonnés
                   </TabsTrigger>
                   {isMember && (
                     <TabsTrigger 

@@ -2,6 +2,7 @@
 
 import { Icon, type IconProps } from "@iconify/react";
 import { useEffect, useLayoutEffect, useRef } from "react";
+import { cn } from "@/lib/utils";
 
 interface SolarIconProps extends Omit<IconProps, "icon"> {
   icon: string;
@@ -68,11 +69,29 @@ export function SolarIcon({ icon, className, ...props }: SolarIconProps) {
   }, [icon, className]);
 
   return (
-    <span ref={containerRef} className={className}>
+    <span 
+      ref={containerRef} 
+      className={cn("inline-flex items-center justify-center", className)}
+      style={{
+        width: className?.includes('w-full') || className?.includes('w-') ? undefined : '1em',
+        height: className?.includes('h-full') || className?.includes('h-') ? undefined : '1em',
+      }}
+    >
       <Icon 
         icon={`solar:${icon}`} 
         inline={true}
         mode="svg"
+        className={cn(
+          "w-full h-full",
+          // Si h-full ou w-full est dans className, l'icône doit s'adapter
+          className?.includes('h-full') || className?.includes('w-full') 
+            ? "w-full h-full" 
+            : undefined
+        )}
+        style={{
+          width: className?.includes('w-full') ? '100%' : undefined,
+          height: className?.includes('h-full') ? '100%' : undefined,
+        }}
         {...props} 
       />
     </span>

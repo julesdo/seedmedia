@@ -74,7 +74,7 @@ export const createDefaultAccount = mutation({
     // Si l'utilisateur n'existe pas, le créer
     if (!appUser) {
       const now = Date.now();
-      const userId = await ctx.db.insert("users", {
+      const userData: any = {
         email: betterAuthUser.email,
         level: 1,
         reachRadius: 10,
@@ -83,13 +83,52 @@ export const createDefaultAccount = mutation({
         profileCompletion: 0,
         premiumTier: "free",
         boostCredits: 0,
+        credibilityScore: 0,
+        role: "explorateur",
+        expertiseDomains: [],
         createdAt: now,
         updatedAt: now,
-      });
+      };
+      
+      // Ajouter name et image depuis Better Auth si disponibles
+      if (betterAuthUser.name) {
+        userData.name = betterAuthUser.name;
+      }
+      if (betterAuthUser.image) {
+        userData.image = betterAuthUser.image;
+      }
+      
+      const userId = await ctx.db.insert("users", userData);
       appUser = await ctx.db.get(userId);
       if (!appUser) {
         throw new Error("Failed to create user");
       }
+    } else {
+      // Synchroniser name et image depuis Better Auth si l'utilisateur n'en a pas
+      const updates: any = {};
+      
+      if (betterAuthUser.name && appUser.email && typeof appUser.email === "string" && (!appUser.name || appUser.name === appUser.email.split("@")[0])) {
+        updates.name = betterAuthUser.name;
+      }
+      
+      if (betterAuthUser.image && !appUser.image) {
+        updates.image = betterAuthUser.image;
+      }
+      
+      if (Object.keys(updates).length > 0) {
+        updates.updatedAt = Date.now();
+        await ctx.db.patch(appUser._id, updates);
+        // Recharger l'utilisateur pour avoir les données à jour
+        appUser = await ctx.db.get(appUser._id);
+        if (!appUser) {
+          throw new Error("Failed to reload user");
+        }
+      }
+    }
+
+    // Vérifier que appUser existe (TypeScript guard)
+    if (!appUser) {
+      throw new Error("User not found");
     }
 
     // Vérifier si un compte par défaut existe déjà

@@ -166,7 +166,7 @@ export default function CallbackPage() {
         }
         
         // Rediriger vers discover
-        window.location.href = "/discover";
+        window.location.href = "/studio";
       } else if ((isSilent || autoReconnect) && typeof window !== "undefined" && !window.opener) {
         // Si on est en mode silencieux ou auto_reconnect mais pas dans une popup
         // Mettre à jour le provider dans localStorage si on a une session
@@ -214,7 +214,7 @@ export default function CallbackPage() {
           sessionStorage.removeItem("oauthProvider");
         }
         setTimeout(() => {
-          window.location.href = "/discover";
+          window.location.href = "/studio";
         }, 500);
       }
     };

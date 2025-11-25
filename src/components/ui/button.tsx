@@ -19,7 +19,7 @@ const buttonVariants = cva(
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-md",
         ghost:
-          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 rounded-md",
+          "button-ghost rounded-md",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
@@ -53,21 +53,21 @@ function Button({
     icon?: string
     iconPosition?: "left" | "right"
   }) {
-  const Comp = asChild ? Slot : "button"
   const isGlassVariant = variant === "glass" || variant === "default" || !variant
   const isAccentVariant = variant === "accent"
   const isDestructiveVariant = variant === "destructive"
+  const isGhostVariant = variant === "ghost"
 
-  // Pour les variantes glass, accent et destructive, on enveloppe le texte dans un span pour le gradient
+  // Pour les variantes glass, accent, destructive et ghost (au hover), on enveloppe le texte dans un span pour le gradient
   const renderChildren = () => {
-    // Si asChild ou si ce n'est ni glass ni accent ni destructive, on ne modifie pas les children
-    if (asChild || (!isGlassVariant && !isAccentVariant && !isDestructiveVariant)) {
+    // Si asChild ou si ce n'est ni glass ni accent ni destructive ni ghost, on ne modifie pas les children
+    if (asChild || (!isGlassVariant && !isAccentVariant && !isDestructiveVariant && !isGhostVariant)) {
       return children
     }
 
     // Déterminer la classe gradient pour le texte selon la variante
     let textGradientClass = ""
-    if (isAccentVariant) {
+    if (isAccentVariant || isGhostVariant) {
       textGradientClass = "text-gradient-accent"
     } else if (isDestructiveVariant) {
       textGradientClass = "text-gradient-destructive"
@@ -80,28 +80,76 @@ function Button({
       return <span className={textGradientClass}>{children}</span>
     }
 
-    // Pour les autres cas, on utilise React.Children pour traiter tous les enfants
-    const processedChildren = React.Children.map(children, (child, index) => {
+    // Fonction récursive pour traiter les enfants
+    const processChild = (child: React.ReactNode, index: number): React.ReactNode => {
       // Si c'est du texte brut, on l'enveloppe dans un span avec la classe gradient
-      if (typeof child === "string") {
+      if (typeof child === "string" && child.trim() !== "") {
         return <span key={`text-${index}`} className={textGradientClass}>{child}</span>
       }
       if (typeof child === "number") {
         return <span key={`num-${index}`} className={textGradientClass}>{child}</span>
       }
+      
+      // Si c'est un élément React
+      if (React.isValidElement(child)) {
+        // Si c'est un SVG, on applique la couleur directement
+        if (child.type === "svg") {
+          return React.cloneElement(child as React.ReactElement, {
+            key: child.key || `svg-${index}`,
+            ...child.props,
+            className: cn(child.props.className),
+            style: { 
+              ...child.props.style, 
+              color: isAccentVariant ? "#FFFFFF" : isDestructiveVariant ? "#FFFFFF" : "#F4F6FB" 
+            },
+          })
+        }
+        
+        // Si c'est un composant avec className qui contient SolarIcon
+        if (child.props && child.props.className && typeof child.props.className === "string" && child.props.className.includes("SolarIcon")) {
+          return React.cloneElement(child as React.ReactElement, {
+            key: child.key || `icon-${index}`,
+            ...child.props,
+            className: cn(child.props.className),
+            style: { 
+              ...child.props.style, 
+              color: isAccentVariant ? "#FFFFFF" : isDestructiveVariant ? "#FFFFFF" : "#F4F6FB" 
+            },
+          })
+        }
+        
+        // Si l'élément a des enfants, on les traite récursivement
+        if (child.props && child.props.children) {
+          const processedChildren = React.Children.map(child.props.children, (grandChild, grandIndex) => {
+            return processChild(grandChild, grandIndex)
+          })
+          
+          return React.cloneElement(child as React.ReactElement, {
+            key: child.key || `element-${index}`,
+            ...child.props,
+            children: processedChildren,
+          })
+        }
+      }
+      
       return child
+    }
+
+    // Traiter tous les enfants
+    const processedChildren = React.Children.map(children, (child, index) => {
+      return processChild(child, index)
     })
 
     return processedChildren || children
   }
 
-  // Rendre l'icône avec les bonnes classes selon la variante
+    // Rendre l'icône avec les bonnes classes selon la variante
   const renderIcon = () => {
     if (!icon) return null
 
     // Déterminer la classe gradient selon la variante
     let gradientClass = ""
-    if (isAccentVariant) {
+    if (isAccentVariant || isGhostVariant) {
       gradientClass = "icon-gradient-accent"
     } else if (isDestructiveVariant) {
       gradientClass = "icon-gradient-destructive"
@@ -161,6 +209,8 @@ function Button({
     )
   }
 
+  const Comp = asChild ? Slot : "button"
+  
   return (
     <Comp
       data-slot="button"

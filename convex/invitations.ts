@@ -2,6 +2,7 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { betterAuthComponent } from "./auth";
 import { Id } from "./_generated/dataModel";
+import { internal } from "./_generated/api";
 
 /**
  * Génère un token unique pour une invitation
@@ -192,6 +193,24 @@ export const inviteUser = mutation({
       updatedAt: now,
     });
 
+    // Récupérer l'organisation pour la notification
+    const organization = await ctx.db.get(args.organizationId);
+    
+    // Si l'utilisateur invité existe déjà, lui envoyer une notification
+    if (existingUser) {
+      await ctx.runMutation(internal.notifications.createNotificationInternal, {
+        userId: existingUser._id,
+        type: "invitation_received",
+        title: "Nouvelle invitation",
+        message: `${appUser.email?.split("@")[0] || "Un utilisateur"} vous a invité à rejoindre "${organization?.name || "une organisation"}" en tant que ${args.role === "admin" ? "administrateur" : "membre"}`,
+        link: "/studio/invitations",
+        metadata: {
+          invitationId,
+          organizationId: args.organizationId,
+        },
+      });
+    }
+
     // TODO: Envoyer un email d'invitation
     // await sendInvitationEmail(args.email, invitationId, token);
 
@@ -290,6 +309,26 @@ export const acceptInvitation = mutation({
       updatedAt: now,
     });
 
+    // Récupérer l'organisation et l'utilisateur qui a invité
+    const organization = await ctx.db.get(invitation.organizationId);
+    const inviter = await ctx.db.get(invitation.invitedBy);
+
+    // Notifier celui qui a envoyé l'invitation
+    if (inviter && inviter._id !== appUser._id) {
+      await ctx.runMutation(internal.notifications.createNotificationInternal, {
+        userId: inviter._id,
+        type: "invitation_accepted",
+        title: "Invitation acceptée",
+        message: `${appUser.email?.split("@")[0] || "Un utilisateur"} a accepté votre invitation à rejoindre "${organization?.name || "l'organisation"}"`,
+        link: `/discover/organizations/${invitation.organizationId}`,
+        metadata: {
+          invitationId: invitation._id,
+          organizationId: invitation.organizationId,
+          acceptedBy: appUser._id,
+        },
+      });
+    }
+
     return { success: true };
   },
 });
@@ -320,10 +359,36 @@ export const rejectInvitation = mutation({
       throw new Error("Unauthorized");
     }
 
+    const now = Date.now();
+    
     await ctx.db.patch(invitation._id, {
       status: "rejected",
-      updatedAt: Date.now(),
+      updatedAt: now,
     });
+
+    // Récupérer l'organisation et l'utilisateur qui a invité
+    const organization = await ctx.db.get(invitation.organizationId);
+    const inviter = await ctx.db.get(invitation.invitedBy);
+    const appUser = await ctx.db
+      .query("users")
+      .withIndex("email", (q) => q.eq("email", betterAuthUser.email))
+      .first();
+
+    // Notifier celui qui a envoyé l'invitation
+    if (inviter && appUser && inviter._id !== appUser._id) {
+      await ctx.runMutation(internal.notifications.createNotificationInternal, {
+        userId: inviter._id,
+        type: "invitation_rejected",
+        title: "Invitation refusée",
+        message: `${appUser.email?.split("@")[0] || "Un utilisateur"} a refusé votre invitation à rejoindre "${organization?.name || "l'organisation"}"`,
+        link: `/discover/organizations/${invitation.organizationId}`,
+        metadata: {
+          invitationId: invitation._id,
+          organizationId: invitation.organizationId,
+          rejectedBy: appUser._id,
+        },
+      });
+    }
 
     return { success: true };
   },

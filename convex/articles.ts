@@ -1,136 +1,53 @@
+import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
 import { betterAuthComponent } from "./auth";
+import { Id } from "./_generated/dataModel";
+import { api, internal } from "./_generated/api";
+import { getEditorialRulesForArticleType, getArticleQualityRules, getRuleValueAsNumber } from "./configurableRules.helpers";
+import { getDefaultCategory } from "./categories.defaults";
+import { updateCredibilityScoreWithAction } from "./credibility";
 
-/**
- * Calcul du score de qualité d'un article
- * Basé sur :
- * - Ratio de claims vérifiés
- * - Nombre de vérifications par experts
- * - Score de vérification communautaire
- * - Type d'article (scientifique > expert > opinion)
- */
-function calculateQualityScore(
-  verifiedClaimsCount: number,
-  totalClaimsCount: number,
-  expertReviewCount: number,
-  communityVerificationScore: number,
-  articleType: "scientific" | "expert" | "opinion" | "news" | "tutorial" | "other"
-): number {
-  // Ratio de vérification (0-40 points)
-  const verificationRatio = totalClaimsCount > 0 
-    ? (verifiedClaimsCount / totalClaimsCount) * 40 
-    : 0;
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
 
-  // Bonus pour vérifications expertes (0-30 points)
-  const expertBonus = Math.min(expertReviewCount * 5, 30);
-
-  // Score communautaire (0-20 points)
-  const communityScore = (communityVerificationScore / 100) * 20;
-
-  // Bonus selon le type d'article (0-10 points)
-  const typeBonus = {
-    scientific: 10,
-    expert: 7,
-    tutorial: 5,
-    news: 3,
-    opinion: 2,
-    other: 1,
-  }[articleType];
-
-  return Math.min(Math.round(verificationRatio + expertBonus + communityScore + typeBonus), 100);
-}
-
-/**
- * Calcul du score de vérification communautaire d'un article
- * Basé sur les vérifications de tous les claims de l'article
- */
-async function calculateCommunityVerificationScore(
-  ctx: any,
-  articleId: string
-): Promise<number> {
-  // Récupérer tous les claims de l'article
-  const claims = await ctx.db
-    .query("articleClaims")
-    .withIndex("articleId", (q: any) => q.eq("articleId", articleId as any))
-    .collect();
-
-  if (claims.length === 0) return 50; // Score neutre par défaut
-
-  // Récupérer toutes les vérifications de tous les claims
-  const allVerifications = await Promise.all(
-    claims.map(async (claim: any) => {
-      return await ctx.db
-        .query("claimVerifications")
-        .withIndex("claimId", (q: any) => q.eq("claimId", claim._id))
-        .collect();
-    })
-  );
-
-  const verifications = allVerifications.flat();
-
-  if (verifications.length === 0) return 50; // Score neutre par défaut
-
-  let verifiedCount = 0;
-  let disputedCount = 0;
-  let falseCount = 0;
-  let expertWeight = 0;
-
-  for (const verification of verifications) {
-    const weight = verification.isExpert ? 3 : 1; // Les experts ont 3x plus de poids
-    expertWeight += weight;
-
-    if (verification.verificationResult === "verified") {
-      verifiedCount += weight;
-    } else if (verification.verificationResult === "disputed") {
-      disputedCount += weight;
-    } else if (verification.verificationResult === "false") {
-      falseCount += weight;
-    }
-  }
-
-  const total = verifiedCount + disputedCount + falseCount;
-  if (total === 0) return 50;
-
-  // Score basé sur le ratio de vérifications positives
-  const score = (verifiedCount / total) * 100;
-  // Pénalité pour les vérifications négatives
-  const penalty = (falseCount / total) * 50;
-
-  return Math.max(0, Math.min(100, score - penalty));
-}
-
-/**
- * Mise à jour du score de qualité d'un article
- */
-async function updateArticleQualityScore(ctx: any, articleId: string) {
-  const article = await ctx.db.get(articleId as any);
+async function updateArticleQualityScore(ctx: any, articleId: Id<"articles">) {
+  const article = await ctx.db.get(articleId);
   if (!article) return;
 
-  const claims = await ctx.db
-    .query("articleClaims")
-    .withIndex("articleId", (q: any) => q.eq("articleId", articleId as any))
-    .collect();
+  // Récupérer les règles de qualité configurables
+  const qualityRules = await getArticleQualityRules(ctx);
 
-  const verifiedClaims = claims.filter(
-    (c: any) => c.verificationStatus === "verified"
-  ).length;
+  let qualityScore = 0;
+  
+  // Bonus selon le type d'article (depuis les règles configurables)
+  const typeBonus: Record<string, number> = {
+    scientific: qualityRules.scientificBonus,
+    expert: qualityRules.expertBonus,
+    tutorial: qualityRules.tutorialBonus,
+    news: qualityRules.newsBonus,
+    opinion: qualityRules.opinionBonus,
+    other: qualityRules.otherBonus,
+  };
+  qualityScore += typeBonus[article.articleType] || qualityRules.otherBonus;
 
-  const communityScore = await calculateCommunityVerificationScore(ctx, articleId);
+  // Bonus selon le ratio de vérification
+  if (article.totalClaimsCount > 0) {
+    const verificationRatio = article.verifiedClaimsCount / article.totalClaimsCount;
+    qualityScore += verificationRatio * qualityRules.verificationRatioWeight;
+  }
 
-  const qualityScore = calculateQualityScore(
-    verifiedClaims,
-    claims.length,
-    article.expertReviewCount,
-    communityScore,
-    article.articleType
-  );
+  // Bonus vérifications expertes
+  qualityScore += Math.min(article.expertReviewCount * qualityRules.expertReviewPoints, qualityRules.expertReviewMax);
 
-  await ctx.db.patch(articleId as any, {
+  // Bonus score communautaire
+  qualityScore += (article.communityVerificationScore / 100) * qualityRules.communityWeight;
+
+  // Score final entre 0 et 100
+  qualityScore = Math.min(Math.round(qualityScore), 100);
+
+  await ctx.db.patch(articleId, {
     qualityScore,
-    verifiedClaimsCount: verifiedClaims,
-    totalClaimsCount: claims.length,
-    communityVerificationScore: communityScore,
     updatedAt: Date.now(),
   });
 }
@@ -141,6 +58,13 @@ async function updateArticleQualityScore(ctx: any, articleId: string) {
 
 /**
  * Récupère les articles publiés, triés par qualité et pertinence
+ */
+/**
+ * ⚠️ IMPORTANT : Ne PAS filtrer par rayon géographique (reachRadius/location)
+ * Le filtrage se fait uniquement par :
+ * - Réputation (qualityScore, credibilityScore)
+ * - Gouvernance (status: published = déjà validé)
+ * - Type, tags, tri (recent, popular, verified)
  */
 export const getArticles = query({
   args: {
@@ -163,10 +87,12 @@ export const getArticles = query({
         v.literal("other")
       )
     ),
-    minQualityScore: v.optional(v.number()), // Filtre par score minimum
+    minQualityScore: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const limit = args.limit || 20;
+    // Récupérer la limite par défaut depuis les règles configurables
+    const defaultLimit = await getRuleValueAsNumber(ctx, "default_list_limit").catch(() => 20);
+    const limit = args.limit || defaultLimit;
     const sortBy = args.sortBy || "quality";
     const minQualityScore = args.minQualityScore || 0;
 
@@ -205,25 +131,209 @@ export const getArticles = query({
         break;
     }
 
-    // Enrichir avec les données de l'auteur
+    // Enrichir avec les données de l'auteur et les catégories
     const articlesWithAuthor = await Promise.all(
       articles.slice(0, limit).map(async (article) => {
         const author = await ctx.db.get(article.authorId);
+        
+        // Récupérer les catégories
+        const categories = article.categoryIds && article.categoryIds.length > 0
+          ? (await Promise.all(
+              article.categoryIds.map(async (categoryId) => {
+                const category = await ctx.db.get(categoryId);
+                return category
+                  ? {
+                      _id: category._id,
+                      name: category.name,
+                      slug: category.slug,
+                      icon: category.icon,
+                      color: category.color,
+                    }
+                  : null;
+              })
+            )).filter((cat): cat is NonNullable<typeof cat> => cat !== null)
+          : [];
+        
         return {
           ...article,
           author: author
             ? {
                 _id: author._id,
                 email: author.email,
-                name: author.email.split("@")[0] || "Auteur", // Utiliser l'email comme nom par défaut
-                image: null, // L'image viendra de Better Auth côté client
+                name: author.name || author.email.split("@")[0] || "Auteur",
+                image: author.image || null,
               }
             : null,
+          categories,
         };
       })
     );
 
     return articlesWithAuthor;
+  },
+});
+
+/**
+ * Récupère les articles en attente de validation (pour les éditeurs)
+ */
+export const getPendingArticles = query({
+  args: {
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const betterAuthUser = await betterAuthComponent.safeGetAuthUser(ctx as any);
+    if (!betterAuthUser) {
+      return [];
+    }
+
+    const appUser = await ctx.db
+      .query("users")
+      .withIndex("email", (q) => q.eq("email", betterAuthUser.email))
+      .first();
+
+    if (!appUser) {
+      return [];
+    }
+
+    // Vérifier que l'utilisateur est éditeur
+    if (appUser.role !== "editeur") {
+      return [];
+    }
+
+    const defaultLimit = await getRuleValueAsNumber(ctx, "default_list_limit").catch(() => 20);
+    const limit = args.limit || defaultLimit;
+
+    // Récupérer tous les articles avec statut "pending"
+    const allArticles = await ctx.db
+      .query("articles")
+      .withIndex("status", (q) => q.eq("status", "pending"))
+      .collect();
+
+    // Trier par date de création (plus récents en premier)
+    const sortedArticles = allArticles
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .slice(0, limit);
+
+    // Enrichir avec les données de l'auteur
+    const articlesWithAuthor = await Promise.all(
+      sortedArticles.map(async (article) => {
+        const author = await ctx.db.get(article.authorId);
+        
+        // Récupérer les catégories
+        const categories = article.categoryIds && article.categoryIds.length > 0
+          ? (await Promise.all(
+              article.categoryIds.map(async (categoryId) => {
+                const category = await ctx.db.get(categoryId);
+                return category
+                  ? {
+                      _id: category._id,
+                      name: category.name,
+                      slug: category.slug,
+                      icon: category.icon,
+                      color: category.color,
+                    }
+                  : null;
+              })
+            )).filter((cat): cat is NonNullable<typeof cat> => cat !== null)
+          : [];
+
+        return {
+          ...article,
+          author: author
+            ? {
+                _id: author._id,
+                email: author.email || "",
+                name: author.name || author.email?.split("@")[0] || "Auteur",
+                image: author.image || null,
+                role: author.role || "explorateur",
+                credibilityScore: author.credibilityScore || 0,
+              }
+            : null,
+          categories,
+        };
+      })
+    );
+
+    return articlesWithAuthor;
+  },
+});
+
+/**
+ * Récupère les articles de l'utilisateur connecté
+ */
+export const getMyArticles = query({
+  args: {
+    limit: v.optional(v.number()),
+    status: v.optional(
+      v.union(
+        v.literal("draft"),
+        v.literal("pending"),
+        v.literal("published"),
+        v.literal("rejected")
+      )
+    ),
+  },
+  handler: async (ctx, args) => {
+    const betterAuthUser = await betterAuthComponent.safeGetAuthUser(ctx as any);
+    if (!betterAuthUser) {
+      return [];
+    }
+
+    const appUser = await ctx.db
+      .query("users")
+      .withIndex("email", (q) => q.eq("email", betterAuthUser.email))
+      .first();
+
+    if (!appUser) {
+      return [];
+    }
+
+    // Récupérer la limite par défaut depuis les règles configurables
+    const defaultLimit = await getRuleValueAsNumber(ctx, "default_list_limit").catch(() => 20);
+    const limit = args.limit || defaultLimit;
+
+    let articles = await ctx.db
+      .query("articles")
+      .withIndex("authorId", (q) => q.eq("authorId", appUser._id))
+      .collect();
+
+    // Filtrer par statut si spécifié
+    if (args.status) {
+      articles = articles.filter((a) => a.status === args.status);
+    }
+
+    // Trier par date de création (plus récents en premier)
+    articles.sort((a, b) => b.createdAt - a.createdAt);
+
+    return articles.slice(0, limit);
+  },
+});
+
+/**
+ * Récupère un article par son ID (pour les brouillons qui n'ont pas encore de slug)
+ */
+export const getArticleById = query({
+  args: {
+    articleId: v.id("articles"),
+  },
+  handler: async (ctx, args) => {
+    const article = await ctx.db.get(args.articleId);
+    
+    if (!article) return null;
+
+    const author = await ctx.db.get(article.authorId);
+
+    return {
+      ...article,
+      author: author
+        ? {
+            _id: author._id,
+            email: author.email,
+            name: author.name || author.email.split("@")[0] || "Auteur",
+            image: author.image || null,
+          }
+        : null,
+    };
   },
 });
 
@@ -243,10 +353,24 @@ export const getArticleBySlug = query({
     if (!article) return null;
 
     const author = await ctx.db.get(article.authorId);
-    const claims = await ctx.db
-      .query("articleClaims")
-      .withIndex("articleId", (q: any) => q.eq("articleId", article._id))
-      .collect();
+
+    // Récupérer les catégories
+    const categories = article.categoryIds && article.categoryIds.length > 0
+      ? (await Promise.all(
+          article.categoryIds.map(async (categoryId) => {
+            const category = await ctx.db.get(categoryId);
+            return category
+              ? {
+                  _id: category._id,
+                  name: category.name,
+                  slug: category.slug,
+                  icon: category.icon,
+                  color: category.color,
+                }
+              : null;
+          })
+        )).filter((cat): cat is NonNullable<typeof cat> => cat !== null)
+      : [];
 
     return {
       ...article,
@@ -254,11 +378,11 @@ export const getArticleBySlug = query({
         ? {
             _id: author._id,
             email: author.email,
-            name: author.email.split("@")[0] || "Auteur", // Utiliser l'email comme nom par défaut
-            image: null, // L'image viendra de Better Auth côté client
+            name: author.name || author.email.split("@")[0] || "Auteur",
+            image: author.image || null,
           }
         : null,
-      claims,
+      categories,
     };
   },
 });
@@ -283,20 +407,71 @@ export const getArticleClaims = query({
           .withIndex("claimId", (q) => q.eq("claimId", claim._id))
           .collect();
 
-        const verifications = await ctx.db
-          .query("claimVerifications")
-          .withIndex("claimId", (q) => q.eq("claimId", claim._id))
-          .collect();
-
         return {
           ...claim,
           sources,
-          verifications,
         };
       })
     );
 
     return claimsWithSources;
+  },
+});
+
+/**
+ * Récupère toutes les sources d'un article (toutes les sources de tous les claims)
+ */
+export const getArticleSources = query({
+  args: {
+    articleId: v.id("articles"),
+  },
+  handler: async (ctx, args) => {
+    // Récupérer tous les claims de l'article
+    const claims = await ctx.db
+      .query("articleClaims")
+      .withIndex("articleId", (q) => q.eq("articleId", args.articleId))
+      .collect();
+
+    // Récupérer toutes les sources de tous les claims
+    const allSources = await Promise.all(
+      claims.map(async (claim) => {
+        const sources = await ctx.db
+          .query("claimSources")
+          .withIndex("claimId", (q) => q.eq("claimId", claim._id))
+          .collect();
+        
+        // Enrichir avec les données de l'utilisateur qui a ajouté la source
+        const sourcesWithUser = await Promise.all(
+          sources.map(async (source) => {
+            const addedByUser = await ctx.db.get(source.addedBy);
+            return {
+              ...source,
+              addedByUser: addedByUser
+                ? {
+                    _id: addedByUser._id,
+                    email: addedByUser.email || "",
+                    name: addedByUser.email?.split("@")[0] || "Utilisateur",
+                  }
+                : null,
+            };
+          })
+        );
+        
+        return sourcesWithUser;
+      })
+    );
+
+    // Aplatir la liste et dédupliquer par URL si présent
+    const flattenedSources = allSources.flat();
+    const uniqueSources = flattenedSources.filter((source, index, self) => {
+      if (!source.url) return true; // Garder les sources sans URL
+      return index === self.findIndex((s) => s.url === source.url);
+    });
+
+    // Trier par score de fiabilité décroissant
+    uniqueSources.sort((a, b) => (b.reliabilityScore || 0) - (a.reliabilityScore || 0));
+
+    return uniqueSources;
   },
 });
 
@@ -312,8 +487,10 @@ export const createArticle = mutation({
     title: v.string(),
     slug: v.string(),
     summary: v.string(),
-    content: v.string(),
+    content: v.string(), // JSON stringifié du contenu Plate.js
     tags: v.array(v.string()),
+    categoryIds: v.optional(v.array(v.id("categories"))),
+    categorySlugs: v.optional(v.array(v.string())), // Pour les catégories par défaut (pas encore en base)
     coverImage: v.optional(v.string()),
     articleType: v.union(
       v.literal("scientific"),
@@ -323,11 +500,12 @@ export const createArticle = mutation({
       v.literal("tutorial"),
       v.literal("other")
     ),
-    status: v.union(
-      v.literal("draft"),
-      v.literal("pending"),
-      v.literal("published")
-    ),
+    status: v.union(v.literal("draft"), v.literal("pending"), v.literal("published")),
+    // Structure obligatoire selon NEW_SEED.md
+    these: v.optional(v.string()),
+    counterArguments: v.optional(v.array(v.string())),
+    conclusion: v.optional(v.string()),
+    sourcesCount: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const betterAuthUser = await betterAuthComponent.safeGetAuthUser(ctx as any);
@@ -344,17 +522,122 @@ export const createArticle = mutation({
       throw new Error("User not found");
     }
 
-    // Vérifier que le slug est unique
-    const existing = await ctx.db
-      .query("articles")
-      .withIndex("slug", (q) => q.eq("slug", args.slug))
-      .first();
+    const now = Date.now();
 
-    if (existing) {
-      throw new Error("Un article avec ce slug existe déjà");
+    // Forcer le statut "pending" pour les explorateurs (ils ne peuvent pas publier directement)
+    let finalStatus = args.status;
+    if (appUser.role === "explorateur" && args.status === "published") {
+      finalStatus = "pending";
     }
 
-    const now = Date.now();
+    // Validation si création directe en "published" (seulement pour contributeurs et éditeurs)
+    if (finalStatus === "published") {
+      // Récupérer les règles éditoriales pour ce type d'article
+      const editorialRules = await getEditorialRulesForArticleType(ctx, args.articleType);
+      
+      // Vérifier les champs obligatoires selon les règles configurables
+      if (editorialRules.requireThesis) {
+        if (!args.these || !args.these.trim()) {
+          throw new Error("La thèse est obligatoire pour publier un article");
+        }
+      }
+      
+      if (editorialRules.requireConclusion) {
+        if (!args.conclusion || !args.conclusion.trim()) {
+          throw new Error("La conclusion est obligatoire pour publier un article");
+        }
+      }
+      
+      if (editorialRules.requireCounterArguments) {
+        if ((args.counterArguments || []).length < 1) {
+          throw new Error("Au moins 1 contre-argument est obligatoire pour publier un article");
+        }
+      }
+      
+      // Vérifier le nombre minimum de sources selon le type d'article
+      if ((args.sourcesCount || 0) < editorialRules.minSources) {
+        throw new Error(
+          `Au moins ${editorialRules.minSources} source${editorialRules.minSources > 1 ? "s" : ""} ${editorialRules.minSources > 1 ? "sont" : "est"} obligatoire${editorialRules.minSources > 1 ? "s" : ""} pour publier un article de type "${args.articleType}"`
+        );
+      }
+      
+      // Vérifier la longueur de l'article
+      const contentLength = args.content?.length || 0;
+      if (contentLength < editorialRules.minLength) {
+        throw new Error(
+          `L'article doit contenir au moins ${editorialRules.minLength} caractères (actuellement ${contentLength})`
+        );
+      }
+      if (contentLength > editorialRules.maxLength) {
+        throw new Error(
+          `L'article ne peut pas dépasser ${editorialRules.maxLength} caractères (actuellement ${contentLength})`
+        );
+      }
+      
+      // Vérifier le nombre de tags
+      if ((args.tags || []).length > editorialRules.maxTags) {
+        throw new Error(
+          `Un article ne peut pas avoir plus de ${editorialRules.maxTags} tags`
+        );
+      }
+      
+      // Vérifier que le contenu n'est pas vide
+      try {
+        const contentObj = JSON.parse(args.content || "[]");
+        if (!Array.isArray(contentObj) || contentObj.length === 0) {
+          throw new Error("Le développement est obligatoire pour publier un article");
+        }
+      } catch {
+        throw new Error("Le contenu de l'article est invalide");
+      }
+    }
+
+    // Gérer les catégories : combiner categoryIds et categorySlugs
+    const finalCategoryIds: Id<"categories">[] = [];
+    
+    // Ajouter les catégories existantes
+    if (args.categoryIds && args.categoryIds.length > 0) {
+      finalCategoryIds.push(...args.categoryIds);
+    }
+    
+    // Gérer les catégories par défaut (pas encore en base)
+    if (args.categorySlugs && args.categorySlugs.length > 0) {
+      for (const slug of args.categorySlugs) {
+        // Vérifier si la catégorie existe déjà en base
+        let category = await ctx.db
+          .query("categories")
+          .withIndex("slug", (q) => q.eq("slug", slug))
+          .first();
+
+        // Si elle n'existe pas, créer la catégorie par défaut
+        if (!category) {
+          const defaultCat = getDefaultCategory(slug);
+          if (defaultCat) {
+            // Créer la catégorie automatiquement
+            const categoryId = await ctx.db.insert("categories", {
+              name: defaultCat.name,
+              slug: defaultCat.slug,
+              description: defaultCat.description,
+              icon: defaultCat.icon,
+              color: defaultCat.color,
+              appliesTo: defaultCat.appliesTo,
+              status: "active",
+              usageCount: 0,
+              proposedBy: appUser._id, // L'utilisateur qui crée l'article
+              createdAt: now,
+              updatedAt: now,
+            });
+            
+            finalCategoryIds.push(categoryId);
+          }
+        } else {
+          // La catégorie existe déjà, l'ajouter
+          if (!finalCategoryIds.includes(category._id)) {
+            finalCategoryIds.push(category._id);
+          }
+        }
+      }
+    }
 
     const articleId = await ctx.db.insert("articles", {
       title: args.title,
@@ -363,24 +646,68 @@ export const createArticle = mutation({
       content: args.content,
       authorId: appUser._id,
       tags: args.tags,
+      categoryIds: finalCategoryIds.length > 0 ? finalCategoryIds : undefined,
       coverImage: args.coverImage,
-      articleType: args.articleType,
       featured: false,
       publishedAt: args.status === "published" ? now : undefined,
       views: 0,
       reactions: 0,
       comments: 0,
-      qualityScore: 0, // Sera calculé quand des claims seront ajoutés
+      qualityScore: 0,
       verifiedClaimsCount: 0,
       totalClaimsCount: 0,
       expertReviewCount: 0,
-      communityVerificationScore: 50, // Score neutre par défaut
-      status: args.status,
+      communityVerificationScore: 0,
+      articleType: args.articleType,
+      status: finalStatus,
+      // Structure obligatoire
+      these: args.these || "",
+      counterArguments: args.counterArguments || [],
+      conclusion: args.conclusion || "",
+      sourcesCount: args.sourcesCount || 0,
       createdAt: now,
       updatedAt: now,
     });
 
-    return { articleId };
+    // Calculer le score de qualité initial
+    await updateArticleQualityScore(ctx, articleId);
+
+    // Mettre à jour le score de crédibilité de l'auteur si l'article est publié
+    if (finalStatus === "published") {
+      await updateCredibilityScoreWithAction(
+        ctx,
+        appUser._id,
+        "article_published",
+        { articleId }
+      );
+    }
+
+    // Si l'article est en attente, notifier tous les éditeurs
+    if (finalStatus === "pending") {
+      // Récupérer tous les éditeurs
+      const editors = await ctx.db
+        .query("users")
+        .filter((q: any) => q.eq(q.field("role"), "editeur"))
+        .collect();
+
+      // Envoyer une notification à chaque éditeur
+      await Promise.all(
+        editors.map((editor) =>
+          ctx.runMutation(internal.notifications.createNotificationInternal, {
+            userId: editor._id,
+            type: "article_pending",
+            title: "Nouvel article en attente de validation",
+            message: `Un nouvel article "${args.title}" a été soumis et nécessite votre validation.`,
+            link: `/studio/articles/en-attente`,
+            metadata: {
+              articleId: articleId,
+            },
+          })
+        )
+      );
+    }
+
+    return articleId;
   },
 });
 
@@ -394,6 +721,8 @@ export const updateArticle = mutation({
     summary: v.optional(v.string()),
     content: v.optional(v.string()),
     tags: v.optional(v.array(v.string())),
+    categoryIds: v.optional(v.array(v.id("categories"))),
+    categorySlugs: v.optional(v.array(v.string())), // Pour les catégories par défaut (pas encore en base)
     coverImage: v.optional(v.string()),
     articleType: v.optional(
       v.union(
@@ -405,14 +734,12 @@ export const updateArticle = mutation({
         v.literal("other")
       )
     ),
-    status: v.optional(
-      v.union(
-        v.literal("draft"),
-        v.literal("pending"),
-        v.literal("published"),
-        v.literal("rejected")
-      )
-    ),
+    status: v.optional(v.union(v.literal("draft"), v.literal("pending"), v.literal("published"))),
+    // Structure obligatoire
+    these: v.optional(v.string()),
+    counterArguments: v.optional(v.array(v.string())),
+    conclusion: v.optional(v.string()),
+    sourcesCount: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const betterAuthUser = await betterAuthComponent.safeGetAuthUser(ctx as any);
@@ -434,33 +761,193 @@ export const updateArticle = mutation({
       throw new Error("Article not found");
     }
 
-    // Vérifier que l'utilisateur est l'auteur
-    if (article.authorId !== appUser._id) {
-      throw new Error("Vous n'êtes pas l'auteur de cet article");
+    // Vérifier que l'utilisateur est l'auteur ou un éditeur
+    if (article.authorId !== appUser._id && appUser.role !== "editeur") {
+      throw new Error("Unauthorized");
     }
 
-    const updates: any = {
+    const updateData: any = {
       updatedAt: Date.now(),
     };
 
-    if (args.title !== undefined) updates.title = args.title;
-    if (args.summary !== undefined) updates.summary = args.summary;
-    if (args.content !== undefined) updates.content = args.content;
-    if (args.tags !== undefined) updates.tags = args.tags;
-    if (args.coverImage !== undefined) updates.coverImage = args.coverImage;
-    if (args.articleType !== undefined) updates.articleType = args.articleType;
+    // Gérer les catégories : combiner categoryIds et categorySlugs
+    if (args.categoryIds !== undefined || args.categorySlugs !== undefined) {
+      const finalCategoryIds: Id<"categories">[] = [];
+      
+      // Ajouter les catégories existantes
+      if (args.categoryIds && args.categoryIds.length > 0) {
+        finalCategoryIds.push(...args.categoryIds);
+      }
+      
+      // Gérer les catégories par défaut (pas encore en base)
+      if (args.categorySlugs && args.categorySlugs.length > 0) {
+        for (const slug of args.categorySlugs) {
+          // Vérifier si la catégorie existe déjà en base
+          let category = await ctx.db
+            .query("categories")
+            .withIndex("slug", (q) => q.eq("slug", slug))
+            .first();
+
+          // Si elle n'existe pas, créer la catégorie par défaut
+          if (!category) {
+            const defaultCat = getDefaultCategory(slug);
+            if (defaultCat) {
+              // Créer la catégorie automatiquement
+              const categoryId = await ctx.db.insert("categories", {
+                name: defaultCat.name,
+                slug: defaultCat.slug,
+                description: defaultCat.description,
+                icon: defaultCat.icon,
+                color: defaultCat.color,
+                appliesTo: defaultCat.appliesTo,
+                status: "active",
+                usageCount: 0,
+                proposedBy: appUser._id, // L'utilisateur qui modifie l'article
+                createdAt: Date.now(),
+                updatedAt: Date.now(),
+              });
+              
+              finalCategoryIds.push(categoryId);
+            }
+          } else {
+            // La catégorie existe déjà, l'ajouter
+            if (!finalCategoryIds.includes(category._id)) {
+              finalCategoryIds.push(category._id);
+            }
+          }
+        }
+      }
+      
+      updateData.categoryIds = finalCategoryIds.length > 0 ? finalCategoryIds : undefined;
+    }
+
+    if (args.title !== undefined) updateData.title = args.title;
+    if (args.summary !== undefined) updateData.summary = args.summary;
+    if (args.content !== undefined) updateData.content = args.content;
+    if (args.tags !== undefined) updateData.tags = args.tags;
+    if (args.coverImage !== undefined) updateData.coverImage = args.coverImage;
+    if (args.articleType !== undefined) updateData.articleType = args.articleType;
     if (args.status !== undefined) {
-      updates.status = args.status;
-      if (args.status === "published" && !article.publishedAt) {
-        updates.publishedAt = Date.now();
+      // Forcer le statut "pending" pour les explorateurs (ils ne peuvent pas publier directement)
+      let finalStatus = args.status;
+      if (appUser.role === "explorateur" && args.status === "published") {
+        finalStatus = "pending";
+      }
+      
+      updateData.status = finalStatus;
+      if (finalStatus === "published" && !article.publishedAt) {
+        updateData.publishedAt = Date.now();
+      }
+      
+      // Si l'article passe en "pending", notifier les éditeurs
+      if (finalStatus === "pending" && article.status !== "pending") {
+        // Récupérer tous les éditeurs
+        const editors = await ctx.db
+          .query("users")
+          .filter((q: any) => q.eq(q.field("role"), "editeur"))
+          .collect();
+
+        // Envoyer une notification à chaque éditeur
+        await Promise.all(
+          editors.map((editor) =>
+            ctx.runMutation(internal.notifications.createNotificationInternal, {
+              userId: editor._id,
+              type: "article_pending",
+              title: "Nouvel article en attente de validation",
+              message: `Un article "${article.title}" a été soumis et nécessite votre validation.`,
+              link: `/studio/articles/en-attente`,
+              metadata: {
+                articleId: args.articleId,
+              },
+            })
+          )
+        );
+      }
+    }
+    
+    // Structure obligatoire
+    if (args.these !== undefined) updateData.these = args.these;
+    if (args.counterArguments !== undefined) updateData.counterArguments = args.counterArguments;
+    if (args.conclusion !== undefined) updateData.conclusion = args.conclusion;
+    if (args.sourcesCount !== undefined) updateData.sourcesCount = args.sourcesCount;
+
+    // Validation de la structure obligatoire si passage à "published"
+    if (args.status === "published" && article.status !== "published") {
+      const finalArticle = { ...article, ...updateData };
+      
+      // Récupérer les règles éditoriales pour ce type d'article
+      const editorialRules = await getEditorialRulesForArticleType(ctx, finalArticle.articleType);
+      
+      // Vérifier les champs obligatoires selon les règles configurables
+      if (editorialRules.requireThesis) {
+        if (!finalArticle.these || !finalArticle.these.trim()) {
+          throw new Error("La thèse est obligatoire pour publier un article");
+        }
+      }
+      
+      if (editorialRules.requireConclusion) {
+        if (!finalArticle.conclusion || !finalArticle.conclusion.trim()) {
+          throw new Error("La conclusion est obligatoire pour publier un article");
+        }
+      }
+      
+      if (editorialRules.requireCounterArguments) {
+        if ((finalArticle.counterArguments || []).length < 1) {
+          throw new Error("Au moins 1 contre-argument est obligatoire pour publier un article");
+        }
+      }
+      
+      // Vérifier le nombre minimum de sources selon le type d'article
+      if ((finalArticle.sourcesCount || 0) < editorialRules.minSources) {
+        throw new Error(
+          `Au moins ${editorialRules.minSources} source${editorialRules.minSources > 1 ? "s" : ""} ${editorialRules.minSources > 1 ? "sont" : "est"} obligatoire${editorialRules.minSources > 1 ? "s" : ""} pour publier un article de type "${finalArticle.articleType}"`
+        );
+      }
+      
+      // Vérifier la longueur de l'article
+      const contentLength = finalArticle.content?.length || 0;
+      if (contentLength < editorialRules.minLength) {
+        throw new Error(
+          `L'article doit contenir au moins ${editorialRules.minLength} caractères (actuellement ${contentLength})`
+        );
+      }
+      if (contentLength > editorialRules.maxLength) {
+        throw new Error(
+          `L'article ne peut pas dépasser ${editorialRules.maxLength} caractères (actuellement ${contentLength})`
+        );
+      }
+      
+      // Vérifier le nombre de tags
+      if ((finalArticle.tags || []).length > editorialRules.maxTags) {
+        throw new Error(
+          `Un article ne peut pas avoir plus de ${editorialRules.maxTags} tags`
+        );
+      }
+      
+      // Vérifier que le contenu n'est pas vide
+      try {
+        const contentObj = JSON.parse(finalArticle.content || "[]");
+        if (!Array.isArray(contentObj) || contentObj.length === 0) {
+          throw new Error("Le développement est obligatoire pour publier un article");
+        }
+      } catch {
+        throw new Error("Le contenu de l'article est invalide");
       }
     }
 
-    await ctx.db.patch(args.articleId, updates);
+    await ctx.db.patch(args.articleId, updateData);
 
-    // Recalculer le score de qualité si nécessaire
-    if (args.content !== undefined || args.status === "published") {
-      await updateArticleQualityScore(ctx, args.articleId);
+    // Recalculer le score de qualité
+    await updateArticleQualityScore(ctx, args.articleId);
+
+    // Mettre à jour le score de crédibilité de l'auteur si l'article vient d'être publié
+    if (args.status === "published" && article.status !== "published") {
+      await updateCredibilityScoreWithAction(
+        ctx,
+        article.authorId,
+        "article_published",
+        { articleId: args.articleId }
+      );
     }
 
     return { success: true };
@@ -468,13 +955,144 @@ export const updateArticle = mutation({
 });
 
 /**
- * Ajoute un claim (affirmation) à un article
+ * Approuve un article en attente (réservé aux éditeurs)
+ */
+export const approveArticle = mutation({
+  args: {
+    articleId: v.id("articles"),
+  },
+  handler: async (ctx, args) => {
+    const betterAuthUser = await betterAuthComponent.safeGetAuthUser(ctx as any);
+    if (!betterAuthUser) {
+      throw new Error("Not authenticated");
+    }
+
+    const appUser = await ctx.db
+      .query("users")
+      .withIndex("email", (q) => q.eq("email", betterAuthUser.email))
+      .first();
+
+    if (!appUser) {
+      throw new Error("User not found");
+    }
+
+    // Vérifier que l'utilisateur est éditeur
+    if (appUser.role !== "editeur") {
+      throw new Error("Seuls les éditeurs peuvent approuver des articles");
+    }
+
+    const article = await ctx.db.get(args.articleId);
+    if (!article) {
+      throw new Error("Article not found");
+    }
+
+    if (article.status !== "pending") {
+      throw new Error("Cet article n'est pas en attente de validation");
+    }
+
+    const now = Date.now();
+
+    // Publier l'article
+    await ctx.db.patch(args.articleId, {
+      status: "published",
+      publishedAt: now,
+      updatedAt: now,
+    });
+
+    // Mettre à jour le score de crédibilité de l'auteur
+    await updateCredibilityScoreWithAction(
+      ctx,
+      article.authorId,
+      "article_published",
+      { articleId: args.articleId }
+    );
+
+    // Envoyer une notification à l'auteur
+    await ctx.runMutation(internal.notifications.createNotificationInternal, {
+      userId: article.authorId,
+      type: "article_approved",
+      title: "Article approuvé",
+      message: `Votre article "${article.title}" a été approuvé et publié.`,
+      link: `/articles/${article.slug}`,
+      metadata: {
+        articleId: args.articleId,
+      },
+    });
+
+    return { success: true };
+  },
+});
+
+/**
+ * Rejette un article en attente (réservé aux éditeurs)
+ */
+export const rejectArticle = mutation({
+  args: {
+    articleId: v.id("articles"),
+    reason: v.optional(v.string()), // Raison du rejet
+  },
+  handler: async (ctx, args) => {
+    const betterAuthUser = await betterAuthComponent.safeGetAuthUser(ctx as any);
+    if (!betterAuthUser) {
+      throw new Error("Not authenticated");
+    }
+
+    const appUser = await ctx.db
+      .query("users")
+      .withIndex("email", (q) => q.eq("email", betterAuthUser.email))
+      .first();
+
+    if (!appUser) {
+      throw new Error("User not found");
+    }
+
+    // Vérifier que l'utilisateur est éditeur
+    if (appUser.role !== "editeur") {
+      throw new Error("Seuls les éditeurs peuvent rejeter des articles");
+    }
+
+    const article = await ctx.db.get(args.articleId);
+    if (!article) {
+      throw new Error("Article not found");
+    }
+
+    if (article.status !== "pending") {
+      throw new Error("Cet article n'est pas en attente de validation");
+    }
+
+    const now = Date.now();
+
+    // Rejeter l'article
+    await ctx.db.patch(args.articleId, {
+      status: "rejected",
+      updatedAt: now,
+    });
+
+    // Envoyer une notification à l'auteur
+    await ctx.runMutation(internal.notifications.createNotificationInternal, {
+      userId: article.authorId,
+      type: "article_rejected",
+      title: "Article rejeté",
+      message: args.reason 
+        ? `Votre article "${article.title}" a été rejeté. Raison : ${args.reason}`
+        : `Votre article "${article.title}" a été rejeté.`,
+      link: `/studio/articles/${article.slug}`,
+      metadata: {
+        articleId: args.articleId,
+      },
+    });
+
+    return { success: true };
+  },
+});
+
+/**
+ * Ajoute un claim à un article
  */
 export const addClaim = mutation({
   args: {
     articleId: v.id("articles"),
     claimText: v.string(),
-    position: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const betterAuthUser = await betterAuthComponent.safeGetAuthUser(ctx as any);
@@ -496,33 +1114,25 @@ export const addClaim = mutation({
       throw new Error("Article not found");
     }
 
-    // Vérifier que l'utilisateur est l'auteur
-    if (article.authorId !== appUser._id) {
-      throw new Error("Vous n'êtes pas l'auteur de cet article");
-    }
-
     const now = Date.now();
 
     const claimId = await ctx.db.insert("articleClaims", {
       articleId: args.articleId,
       claimText: args.claimText,
-      position: args.position,
       verificationStatus: "unverified",
       verificationScore: 0,
       sourcesCount: 0,
       expertVerificationsCount: 0,
+      position: 0, // Position dans l'article (optionnel)
       createdAt: now,
       updatedAt: now,
     });
 
-    // Mettre à jour le nombre de claims de l'article
+    // Mettre à jour le nombre total de claims de l'article
     await ctx.db.patch(args.articleId, {
       totalClaimsCount: article.totalClaimsCount + 1,
       updatedAt: now,
     });
-
-    // Recalculer le score de qualité
-    await updateArticleQualityScore(ctx, args.articleId);
 
     return { claimId };
   },
@@ -542,11 +1152,9 @@ export const addSourceToClaim = mutation({
       v.literal("website"),
       v.literal("other")
     ),
-    title: v.string(),
-    url: v.optional(v.string()),
-    author: v.optional(v.string()),
-    publicationDate: v.optional(v.number()),
-    reliabilityScore: v.number(), // Score de fiabilité (0-100)
+    sourceUrl: v.string(),
+    sourceTitle: v.optional(v.string()),
+    reliabilityScore: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const betterAuthUser = await betterAuthComponent.safeGetAuthUser(ctx as any);
@@ -568,183 +1176,21 @@ export const addSourceToClaim = mutation({
       throw new Error("Claim not found");
     }
 
-    const sourceId = await ctx.db.insert("claimSources", {
+    const now = Date.now();
+
+    // Récupérer le score de fiabilité par défaut depuis les règles configurables
+    const defaultReliabilityScore = await getRuleValueAsNumber(ctx, "default_source_reliability_score").catch(() => 50);
+
+    await ctx.db.insert("claimSources", {
       claimId: args.claimId,
       sourceType: args.sourceType,
-      title: args.title,
-      url: args.url,
-      author: args.author,
-      publicationDate: args.publicationDate,
-      reliabilityScore: args.reliabilityScore,
+      title: args.sourceTitle || "",
+      url: args.sourceUrl,
+      reliabilityScore: args.reliabilityScore || defaultReliabilityScore,
       addedBy: appUser._id,
-      createdAt: Date.now(),
+      createdAt: now,
     });
-
-    // Mettre à jour le nombre de sources du claim
-    await ctx.db.patch(args.claimId, {
-      sourcesCount: claim.sourcesCount + 1,
-      updatedAt: Date.now(),
-    });
-
-    // Si le claim a maintenant des sources, améliorer son statut
-    if (claim.sourcesCount === 0 && args.reliabilityScore >= 70) {
-      await ctx.db.patch(args.claimId, {
-        verificationStatus: "verified",
-        verificationScore: args.reliabilityScore,
-        updatedAt: Date.now(),
-      });
-    }
-
-    // Recalculer le score de qualité de l'article
-    await updateArticleQualityScore(ctx, claim.articleId);
-
-    return { sourceId };
-  },
-});
-
-/**
- * Vérifie un claim (par la communauté ou un expert)
- */
-export const verifyClaim = mutation({
-  args: {
-    claimId: v.id("articleClaims"),
-    verificationResult: v.union(
-      v.literal("verified"),
-      v.literal("disputed"),
-      v.literal("false")
-    ),
-    comment: v.optional(v.string()),
-    isExpert: v.optional(v.boolean()),
-  },
-  handler: async (ctx, args) => {
-    const betterAuthUser = await betterAuthComponent.safeGetAuthUser(ctx as any);
-    if (!betterAuthUser) {
-      throw new Error("Not authenticated");
-    }
-
-    const appUser = await ctx.db
-      .query("users")
-      .withIndex("email", (q) => q.eq("email", betterAuthUser.email))
-      .first();
-
-    if (!appUser) {
-      throw new Error("User not found");
-    }
-
-    const claim = await ctx.db.get(args.claimId);
-    if (!claim) {
-      throw new Error("Claim not found");
-    }
-
-    // Vérifier si l'utilisateur a déjà vérifié ce claim
-    const existingVerification = await ctx.db
-      .query("claimVerifications")
-      .withIndex("claimId", (q) => q.eq("claimId", args.claimId))
-      .filter((q) => q.eq(q.field("verifierId"), appUser._id))
-      .first();
-
-    if (existingVerification) {
-      // Mettre à jour la vérification existante
-      await ctx.db.patch(existingVerification._id, {
-        verificationResult: args.verificationResult,
-        comment: args.comment,
-        isExpert: args.isExpert || false,
-      });
-    } else {
-      // Créer une nouvelle vérification
-      await ctx.db.insert("claimVerifications", {
-        claimId: args.claimId,
-        verifierId: appUser._id,
-        isExpert: args.isExpert || false,
-        verificationResult: args.verificationResult,
-        comment: args.comment,
-        createdAt: Date.now(),
-      });
-    }
-
-    // Mettre à jour le statut du claim basé sur les vérifications
-    const verifications = await ctx.db
-      .query("claimVerifications")
-      .withIndex("claimId", (q) => q.eq("claimId", args.claimId))
-      .collect();
-
-    const expertVerifications = verifications.filter((v) => v.isExpert);
-    const verifiedCount = verifications.filter(
-      (v) => v.verificationResult === "verified"
-    ).length;
-    const disputedCount = verifications.filter(
-      (v) => v.verificationResult === "disputed"
-    ).length;
-    const falseCount = verifications.filter(
-      (v) => v.verificationResult === "false"
-    ).length;
-
-    let newStatus: "unverified" | "verified" | "disputed" | "false" = "unverified";
-    let newScore = 0;
-
-    if (expertVerifications.length > 0) {
-      // Si des experts ont vérifié, donner plus de poids
-      const expertVerified = expertVerifications.filter(
-        (v) => v.verificationResult === "verified"
-      ).length;
-      const expertFalse = expertVerifications.filter(
-        (v) => v.verificationResult === "false"
-      ).length;
-
-      if (expertVerified > expertFalse) {
-        newStatus = "verified";
-        newScore = 80 + (expertVerified * 5);
-      } else if (expertFalse > expertVerified) {
-        newStatus = "false";
-        newScore = 20;
-      } else {
-        newStatus = "disputed";
-        newScore = 50;
-      }
-    } else if (verifications.length > 0) {
-      // Sinon, utiliser la majorité communautaire
-      if (verifiedCount > disputedCount && verifiedCount > falseCount) {
-        newStatus = "verified";
-        newScore = 60 + (verifiedCount * 2);
-      } else if (falseCount > verifiedCount && falseCount > disputedCount) {
-        newStatus = "false";
-        newScore = 30;
-      } else {
-        newStatus = "disputed";
-        newScore = 50;
-      }
-    }
-
-    await ctx.db.patch(args.claimId, {
-      verificationStatus: newStatus,
-      verificationScore: Math.min(100, newScore),
-      expertVerificationsCount: expertVerifications.length,
-      updatedAt: Date.now(),
-    });
-
-    // Mettre à jour le nombre de vérifications expertes de l'article
-    const article = await ctx.db.get(claim.articleId);
-    if (article) {
-      const allClaims = await ctx.db
-        .query("articleClaims")
-        .withIndex("articleId", (q) => q.eq("articleId", claim.articleId))
-        .collect();
-
-      const totalExpertVerifications = allClaims.reduce(
-        (sum, c) => sum + c.expertVerificationsCount,
-        0
-      );
-
-      await ctx.db.patch(claim.articleId, {
-        expertReviewCount: totalExpertVerifications,
-        updatedAt: Date.now(),
-      });
-    }
-
-    // Recalculer le score de qualité de l'article
-    await updateArticleQualityScore(ctx, claim.articleId);
 
     return { success: true };
   },
 });
-

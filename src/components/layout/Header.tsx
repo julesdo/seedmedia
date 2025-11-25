@@ -15,10 +15,42 @@ import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Breadcrumb } from "./Breadcrumb";
 import { SolarIcon } from "@/components/icons/SolarIcon";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { CredibilityBadge } from "@/components/credibility/CredibilityBadge";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { formatDistanceToNow } from "date-fns";
+import { fr } from "date-fns/locale";
+import { useMutation } from "convex/react";
+import { Id } from "../../../convex/_generated/dataModel";
+import { useRouter } from "next/navigation";
 
 export function Header() {
   const user = useQuery(api.users.getCurrentUser);
-  const notificationsCount = 62; // TODO: Get from Convex
+  const notificationsCount = useQuery(api.notifications.getUnreadNotificationsCount) || 0;
+  const notifications = useQuery(api.notifications.getUnreadNotifications) || [];
+  const markAsRead = useMutation(api.notifications.markNotificationAsRead);
+  const markAllAsRead = useMutation(api.notifications.markAllNotificationsAsRead);
+  const router = useRouter();
+
+  const handleNotificationClick = async (notificationId: Id<"notifications">, link?: string) => {
+    await markAsRead({ notificationId });
+    if (link) {
+      router.push(link);
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    await markAllAsRead({});
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-sidebar/80 backdrop-blur-xl supports-[backdrop-filter]:bg-sidebar/80">
@@ -45,37 +77,6 @@ export function Header() {
 
         {/* Right: Actions */}
         <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Level */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="glass" size="sm" className="gap-1.5 hidden sm:flex">
-                <span className="text-gradient-light">Niveau {user?.level || 3}</span>
-                <SolarIcon icon="alt-arrow-down-bold" className="h-3.5 w-3.5 icon-gradient-light" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>Niveau 1</DropdownMenuItem>
-              <DropdownMenuItem>Niveau 2</DropdownMenuItem>
-              <DropdownMenuItem>Niveau 3</DropdownMenuItem>
-              <DropdownMenuItem>Niveau 4</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* Region */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="glass" size="sm" className="gap-1.5 hidden md:flex">
-                <span className="text-gradient-light">{user?.region || "Nouvelle-Aquitaine"}</span>
-                <SolarIcon icon="alt-arrow-down-bold" className="h-3.5 w-3.5 icon-gradient-light" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>Nouvelle-Aquitaine</DropdownMenuItem>
-              <DropdownMenuItem>Île-de-France</DropdownMenuItem>
-              <DropdownMenuItem>Auvergne-Rhône-Alpes</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
           {/* Language */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -90,19 +91,107 @@ export function Header() {
             </DropdownMenuContent>
           </DropdownMenu>
 
+          {/* Theme Toggle */}
+          <ThemeToggle variant="ghost" />
+
+          {/* Credibility Badge */}
+          {user && (
+            <CredibilityBadge compact showLabel={false} />
+          )}
+
           {/* Notifications */}
-          <Button variant="glass" size="icon" className="relative">
-            <SolarIcon icon="bell-bold" className="h-4 w-4 icon-gradient-light" />
-            {notificationsCount > 0 && (
-              <Badge
-                variant="default"
-                className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs font-semibold"
-              >
-                {notificationsCount}
-              </Badge>
-            )}
-            <span className="sr-only">Notifications</span>
-          </Button>
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="glass" size="icon" className="relative">
+                <SolarIcon icon="bell-bold" className="h-4 w-4 icon-gradient-light" />
+                {notificationsCount > 0 && (
+                  <Badge
+                    variant="default"
+                    className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs font-semibold"
+                  >
+                    {notificationsCount > 99 ? "99+" : notificationsCount}
+                  </Badge>
+                )}
+                <span className="sr-only">Notifications</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-full sm:w-[400px] p-0">
+              <SheetHeader className="px-6 pt-6 pb-4 border-b">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <SheetTitle>Notifications</SheetTitle>
+                    <SheetDescription>
+                      {notificationsCount > 0
+                        ? `${notificationsCount} notification${notificationsCount > 1 ? "s" : ""} non lue${notificationsCount > 1 ? "s" : ""}`
+                        : "Aucune notification"}
+                    </SheetDescription>
+                  </div>
+                  {notificationsCount > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleMarkAllAsRead}
+                      className="text-xs"
+                    >
+                      Tout marquer comme lu
+                    </Button>
+                  )}
+                </div>
+              </SheetHeader>
+              <ScrollArea className="h-[calc(100vh-120px)]">
+                <div className="p-4 space-y-2">
+                  {notifications.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                      <SolarIcon icon="bell-off-bold" className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                      <p className="text-sm text-muted-foreground">Aucune notification</p>
+                    </div>
+                  ) : (
+                    notifications.map((notification) => (
+                      <div
+                        key={notification._id}
+                        className="p-4 rounded-lg border border-border/50 bg-background hover:bg-accent/50 transition-colors cursor-pointer"
+                        onClick={() => handleNotificationClick(notification._id, notification.link)}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="flex-shrink-0 mt-0.5">
+                            <SolarIcon
+                              icon={
+                                notification.type === "correction_approved"
+                                  ? "verified-check-bold"
+                                  : notification.type === "proposal_vote"
+                                  ? "hand-stars-bold"
+                                  : notification.type === "debat_argument"
+                                  ? "chat-round-bold"
+                                  : "notification-bold"
+                              }
+                              className="h-5 w-5 icon-gradient-light"
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-sm text-gradient-light mb-1">
+                              {notification.title}
+                            </p>
+                            <p className="text-sm text-muted-foreground mb-2">
+                              {notification.message}
+                            </p>
+                            <p className="text-xs text-muted-foreground/70">
+                              {formatDistanceToNow(new Date(notification.createdAt), {
+                                addSuffix: true,
+                                locale: fr,
+                              })}
+                            </p>
+                          </div>
+                          {!notification.read && (
+                            <div className="flex-shrink-0 w-2 h-2 rounded-full bg-primary mt-2" />
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </ScrollArea>
+            </SheetContent>
+          </Sheet>
 
           {/* User Avatar */}
           <DropdownMenu>

@@ -17,9 +17,9 @@ export function MainLayout({ children, rightPanel }: MainLayoutProps) {
         <Header />
         
         {/* Content Area */}
-        <div className="flex flex-1 overflow-hidden">
-          <main className="flex-1 overflow-y-auto bg-background">
-            <div className="container mx-auto p-4">{children}</div>
+        <div className="flex flex-1">
+          <main className="flex-1 bg-background">
+            {children}
           </main>
           {rightPanel && (
             <aside className="hidden lg:block w-80 border-l overflow-y-auto bg-background">

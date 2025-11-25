@@ -7,6 +7,8 @@ import { SolarIcon } from "@/components/icons/SolarIcon";
 import { Link } from "next-view-transitions";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
+import { FavoriteButton } from "@/components/favorites/FavoriteButton";
+import { Id } from "../../../../convex/_generated/dataModel";
 
 interface ArticlesTabProps {
   articles?: any[] | undefined;
@@ -45,8 +47,18 @@ export function ArticlesTab({ articles }: ArticlesTabProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {articles.map((article) => (
-        <Link key={article._id} href={`/articles/${article.slug}`}>
-          <Card className="h-full hover:scale-[1.02] transition-transform cursor-pointer group">
+        <Card key={article._id} className="h-full hover:scale-[1.02] transition-transform group relative">
+          {/* Bouton favori en haut à droite */}
+          <div className="absolute top-3 right-3 z-10">
+            <FavoriteButton
+              targetType="article"
+              targetId={article._id as Id<"articles">}
+              variant="ghost"
+              size="sm"
+              className="backdrop-blur-sm bg-background/90"
+            />
+          </div>
+          <Link href={`/articles/${article.slug}`}>
             {article.coverImage && (
               <AspectRatio ratio={16 / 9} className="overflow-hidden rounded-t-lg">
                 <img
@@ -105,8 +117,8 @@ export function ArticlesTab({ articles }: ArticlesTabProps) {
                 </span>
               </div>
             </CardContent>
-          </Card>
-        </Link>
+          </Link>
+        </Card>
       ))}
     </div>
   );

@@ -22,6 +22,12 @@ const nextConfig: NextConfig = {
         hostname: "avatars.githubusercontent.com",
         port: "",
         pathname: "/**", // Allows any path under this hostname
+      },
+      {
+        protocol: "https", // Or 'http' if that's what your URLs use
+        hostname: "rightful-monitor-255.convex.cloud",
+        port: "",
+        pathname: "/**", // Allows any path under this hostname
       }
       // You can add other hostnames here if needed
       // Example:

@@ -3,7 +3,6 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import { ViewTransitions } from "next-view-transitions";
 import "./globals.css";
 import { ThemeProvider } from "@/components/next-theme/theme-provider";
-import { Footer } from "@/components/footer";
 
 import { ConvexClientProvider } from "./ConvexClientProvider";
 
@@ -27,7 +26,7 @@ export default function RootLayout({
     <ViewTransitions>
       <html lang="en" suppressHydrationWarning>
         <body
-          className={`${plusJakartaSans.variable} min-h-[calc(100vh-2rem)] flex flex-col gap-4 antialiased font-sans`}
+          className={`${plusJakartaSans.variable} antialiased font-sans`}
         >
         {/* SVG Gradients pour les icônes */}
         <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
@@ -52,16 +51,13 @@ export default function RootLayout({
          <ThemeProvider
             attribute="class"
             defaultTheme="dark"
-            forcedTheme="dark"
             enableSystem={false}
             disableTransitionOnChange
           >
             <ConvexClientProvider>
-            <main className="grow flex flex-col">
-            
+            <main>
               {children}
             </main>
-            <Footer />
             </ConvexClientProvider>
             
           </ThemeProvider>

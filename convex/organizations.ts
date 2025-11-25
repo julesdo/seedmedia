@@ -2,6 +2,7 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { betterAuthComponent } from "./auth";
 import { Id } from "./_generated/dataModel";
+import { internal } from "./_generated/api";
 
 /**
  * Récupère toutes les organizations d'un utilisateur
@@ -407,23 +408,13 @@ export const createOrganization = mutation({
     ),
     legalStatus: v.optional(v.string()),
     foundedAt: v.optional(v.number()),
-    sector: v.optional(
-      v.union(
-        v.literal("tech"),
-        v.literal("environnement"),
-        v.literal("social"),
-        v.literal("education"),
-        v.literal("culture"),
-        v.literal("sante"),
-        v.literal("autre")
-      )
-    ),
+    categoryIds: v.optional(v.array(v.id("categories"))),
+    categorySlugs: v.optional(v.array(v.string())), // Pour les catégories par défaut (pas encore en base)
     tags: v.optional(v.array(v.string())),
     contactEmail: v.optional(v.string()),
     contactPhone: v.optional(v.string()),
     website: v.optional(v.string()),
     languages: v.optional(v.array(v.string())),
-    reachRadius: v.optional(v.number()),
     impactMetrics: v.optional(
       v.array(
         v.object({
@@ -478,14 +469,13 @@ export const createOrganization = mutation({
       organizationType: args.organizationType,
       legalStatus: args.legalStatus,
       foundedAt: args.foundedAt,
-      sector: args.sector,
+      categoryIds: args.categoryIds || [],
       tags: args.tags || [],
       contactEmail: args.contactEmail,
       contactPhone: args.contactPhone,
       website: args.website,
       links: [],
       languages: args.languages || ["fr"],
-      reachRadius: args.reachRadius,
       impactMetrics: args.impactMetrics,
       schedule: args.schedule,
       verified: false,
@@ -544,23 +534,13 @@ export const updateOrganization = mutation({
     ),
     legalStatus: v.optional(v.string()),
     foundedAt: v.optional(v.number()),
-    sector: v.optional(
-      v.union(
-        v.literal("tech"),
-        v.literal("environnement"),
-        v.literal("social"),
-        v.literal("education"),
-        v.literal("culture"),
-        v.literal("sante"),
-        v.literal("autre")
-      )
-    ),
+    categoryIds: v.optional(v.array(v.id("categories"))),
+    categorySlugs: v.optional(v.array(v.string())), // Pour les catégories par défaut (pas encore en base)
     tags: v.optional(v.array(v.string())),
     contactEmail: v.optional(v.string()),
     contactPhone: v.optional(v.string()),
     website: v.optional(v.string()),
     languages: v.optional(v.array(v.string())),
-    // reachRadius est géré automatiquement par l'algorithme selon le niveau/XP
     impactMetrics: v.optional(
       v.array(
         v.object({
@@ -624,13 +604,17 @@ export const updateOrganization = mutation({
     if (args.organizationType !== undefined) updates.organizationType = args.organizationType;
     if (args.legalStatus !== undefined) updates.legalStatus = args.legalStatus;
     if (args.foundedAt !== undefined) updates.foundedAt = args.foundedAt;
-    if (args.sector !== undefined) updates.sector = args.sector;
+    if (args.categoryIds !== undefined) updates.categoryIds = args.categoryIds;
+    if (args.categorySlugs !== undefined) {
+      // Pour les catégories par défaut, on doit les convertir en categoryIds si elles existent en base
+      // Sinon, on les garde en categorySlugs pour référence future
+      updates.categorySlugs = args.categorySlugs;
+    }
     if (args.tags !== undefined) updates.tags = args.tags;
     if (args.contactEmail !== undefined) updates.contactEmail = args.contactEmail;
     if (args.contactPhone !== undefined) updates.contactPhone = args.contactPhone;
     if (args.website !== undefined) updates.website = args.website;
     if (args.languages !== undefined) updates.languages = args.languages;
-    // reachRadius est géré automatiquement par l'algorithme selon le niveau/XP
     if (args.impactMetrics !== undefined) updates.impactMetrics = args.impactMetrics;
     if (args.links !== undefined) updates.links = args.links;
     if (args.schedule !== undefined) updates.schedule = args.schedule;
@@ -711,9 +695,37 @@ export const transferOwnership = mutation({
     });
 
     // Mettre à jour l'organisation avec le nouveau propriétaire
+    const organization = await ctx.db.get(args.organizationId);
     await ctx.db.patch(args.organizationId, {
       ownerId: args.newOwnerId,
       updatedAt: Date.now(),
+    });
+
+    // Récupérer les informations du nouveau propriétaire
+    const newOwnerUser = await ctx.db.get(args.newOwnerId);
+
+    // Notifier le nouveau propriétaire
+    await ctx.runMutation(internal.notifications.createNotificationInternal, {
+      userId: args.newOwnerId,
+      type: "role_changed",
+      title: "Vous êtes maintenant propriétaire",
+      message: `${appUser.email?.split("@")[0] || "Un utilisateur"} vous a transféré la propriété de l'organisation "${organization?.name || "l'organisation"}"`,
+      link: `/discover/organizations/${args.organizationId}`,
+      metadata: {
+        organizationId: args.organizationId,
+      },
+    });
+
+    // Notifier l'ancien propriétaire
+    await ctx.runMutation(internal.notifications.createNotificationInternal, {
+      userId: appUser._id,
+      type: "role_changed",
+      title: "Propriété transférée",
+      message: `Vous avez transféré la propriété de "${organization?.name || "l'organisation"}" à ${newOwnerUser?.email?.split("@")[0] || "un membre"}. Vous êtes maintenant administrateur.`,
+      link: `/discover/organizations/${args.organizationId}`,
+      metadata: {
+        organizationId: args.organizationId,
+      },
     });
 
     return { success: true };
@@ -796,17 +808,7 @@ export const searchOrganizations = query({
         v.literal("autre")
       )
     ),
-    sector: v.optional(
-      v.union(
-        v.literal("tech"),
-        v.literal("environnement"),
-        v.literal("social"),
-        v.literal("education"),
-        v.literal("culture"),
-        v.literal("sante"),
-        v.literal("autre")
-      )
-    ),
+    categoryIds: v.optional(v.array(v.id("categories"))), // Au moins une catégorie doit correspondre
     tags: v.optional(v.array(v.string())), // Au moins un tag doit correspondre
     verified: v.optional(v.boolean()),
     premiumTier: v.optional(
@@ -846,12 +848,6 @@ export const searchOrganizations = query({
         .withIndex("organizationType", (q) => q.eq("organizationType", args.organizationType!))
         .collect();
       results.push(...byType);
-    } else if (args.sector) {
-      // Si on a un filtre par secteur, utiliser l'index
-      const bySector = await orgQuery
-        .withIndex("sector", (q) => q.eq("sector", args.sector!))
-        .collect();
-      results.push(...bySector);
     } else {
       // Sinon, récupérer toutes les organisations
       const all = await orgQuery.collect();
@@ -886,11 +882,12 @@ export const searchOrganizations = query({
     } else if (!results.some((r) => r.organizationType === args.organizationType)) {
       filtered = filtered.filter((org) => org.organizationType === args.organizationType);
     }
-    
-    if (args.sector === undefined) {
-      // Pas de filtre par secteur
-    } else if (!results.some((r) => r.sector === args.sector)) {
-      filtered = filtered.filter((org) => org.sector === args.sector);
+
+    // Filtre par catégories (au moins une catégorie doit correspondre)
+    if (args.categoryIds && args.categoryIds.length > 0) {
+      filtered = filtered.filter((org) =>
+        org.categoryIds && args.categoryIds!.some((catId) => org.categoryIds!.includes(catId))
+      );
     }
 
     // Filtre par tags (au moins un tag doit correspondre)

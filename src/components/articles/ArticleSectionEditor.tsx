@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { EditorProvider, Editor, ContainerNode, getNodeTextContent } from "@/components/ui/rich-editor";
-import { createEmptyContent } from "@/components/ui/rich-editor/empty-content";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,11 +9,13 @@ import { SolarIcon } from "@/components/icons/SolarIcon";
 import { X, Plus, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { PlateEditorWrapper, extractTextFromPlateValue } from "./PlateEditorWrapper";
+import type { TElement } from "platejs";
 
 export interface ArticleSection {
   id: string;
   title: string;
-  content: string; // JSON stringifié du ContainerNode de Mina Rich Editor
+  content: string; // JSON stringifié du contenu Plate.js
   order: number;
   wordCount: number;
   hasClaims: boolean;
@@ -38,8 +38,6 @@ export function ArticleSectionEditor({
     new Set([sections[0]?.id].filter(Boolean) as string[])
   );
   const [editingTitle, setEditingTitle] = useState<string | null>(null);
-  // Stocker les containers initiaux pour éviter les réinitialisations
-  const initialContainersRef = useRef<Map<string, ContainerNode>>(new Map());
   
   // Stocker les fichiers images avec leurs URLs blob temporaires
   const pendingImagesRef = useRef<Map<string, File>>(new Map());
@@ -51,27 +49,6 @@ export function ArticleSectionEditor({
   useEffect(() => {
     onImagesChangeRef.current = onImagesChange;
   }, [onImagesChange]);
-
-  // Synchroniser initialContainersRef avec section.content quand il change
-  useEffect(() => {
-    sections.forEach((section) => {
-      if (section.content) {
-        try {
-          const parsed = JSON.parse(section.content) as ContainerNode;
-          // Ne mettre à jour que si le contenu a vraiment changé
-          const existing = initialContainersRef.current.get(section.id);
-          const existingString = existing ? JSON.stringify(existing) : null;
-          const newString = JSON.stringify(parsed);
-          
-          if (existingString !== newString) {
-            initialContainersRef.current.set(section.id, parsed);
-          }
-        } catch {
-          // Ignorer les erreurs de parsing
-        }
-      }
-    });
-  }, [sections]);
 
   // Fonction pour créer une URL blob temporaire au lieu d'uploader immédiatement
   const handleImageUpload = useCallback(async (file: File): Promise<string> => {
@@ -191,11 +168,10 @@ export function ArticleSectionEditor({
   const calculateWordCount = (content: string): number => {
     try {
       if (!content) return 0;
-      const container: ContainerNode = JSON.parse(content);
-      // Extraire le texte du ContainerNode
-      const text = getNodeTextContent(container);
-      return text.trim().split(/\s+/).filter((w: string) => w.length > 0)
-        .length;
+      const parsed = JSON.parse(content) as TElement[];
+      // Utiliser la fonction utilitaire pour extraire le texte
+      const text = extractTextFromPlateValue(parsed);
+      return text.split(/\s+/).filter((w: string) => w.length > 0).length;
     } catch {
       return 0;
     }
@@ -211,12 +187,13 @@ export function ArticleSectionEditor({
     try {
       if (!content) return;
       
-      // Fonction récursive pour extraire les blob URLs du container
+      // Fonction récursive pour extraire les blob URLs du format Plate.js
       const extractBlobUrls = (node: any, blobUrls: Set<string>): void => {
         if (!node) return;
         
-        if (node.type === 'img' || node.type === 'video') {
-          const src = node.attributes?.src;
+        // Plate.js peut avoir des images dans différents formats
+        if (node.type === 'img' || node.type === 'image') {
+          const src = node.url || node.src || node.attributes?.src;
           if (src && typeof src === 'string' && src.startsWith('blob:')) {
             blobUrls.add(src);
           }
@@ -227,9 +204,9 @@ export function ArticleSectionEditor({
         }
       };
       
-      const container: ContainerNode = JSON.parse(content);
+      const parsed = JSON.parse(content) as TElement[];
       const blobUrlsInContent = new Set<string>();
-      extractBlobUrls(container, blobUrlsInContent);
+      parsed.forEach((node) => extractBlobUrls(node, blobUrlsInContent));
       
       // Retirer de pendingImagesRef les URLs blob qui ne sont plus dans le contenu
       // MAIS NE PAS RÉVOQUER - on laisse les blob URLs actifs jusqu'à l'upload final
@@ -255,57 +232,6 @@ export function ArticleSectionEditor({
     }
   };
 
-  // Fonction helper pour calculer initialContainer
-  const getInitialContainer = useCallback((section: ArticleSection): ContainerNode => {
-    // Toujours calculer depuis section.content pour être sûr d'avoir la dernière version
-    if (section.content) {
-      try {
-        const parsed = JSON.parse(section.content) as ContainerNode;
-        // Mettre à jour le ref pour éviter les re-parsing inutiles
-        initialContainersRef.current.set(section.id, parsed);
-        return parsed;
-      } catch {
-        // En cas d'erreur, utiliser le ref si disponible, sinon créer un container vide
-        const cached = initialContainersRef.current.get(section.id);
-        if (cached) {
-          return cached;
-        }
-        const empty = {
-          id: `container-${section.id}`,
-          type: "container",
-          children: createEmptyContent(),
-          attributes: {},
-        } as ContainerNode;
-        initialContainersRef.current.set(section.id, empty);
-        return empty;
-      }
-    } else {
-      // Si pas de contenu, utiliser le ref si disponible, sinon créer un container vide
-      const cached = initialContainersRef.current.get(section.id);
-      if (cached) {
-        return cached;
-      }
-      const empty = {
-        id: `container-${section.id}`,
-        type: "container",
-        children: createEmptyContent(),
-        attributes: {},
-      } as ContainerNode;
-      initialContainersRef.current.set(section.id, empty);
-      return empty;
-    }
-  }, []);
-
-  // Fonction helper pour générer un hash simple du contenu
-  const getContentHash = useCallback((content: string | null): string => {
-    if (!content) return 'empty';
-    // Utiliser la longueur et les premiers/derniers caractères comme hash
-    // Cela permet de détecter les changements même si le contenu est long
-    const len = content.length;
-    const start = content.slice(0, 50);
-    const end = content.slice(-50);
-    return `${len}-${start}-${end}`;
-  }, []);
 
   return (
     <div className="space-y-4">
@@ -317,6 +243,7 @@ export function ArticleSectionEditor({
           <Card
             key={section.id}
             className="border-0 bg-gradient-to-br from-background/70 to-background/30 backdrop-blur-lg"
+            style={{ position: 'relative' }}
           >
             <CardContent className="p-0">
               {/* Header de section - Entièrement cliquable */}
@@ -435,53 +362,17 @@ export function ArticleSectionEditor({
                   }}
                 >
                   <div className="h-[600px] border-0 bg-gradient-to-br from-background/80 to-background/40 backdrop-blur-lg rounded-lg flex flex-col relative shadow-sm">
-                    <EditorProvider
-                      key={`editor-${section.id}-${getContentHash(section.content)}`}
-                      initialContainer={getInitialContainer(section)}
-                      onChange={(state) => {
-                        // Récupérer le container actuel depuis l'état
-                        const currentContainer = state.history[state.historyIndex];
-                        if (currentContainer) {
-                          const contentString = JSON.stringify(currentContainer);
-                          // Ne mettre à jour que si le contenu a vraiment changé
-                          if (contentString !== section.content) {
-                            handleContentChange(
-                              section.id,
-                              contentString
-                            );
-                          }
+                    <PlateEditorWrapper
+                      key={`editor-${section.id}`}
+                      value={section.content}
+                      onChange={(content) => {
+                        // Ne mettre à jour que si le contenu a vraiment changé
+                        if (content !== section.content) {
+                          handleContentChange(section.id, content);
                         }
                       }}
-                    >
-                      <div 
-                        className="flex-1 overflow-y-auto min-h-0 relative" 
-                        style={{ overflowX: 'clip' }}
-                        onMouseDown={(e) => {
-                          // Empêcher le changement de focus vers l'input titre quand on clique dans l'éditeur
-                          const target = e.target as HTMLElement
-                          // Si on clique sur un bouton ou un élément interactif dans l'éditeur, empêcher le changement de focus
-                          if (target.closest('button') || target.closest('[role="button"]')) {
-                            e.preventDefault()
-                            e.stopPropagation()
-                          }
-                        }}
-                        onClick={(e) => {
-                          // Empêcher la propagation des clics sur les boutons
-                          const target = e.target as HTMLElement
-                          if (target.closest('button') || target.closest('[role="button"]')) {
-                            e.stopPropagation()
-                          }
-                        }}
-                      >
-                        <div className="h-full w-full">
-                          <Editor
-                            readOnly={false}
-                            notionBased={false}
-                            onUploadImage={handleImageUpload}
-                          />
-                        </div>
-                      </div>
-                    </EditorProvider>
+                      placeholder="Commencez à écrire votre section..."
+                    />
                   </div>
 
                   {/* Bouton pour ajouter des claims */}

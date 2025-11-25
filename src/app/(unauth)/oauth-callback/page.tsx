@@ -84,7 +84,7 @@ export default function OAuthCallbackPage() {
         }
       } else if (!isAdding) {
         // Rediriger vers discover normalement
-        window.location.href = "/discover";
+        window.location.href = "/studio";
       }
     };
 

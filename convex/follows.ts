@@ -107,13 +107,19 @@ export const getOrganizationFollowers = query({
           ? {
               _id: user._id,
               email: user.email,
+              name: user.name,
+              image: user.image,
+              credibilityScore: user.credibilityScore || 0,
+              level: user.level || 1,
               createdAt: follow.createdAt,
             }
           : null;
       })
     );
 
-    return followers.filter(Boolean);
+    return followers
+      .filter((f): f is NonNullable<typeof f> => f !== null)
+      .sort((a, b) => b.createdAt - a.createdAt);
   },
 });
 

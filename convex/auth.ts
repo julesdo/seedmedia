@@ -1,7 +1,7 @@
 import {
   createClient,
 } from "@convex-dev/better-auth";
-import { components } from "./_generated/api";
+import { components, internal } from "./_generated/api";
 import { query } from "./_generated/server";
 import { DataModel, Id } from "./_generated/dataModel";
 import { asyncMap } from "convex-helpers";
@@ -13,34 +13,70 @@ export const betterAuthComponent = createClient(components.betterAuth, {
       onCreate: async (ctx, user) => {
         // Initialize user with Seed defaults
         const now = Date.now();
-        const userId = await ctx.db.insert("users", {
+        // Récupérer les valeurs initiales depuis les règles configurables
+        // Note: Dans un trigger onCreate, on ne peut pas utiliser les queries Convex
+        // On utilise donc les valeurs par défaut directement
+        const initialLevel = 1;
+        const initialReachRadius = 10;
+
+        const userData: any = {
           email: user.email,
-          level: 1,
-          reachRadius: 10, // Niveau 1 = 10km
+          level: initialLevel,
+          reachRadius: initialReachRadius,
           tags: [],
           links: [],
           profileCompletion: 0,
           premiumTier: "free",
           boostCredits: 0,
+          credibilityScore: 0, // Score initial de crédibilité
+          role: "explorateur", // Rôle par défaut
+          expertiseDomains: [], // Domaines d'expertise (vide au départ)
           createdAt: now,
           updatedAt: now,
-        });
+        };
+        
+        // Ajouter name et image seulement s'ils existent
+        if (user.name) {
+          userData.name = user.name;
+        }
+        if (user.image) {
+          userData.image = user.image;
+        }
+        
+        const userId = await ctx.db.insert("users", userData);
 
-        // Initialize missions for new user
-        // Note: We'll call this from the frontend after user creation
-        // to avoid circular dependencies
+        // Initialize missions for new user (via internal mutation)
+        // Note: We use internal mutation to avoid circular dependencies
+        await ctx.runMutation(internal.missions.initializeMissionsInternal, {
+          userId,
+        });
       },
       onUpdate: async (ctx, newUser, oldUser) => {
-        // Keep the user's email synced
+        // Keep the user's email, name, and image synced
         const appUser = await ctx.db
           .query("users")
           .withIndex("email", (q) => q.eq("email", oldUser.email))
           .first();
 
         if (appUser && appUser._id) {
-          await ctx.db.patch(appUser._id as Id<"users">, {
+          const updates: any = {
             email: newUser.email,
-          });
+            updatedAt: Date.now(),
+          };
+          
+          // Synchroniser le nom si disponible dans Better Auth
+          // On met à jour si Better Auth a un nom et que l'utilisateur n'en a pas ou a juste l'email
+          if (newUser.name && appUser.email && typeof appUser.email === "string" && (!appUser.name || appUser.name === appUser.email.split("@")[0])) {
+            updates.name = newUser.name;
+          }
+          
+          // Synchroniser l'image si disponible dans Better Auth
+          // On met à jour si Better Auth a une image et que l'utilisateur n'en a pas
+          if (newUser.image && !appUser.image) {
+            updates.image = newUser.image;
+          }
+          
+          await ctx.db.patch(appUser._id as Id<"users">, updates);
         }
       },
       onDelete: async (ctx, user) => {

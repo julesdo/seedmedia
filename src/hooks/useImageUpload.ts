@@ -22,13 +22,34 @@ interface UseImageUploadReturn {
 /**
  * Hook réutilisable pour l'upload d'images avec Convex File Storage
  */
+/**
+ * Normalise les types de fichiers acceptés (gère les wildcards comme "image/*")
+ */
+function normalizeAcceptedFileTypes(types: string[]): string[] {
+  const normalized: string[] = [];
+  const imageTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"];
+  
+  for (const type of types) {
+    if (type === "image/*") {
+      normalized.push(...imageTypes);
+    } else {
+      normalized.push(type);
+    }
+  }
+  
+  return [...new Set(normalized)]; // Supprimer les doublons
+}
+
 export function useImageUpload(options: UseImageUploadOptions = {}): UseImageUploadReturn {
   const {
     maxSize = 5 * 1024 * 1024, // 5MB par défaut
-    acceptedFileTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"],
+    acceptedFileTypes: rawAcceptedFileTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"],
     onUploadSuccess,
     onUploadError,
   } = options;
+
+  // Normaliser les types acceptés (gérer les wildcards)
+  const acceptedFileTypes = normalizeAcceptedFileTypes(rawAcceptedFileTypes);
 
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -40,9 +61,12 @@ export function useImageUpload(options: UseImageUploadOptions = {}): UseImageUpl
     try {
       // Validation du type de fichier
       if (!acceptedFileTypes.includes(file.type)) {
-        const acceptedTypes = acceptedFileTypes.map((t) => t.split("/")[1]).join(", ");
+        const acceptedTypes = acceptedFileTypes
+          .map((t) => t.split("/")[1])
+          .filter((t) => t !== "*") // Exclure les wildcards
+          .join(", ");
         throw new Error(
-          `Type de fichier non accepté. Types acceptés: ${acceptedTypes}`
+          `Type de fichier non accepté. Types acceptés: ${acceptedTypes || "images"}`
         );
       }
 

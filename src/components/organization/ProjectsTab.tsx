@@ -6,6 +6,8 @@ import { SolarIcon } from "@/components/icons/SolarIcon";
 import { Link } from "next-view-transitions";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
+import { FavoriteButton } from "@/components/favorites/FavoriteButton";
+import { Id } from "../../../../convex/_generated/dataModel";
 
 interface ProjectsTabProps {
   projects?: any[] | undefined;
@@ -50,8 +52,18 @@ export function ProjectsTab({ projects }: ProjectsTabProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {projects.map((project) => (
-        <Link key={project._id} href={`/projects/${project.slug}`}>
-          <Card className="h-full hover:scale-[1.02] transition-transform cursor-pointer group">
+        <Card key={project._id} className="h-full hover:scale-[1.02] transition-transform group relative">
+          {/* Bouton favori en haut à droite */}
+          <div className="absolute top-3 right-3 z-10">
+            <FavoriteButton
+              targetType="project"
+              targetId={project._id as Id<"projects">}
+              variant="ghost"
+              size="sm"
+              className="backdrop-blur-sm bg-background/90"
+            />
+          </div>
+          <Link href={`/projects/${project.slug}`}>
             {project.images && project.images.length > 0 && (
               <AspectRatio ratio={16 / 9} className="overflow-hidden rounded-t-lg">
                 <img
@@ -104,8 +116,8 @@ export function ProjectsTab({ projects }: ProjectsTabProps) {
                 </Badge>
               )}
             </CardContent>
-          </Card>
-        </Link>
+          </Link>
+        </Card>
       ))}
     </div>
   );
