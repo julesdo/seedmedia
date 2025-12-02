@@ -327,17 +327,87 @@ export const toggleCommentReaction = mutation({
     }
 
     if (existingReaction) {
-      // Retirer la réaction
-      await ctx.db.delete(existingReaction._id);
-      
-      // Décrémenter usefulCount si c'était une réaction "useful"
-      if (args.type === "useful" && comment.usefulCount > 0) {
-        await ctx.db.patch(args.commentId, {
-          usefulCount: comment.usefulCount - 1,
-        });
-      }
+      // Si c'est le même type de réaction, on la retire
+      if (existingReaction.type === args.type) {
+        await ctx.db.delete(existingReaction._id);
+        
+        // Décrémenter usefulCount si c'était une réaction "useful"
+        if (args.type === "useful" && comment.usefulCount > 0) {
+          await ctx.db.patch(args.commentId, {
+            usefulCount: comment.usefulCount - 1,
+          });
+        }
 
-      return { success: true, added: false };
+        return { success: true, added: false };
+      } else {
+        // Si c'est un type différent, on remplace l'ancienne par la nouvelle
+        await ctx.db.delete(existingReaction._id);
+        
+        // Décrémenter usefulCount si l'ancienne réaction était "useful"
+        if (existingReaction.type === "useful" && comment.usefulCount > 0) {
+          await ctx.db.patch(args.commentId, {
+            usefulCount: comment.usefulCount - 1,
+          });
+        }
+        
+        // Créer la nouvelle réaction
+        await ctx.db.insert("reactions", {
+          userId: appUser._id,
+          targetType: "comment",
+          targetId: args.commentId,
+          type: args.type,
+          createdAt: Date.now(),
+        });
+
+        // Incrémenter usefulCount si la nouvelle réaction est "useful"
+        if (args.type === "useful") {
+          await ctx.db.patch(args.commentId, {
+            usefulCount: (comment.usefulCount || 0) + 1,
+          });
+        }
+
+        // Notifier l'auteur du commentaire (si ce n'est pas lui qui réagit)
+        if (comment.userId !== appUser._id) {
+          // Récupérer le contenu pour le lien
+          let contentLink = "#";
+          if (comment.targetType === "article") {
+            const article = await ctx.db.get(comment.targetId as Id<"articles">);
+            if (article) contentLink = `/articles/${article.slug}`;
+          } else if (comment.targetType === "project") {
+            const project = await ctx.db.get(comment.targetId as Id<"projects">);
+            if (project) contentLink = `/projects/${project.slug}`;
+          } else if (comment.targetType === "action") {
+            const action = await ctx.db.get(comment.targetId as Id<"actions">);
+            if (action) contentLink = `/actions/${action.slug}`;
+          } else if (comment.targetType === "proposal") {
+            const proposal = await ctx.db.get(comment.targetId as Id<"governanceProposals">);
+            if (proposal) contentLink = `/gouvernance/${proposal.slug}`;
+          }
+
+          const reactionLabels: Record<string, string> = {
+            like: "aimé",
+            love: "adoré",
+            useful: "trouvé utile",
+          };
+
+          await ctx.runMutation(internal.notifications.createNotificationInternal, {
+            userId: comment.userId,
+            type: "comment_reaction",
+            title: "Réaction sur votre commentaire",
+            message: `${appUser.name || appUser.email?.split("@")[0] || "Un utilisateur"} a ${reactionLabels[args.type] || "réagi à"} votre commentaire`,
+            link: contentLink,
+            metadata: {
+              commentId: args.commentId,
+              reactionType: args.type,
+              reactorId: appUser._id,
+              targetType: comment.targetType,
+              targetId: comment.targetId,
+            },
+          });
+        }
+
+        return { success: true, added: true };
+      }
     } else {
       // Ajouter la réaction
       await ctx.db.insert("reactions", {
@@ -351,7 +421,7 @@ export const toggleCommentReaction = mutation({
       // Incrémenter usefulCount si c'est une réaction "useful"
       if (args.type === "useful") {
         await ctx.db.patch(args.commentId, {
-          usefulCount: comment.usefulCount + 1,
+          usefulCount: (comment.usefulCount || 0) + 1,
         });
       }
 

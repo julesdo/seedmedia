@@ -17,9 +17,9 @@ export function ActiveActions() {
 
   if (!actions) {
     return (
-      <div className="border-b border-border pb-8">
-        <Skeleton className="h-6 w-32 mb-4" />
-        <div className="space-y-3">
+      <div className="border-b border-border/60 pb-6">
+        <Skeleton className="h-5 w-32 mb-4" />
+        <div className="space-y-2">
           {[...Array(3)].map((_, i) => (
             <Skeleton key={i} className="h-12 w-full" />
           ))}
@@ -46,10 +46,10 @@ export function ActiveActions() {
   };
 
   return (
-    <div className="border-b border-border pb-8">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="font-bold text-lg">Actions en cours</h3>
-        <Link href="/actions" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+    <div className="border-b border-border/60 pb-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-bold text-base">Actions en cours</h3>
+        <Link href="/actions" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
           Voir tout
         </Link>
       </div>
@@ -58,17 +58,17 @@ export function ActiveActions() {
           <div key={action._id}>
             <Link
               href={`/actions/${action.slug}`}
-              className="block py-3 group"
+              className="block py-2.5 group"
             >
               <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground uppercase">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] text-muted-foreground uppercase">
                     {getActionTypeLabel(action.type)}
                   </span>
                   {action.deadline && (
                     <>
-                      <span className="text-xs text-muted-foreground">•</span>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-[11px] text-muted-foreground">•</span>
+                      <span className="text-[11px] text-muted-foreground">
                         {formatDistanceToNow(new Date(action.deadline), {
                           addSuffix: true,
                           locale: fr,
@@ -80,13 +80,13 @@ export function ActiveActions() {
                 <h4 className="font-semibold text-sm line-clamp-2 group-hover:opacity-80 transition-opacity">
                   {action.title}
                 </h4>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
                   <SolarIcon icon="users-group-two-rounded-bold" className="h-3 w-3" />
                   <span>{action.participants || 0} participants</span>
                 </div>
               </div>
             </Link>
-            {index < Math.min(actions.length, 3) - 1 && <Separator />}
+            {index < Math.min(actions.length, 3) - 1 && <Separator className="border-border/60" />}
           </div>
         ))}
       </div>

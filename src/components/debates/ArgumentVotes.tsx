@@ -48,18 +48,18 @@ export function ArgumentVotes({
   const upvotePercent = totalVotes > 0 ? Math.round((upvotes / totalVotes) * 100) : 0;
 
   return (
-    <div className={cn("flex items-center gap-2", className)}>
+    <div className={cn("flex items-center gap-1.5", className)}>
       <div className="flex items-center gap-1">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => handleVote("up")}
           disabled={!isAuthenticated}
-          className="h-8 px-2"
+          className="h-7 px-1.5 text-xs"
         >
-          <SolarIcon icon="arrow-up-bold" className="h-4 w-4 text-green-500" />
+          <SolarIcon icon="arrow-up-bold" className="h-3 w-3 text-green-500" />
         </Button>
-        <span className="text-sm font-medium min-w-[2ch] text-center">{upvotes}</span>
+        <span className="text-xs font-medium min-w-[2ch] text-center">{upvotes}</span>
       </div>
 
       <div className="flex items-center gap-1">
@@ -68,15 +68,15 @@ export function ArgumentVotes({
           size="sm"
           onClick={() => handleVote("down")}
           disabled={!isAuthenticated}
-          className="h-8 px-2"
+          className="h-7 px-1.5 text-xs"
         >
-          <SolarIcon icon="arrow-down-bold" className="h-4 w-4 text-red-500" />
+          <SolarIcon icon="arrow-down-bold" className="h-3 w-3 text-red-500" />
         </Button>
-        <span className="text-sm font-medium min-w-[2ch] text-center">{downvotes}</span>
+        <span className="text-xs font-medium min-w-[2ch] text-center">{downvotes}</span>
       </div>
 
       {totalVotes > 0 && (
-        <Badge variant="secondary" className="text-xs">
+        <Badge variant="secondary" className="text-[11px] px-1.5 py-0">
           {upvotePercent}% favorable
         </Badge>
       )}

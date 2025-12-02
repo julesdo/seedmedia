@@ -5,7 +5,6 @@ import { api } from "../../../convex/_generated/api";
 import { LatestArticleHero } from "@/components/home/LatestArticleHero";
 import { Button } from "@/components/ui/button";
 import { Link } from "next-view-transitions";
-import { Card, CardContent } from "@/components/ui/card";
 import { SolarIcon } from "@/components/icons/SolarIcon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Id } from "../../../convex/_generated/dataModel";
@@ -28,7 +27,6 @@ export default function PublicHomePage() {
   const latestArticles = useQuery(api.content.getLatestArticles, { limit: 1 });
   const allArticles = useQuery(api.content.getLatestArticles, { limit: 12 });
   const dossiers = useQuery(api.dossiers.getDossiers, { limit: 3, featured: true });
-  const debats = useQuery(api.debates.getOpenDebates, { limit: 3 });
   const projects = useQuery(api.projects.getProjects, { limit: 6 });
   const topExperts = useQuery(api.credibility.getTopExperts, { limit: 5 });
   const openProposals = useQuery(api.governance.getOpenProposals, { limit: 3 });
@@ -72,21 +70,21 @@ export default function PublicHomePage() {
       <CategoriesBar />
 
       {/* Contenu principal - Layout média avec sidebar */}
-      <section className="container mx-auto px-4 md:px-6 lg:px-8 py-12 md:py-16 max-w-7xl">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+      <section className="container mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-10 max-w-7xl">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Colonne principale - Articles */}
-          <main className="lg:col-span-8 space-y-12">
+          <main className="lg:col-span-8 space-y-8">
             {/* Section "What's new" - Grille d'articles */}
             <div>
-              <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h2 className="text-2xl md:text-3xl font-bold">What's new</h2>
-                  <p className="text-sm text-muted-foreground mt-1">Découvrez les derniers articles publiés</p>
+                  <h2 className="text-xl md:text-2xl font-bold">What's new</h2>
+                  <p className="text-xs text-muted-foreground mt-1">Découvrez les derniers articles publiés</p>
                 </div>
                 <Button variant="ghost" size="sm" asChild>
                   <Link href="/articles">
                     Voir tout
-                    <SolarIcon icon="arrow-right-bold" className="h-4 w-4 ml-2" />
+                    <SolarIcon icon="arrow-right-bold" className="h-3.5 w-3.5 ml-1.5" />
                   </Link>
                 </Button>
               </div>
@@ -123,9 +121,9 @@ export default function PublicHomePage() {
                           </div>
 
                           {/* Contenu */}
-                          <div className="space-y-3">
+                          <div className="space-y-2.5">
                             {/* Métadonnées */}
-                            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-2.5 text-xs text-muted-foreground">
                               {article.author && (
                                 <Author
                                   author={article.author}
@@ -138,23 +136,23 @@ export default function PublicHomePage() {
                             </div>
 
                             {/* Titre */}
-                            <h3 className="text-xl font-bold leading-tight group-hover:opacity-80 transition-opacity line-clamp-2">
+                            <h3 className="text-lg font-bold leading-tight group-hover:opacity-80 transition-opacity line-clamp-2">
                               {article.title}
                             </h3>
 
                             {/* Résumé */}
                             {article.summary && (
-                              <p className="text-sm text-muted-foreground line-clamp-2">
+                              <p className="text-xs text-muted-foreground line-clamp-2">
                                 {article.summary}
                               </p>
                             )}
 
                             {/* Catégories et Tags */}
-                            <div className="flex flex-wrap gap-2 items-center">
+                            <div className="flex flex-wrap gap-1.5 items-center">
                               {article.categories && article.categories.length > 0 && (
                                 <>
                                   {article.categories.slice(0, 2).map((category) => (
-                                    <span key={category?._id} className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
+                                    <span key={category?._id} className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
                                       {category?.icon && (
                                         <SolarIcon icon={category?.icon} className="h-3 w-3 shrink-0" />
                                       )}
@@ -165,9 +163,9 @@ export default function PublicHomePage() {
                               )}
                               {article.tags && article.tags.length > 0 && (
                                 <>
-                                  {article.categories && article.categories.length > 0 && <span className="text-xs text-muted-foreground">•</span>}
+                                  {article.categories && article.categories.length > 0 && <span className="text-[11px] text-muted-foreground">•</span>}
                                   {article.tags.slice(0, 2).map((tag) => (
-                                    <span key={tag} className="text-xs text-muted-foreground">
+                                    <span key={tag} className="text-[11px] text-muted-foreground">
                                       #{tag}
                                     </span>
                                   ))}
@@ -197,15 +195,15 @@ export default function PublicHomePage() {
             {/* Section Dossiers */}
             {dossiers && dossiers.length > 0 && (
               <div>
-                <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center justify-between mb-6">
                   <div>
-                    <h2 className="text-2xl md:text-3xl font-bold">Dossiers thématiques</h2>
-                    <p className="text-sm text-muted-foreground mt-1">Explorez nos dossiers approfondis</p>
+                    <h2 className="text-xl md:text-2xl font-bold">Dossiers thématiques</h2>
+                    <p className="text-xs text-muted-foreground mt-1">Explorez nos dossiers approfondis</p>
                   </div>
                   <Button variant="ghost" size="sm" asChild>
                     <Link href="/dossiers">
                       Tout voir
-                      <SolarIcon icon="arrow-right-bold" className="h-4 w-4 ml-2" />
+                      <SolarIcon icon="arrow-right-bold" className="h-3.5 w-3.5 ml-1.5" />
                     </Link>
                   </Button>
                 </div>
@@ -227,17 +225,17 @@ export default function PublicHomePage() {
                             </div>
                           )}
                         </div>
-                        <div className="space-y-2">
-                          <h3 className="text-xl font-bold group-hover:opacity-80 transition-opacity line-clamp-2">
+                        <div className="space-y-1.5">
+                          <h3 className="text-lg font-bold group-hover:opacity-80 transition-opacity line-clamp-2">
                             {dossier.title}
                           </h3>
                           {dossier.description && (
-                            <p className="text-sm text-muted-foreground line-clamp-2">
+                            <p className="text-xs text-muted-foreground line-clamp-2">
                               {dossier.description}
                             </p>
                           )}
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <SolarIcon icon="document-text-bold" className="h-4 w-4" />
+                          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                            <SolarIcon icon="document-text-bold" className="h-3.5 w-3.5" />
                             <span>{dossier.articlesCount || 0} articles</span>
                           </div>
                         </div>
@@ -251,15 +249,15 @@ export default function PublicHomePage() {
             {/* Section Projets */}
             {projects !== undefined && (
               <div>
-                <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center justify-between mb-6">
                   <div>
-                    <h2 className="text-2xl md:text-3xl font-bold">Derniers projets</h2>
-                    <p className="text-sm text-muted-foreground mt-1">Découvrez les projets innovants de la communauté</p>
+                    <h2 className="text-xl md:text-2xl font-bold">Derniers projets</h2>
+                    <p className="text-xs text-muted-foreground mt-1">Découvrez les projets innovants de la communauté</p>
                   </div>
                   <Button variant="ghost" size="sm" asChild>
                     <Link href="/projets">
                       Tout voir
-                      <SolarIcon icon="arrow-right-bold" className="h-4 w-4 ml-2" />
+                      <SolarIcon icon="arrow-right-bold" className="h-3.5 w-3.5 ml-1.5" />
                     </Link>
                   </Button>
                 </div>
@@ -286,17 +284,17 @@ export default function PublicHomePage() {
                             </div>
                           )}
                         </div>
-                        <div className="space-y-2">
-                          <h3 className="text-xl font-bold group-hover:opacity-80 transition-opacity line-clamp-2">
+                        <div className="space-y-1.5">
+                          <h3 className="text-lg font-bold group-hover:opacity-80 transition-opacity line-clamp-2">
                             {project.title}
                           </h3>
                           {project.summary && (
-                            <p className="text-sm text-muted-foreground line-clamp-2">
+                            <p className="text-xs text-muted-foreground line-clamp-2">
                               {project.summary}
                             </p>
                           )}
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <SolarIcon icon="eye-bold" className="h-4 w-4" />
+                          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                            <SolarIcon icon="eye-bold" className="h-3.5 w-3.5" />
                             <span>{project.views || 0} vues</span>
                             {project.stage && (
                               <>
@@ -318,55 +316,10 @@ export default function PublicHomePage() {
               </div>
             )}
 
-            {/* Section Débats */}
-            {debats && debats.length > 0 && (
-              <div>
-                <div className="flex items-center justify-between mb-8">
-                  <div>
-                    <h2 className="text-2xl md:text-3xl font-bold">Débats ouverts</h2>
-                    <p className="text-sm text-muted-foreground mt-1">Participez aux discussions en cours</p>
-                  </div>
-                  <Button variant="ghost" size="sm" asChild>
-                    <Link href="/debats">
-                      Tout voir
-                      <SolarIcon icon="arrow-right-bold" className="h-4 w-4 ml-2" />
-                    </Link>
-                  </Button>
-                </div>
-                <div className="space-y-4">
-                  {debats.map((debat) => (
-                    <Link key={debat._id} href={`/debats/${debat.slug}`}>
-                      <article className="group border-l-4 border-transparent hover:border-primary transition-colors cursor-pointer p-6">
-                        <div className="space-y-3">
-                          <h3 className="text-xl font-bold group-hover:opacity-80 transition-opacity">
-                            {debat.question}
-                          </h3>
-                          {debat.description && (
-                            <p className="text-sm text-muted-foreground line-clamp-2">
-                              {debat.description}
-                            </p>
-                          )}
-                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <SolarIcon icon="check-circle-bold" className="h-4 w-4 text-green-500" />
-                              {debat.argumentsForCount || 0} pour
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <SolarIcon icon="close-circle-bold" className="h-4 w-4 text-red-500" />
-                              {debat.argumentsAgainstCount || 0} contre
-                            </span>
-                          </div>
-                        </div>
-                      </article>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
           </main>
 
           {/* Sidebar */}
-          <aside className="lg:col-span-4 space-y-8">
+          <aside className="lg:col-span-4 space-y-6">
             {/* Trending Topics */}
             <TrendingTopics />
 
@@ -378,16 +331,16 @@ export default function PublicHomePage() {
 
             {/* Top Experts */}
             {topExperts && topExperts.length > 0 && (
-              <div className="border-b border-border pb-8">
-                <h3 className="font-bold text-lg mb-6">Top experts</h3>
+              <div className="border-b border-border/60 pb-6">
+                <h3 className="font-bold text-base mb-4">Top experts</h3>
                 <div className="space-y-0">
                   {topExperts.map((expert, index) => (
                     <div key={expert._id}>
                       <Link
                         href={`/users/${expert._id}`}
-                        className="flex items-center gap-3 py-3 group"
+                        className="flex items-center gap-2.5 py-2.5 group"
                       >
-                        <Avatar className="h-8 w-8">
+                        <Avatar className="h-7 w-7">
                           <AvatarImage src={undefined} />
                           <AvatarFallback className="text-xs">{expert.name?.[0]?.toUpperCase() || "E"}</AvatarFallback>
                         </Avatar>
@@ -395,15 +348,15 @@ export default function PublicHomePage() {
                           <p className="font-medium text-sm group-hover:opacity-80 transition-opacity truncate">
                             {expert.name || "Expert"}
                           </p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-[11px] text-muted-foreground">
                             Score: {expert.credibilityScore || 0}
                           </p>
                         </div>
-                        <span className="text-xs text-muted-foreground shrink-0">
+                        <span className="text-[11px] text-muted-foreground shrink-0">
                           #{index + 1}
                         </span>
                       </Link>
-                      {index < topExperts.length - 1 && <Separator />}
+                      {index < topExperts.length - 1 && <Separator className="border-border/60" />}
                     </div>
                   ))}
                 </div>
@@ -411,40 +364,38 @@ export default function PublicHomePage() {
             )}
 
             {/* Newsletter */}
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="font-bold text-lg mb-2">Newsletter</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Recevez les derniers articles directement dans votre boîte mail
-                </p>
-                <Button className="w-full" size="sm">
-                  S'abonner
-                </Button>
-              </CardContent>
-            </Card>
+            <div className="border-b border-border/60 pb-6">
+              <h3 className="font-bold text-base mb-2">Newsletter</h3>
+              <p className="text-xs text-muted-foreground mb-3">
+                Recevez les derniers articles directement dans votre boîte mail
+              </p>
+              <Button className="w-full" size="sm" variant="accent">
+                S'abonner
+              </Button>
+            </div>
 
             {/* Gouvernance */}
-            <div className="border-b border-border pb-8">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="font-bold text-lg">Gouvernance</h3>
-                <Link href="/gouvernance" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <div className="border-b border-border/60 pb-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-base">Gouvernance</h3>
+                <Link href="/gouvernance" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
                   Voir tout
                 </Link>
               </div>
               {openProposals === undefined ? (
-                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-16 w-full" />
               ) : openProposals && openProposals.length > 0 ? (
                 <div className="space-y-0">
                   {openProposals.slice(0, 2).map((proposal, index) => (
                     <div key={proposal._id}>
                       <Link
                         href={`/gouvernance/${proposal.slug}`}
-                        className="block py-3 group"
+                        className="block py-2.5 group"
                       >
-                        <h4 className="font-semibold text-sm line-clamp-2 group-hover:opacity-80 transition-opacity mb-2">
+                        <h4 className="font-semibold text-sm line-clamp-2 group-hover:opacity-80 transition-opacity mb-1.5">
                           {proposal.title}
                         </h4>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-2.5 text-[11px] text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <SolarIcon icon="check-circle-bold" className="h-3 w-3" />
                             {proposal.votesFor || 0}
@@ -455,12 +406,12 @@ export default function PublicHomePage() {
                           </span>
                         </div>
                       </Link>
-                      {index < Math.min(openProposals.length, 2) - 1 && <Separator />}
+                      {index < Math.min(openProposals.length, 2) - 1 && <Separator className="border-border/60" />}
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   Aucune proposition en cours
                 </p>
               )}

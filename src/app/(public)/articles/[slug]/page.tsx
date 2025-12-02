@@ -125,23 +125,23 @@ export default function PublicArticlePage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6 md:py-12 max-w-7xl">
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8">
-        <article className="space-y-8 min-w-0">
+    <div className="container mx-auto px-4 py-4 md:py-6 max-w-6xl">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
+        <article className="space-y-6 min-w-0">
         {/* Header avec meta */}
-        <header className="space-y-6">
+        <header className="space-y-4">
           {/* Type et métriques */}
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <Badge variant="secondary" className="text-xs font-semibold">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="text-[11px] font-semibold px-2 py-0.5">
                 {ARTICLE_TYPE_LABELS[article.articleType] || article.articleType}
               </Badge>
               {article.categories && article.categories.length > 0 && (
                 <>
                   {article.categories.map((category) => (
-                    <span key={category._id} className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
+                    <span key={category._id} className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
                       {category.icon && (
-                        <SolarIcon icon={category.icon} className="h-3.5 w-3.5 shrink-0" />
+                        <SolarIcon icon={category.icon} className="h-3 w-3 shrink-0" />
                       )}
                       {category.name}
                     </span>
@@ -151,31 +151,31 @@ export default function PublicArticlePage() {
             </div>
             
             {/* Métriques gamifiées */}
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <SolarIcon icon="eye-bold" className="h-3.5 w-3.5" />
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                <SolarIcon icon="eye-bold" className="h-3 w-3" />
                 <span className="font-medium">{article.views || 0}</span>
               </div>
-              <div className="flex items-center gap-1.5 text-xs">
-                <SolarIcon icon="star-bold" className="h-3.5 w-3.5 text-yellow-500" />
-                <span className="font-bold text-foreground">{article.qualityScore || 0}</span>
+              <div className="flex items-center gap-1 text-[11px]">
+                <SolarIcon icon="star-bold" className="h-3 w-3 text-yellow-500" />
+                <span className="font-semibold text-foreground">{article.qualityScore || 0}</span>
               </div>
             </div>
           </div>
 
           {/* Titre */}
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight tracking-tight">
+          <h1 className="text-2xl md:text-3xl font-bold leading-tight tracking-tight">
             {article.title}
           </h1>
               
           {/* Meta auteur et date */}
-          <div className="flex flex-wrap items-center gap-3 text-sm">
+          <div className="flex flex-wrap items-center gap-2 text-xs">
             {author && (
               <Author
                 author={author}
                 variant="detailed"
                 showCredibility
-                size="md"
+                size="sm"
               />
             )}
             
@@ -191,9 +191,9 @@ export default function PublicArticlePage() {
 
           {/* Tags */}
           {article.tags && article.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5">
               {article.tags.map((tag) => (
-                <span key={tag} className="text-xs text-muted-foreground">
+                <span key={tag} className="text-[11px] text-muted-foreground">
                   #{tag}
                 </span>
               ))}
@@ -203,7 +203,7 @@ export default function PublicArticlePage() {
 
         {/* Image de couverture */}
         {article.coverImage && (
-          <div className="relative w-full aspect-video overflow-hidden rounded-lg border border-border">
+          <div className="relative w-full aspect-video overflow-hidden rounded-lg border border-border/60">
             <Image
               src={article.coverImage}
               alt={article.title}
@@ -214,35 +214,35 @@ export default function PublicArticlePage() {
           </div>
         )}
 
-        <Separator />
+        <Separator className="border-border/60" />
 
         {/* Résumé (TL;DR) */}
         {article.summary && (
-          <div className="border-l-4 border-primary/30 pl-4 py-2 bg-muted/30 rounded-r">
-            <div className="flex items-center gap-2 mb-2">
-              <SolarIcon icon="document-text-bold" className="h-4 w-4 text-primary" />
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">TL;DR</span>
+          <div className="border-l-2 border-primary/40 pl-3 py-2 bg-muted/20 rounded-r">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <SolarIcon icon="document-text-bold" className="h-3.5 w-3.5 text-primary" />
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">TL;DR</span>
             </div>
-            <p className="text-base leading-relaxed text-foreground">{article.summary}</p>
+            <p className="text-sm leading-relaxed text-foreground">{article.summary}</p>
           </div>
         )}
 
         {/* Structure obligatoire */}
-        <div className="space-y-10">
+        <div className="space-y-6">
           {/* Thèse / Problème */}
           {article.these && (
-            <section className="space-y-3">
-              <div className="flex items-center gap-2 pb-2 border-b border-border">
-                <SolarIcon icon="lightbulb-bold" className="h-5 w-5 text-primary" />
-                <h2 className="text-xl font-bold">Thèse / Problème</h2>
+            <section className="space-y-2">
+              <div className="flex items-center gap-2 pb-1.5 border-b border-border/60">
+                <SolarIcon icon="lightbulb-bold" className="h-4 w-4 text-primary" />
+                <h2 className="text-lg font-semibold">Thèse / Problème</h2>
               </div>
-              <p className="text-base leading-relaxed whitespace-pre-wrap text-foreground">{article.these}</p>
+              <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground">{article.these}</p>
             </section>
           )}
 
           {/* Développement */}
           {article.content && (
-            <section className="prose prose-lg dark:prose-invert max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-p:leading-relaxed prose-a:text-primary prose-a:no-underline hover:prose-a:underline">
+            <section className="prose prose-sm dark:prose-invert max-w-none prose-headings:font-semibold prose-headings:text-base prose-headings:tracking-tight prose-p:leading-relaxed prose-p:text-sm prose-a:text-primary prose-a:no-underline hover:prose-a:underline">
               <PlateEditorWrapper
                 value={article.content}
                 readOnly={true}
@@ -253,20 +253,20 @@ export default function PublicArticlePage() {
 
           {/* Contre-arguments */}
           {article.counterArguments && article.counterArguments.length > 0 && (
-            <section className="space-y-3 border-l-4 border-destructive/30 pl-4 py-2 bg-destructive/5 rounded-r">
-              <div className="flex items-center gap-2 pb-2">
-                <SolarIcon icon="danger-triangle-bold" className="h-5 w-5 text-destructive" />
-                <h2 className="text-xl font-bold">
+            <section className="space-y-2 border-l-2 border-destructive/40 pl-3 py-2 bg-destructive/5 rounded-r">
+              <div className="flex items-center gap-2 pb-1.5">
+                <SolarIcon icon="danger-triangle-bold" className="h-4 w-4 text-destructive" />
+                <h2 className="text-lg font-semibold">
                   Contre-arguments
-                  <span className="ml-2 text-sm font-normal text-muted-foreground">
+                  <span className="ml-2 text-xs font-normal text-muted-foreground">
                     ({article.counterArguments.length})
                   </span>
                 </h2>
               </div>
-              <ul className="space-y-3 list-none pl-0">
+              <ul className="space-y-2 list-none pl-0">
                 {article.counterArguments.map((arg, index) => (
-                  <li key={index} className="flex gap-3 text-base leading-relaxed">
-                    <span className="text-destructive shrink-0 mt-1">•</span>
+                  <li key={index} className="flex gap-2 text-sm leading-relaxed">
+                    <span className="text-destructive shrink-0 mt-0.5 text-xs">•</span>
                     <span>{arg}</span>
                   </li>
                 ))}
@@ -276,13 +276,13 @@ export default function PublicArticlePage() {
 
           {/* Conclusion */}
           {article.conclusion && (
-            <section className="space-y-3 border-l-4 border-primary/30 pl-4 py-2 bg-primary/5 rounded-r">
-              <div className="flex items-center gap-2 pb-2">
-                <SolarIcon icon="check-circle-bold" className="h-5 w-5 text-primary" />
-                <h2 className="text-xl font-bold">Conclusion</h2>
-                <span className="text-xs text-muted-foreground font-normal">(orientée solutions)</span>
+            <section className="space-y-2 border-l-2 border-primary/40 pl-3 py-2 bg-primary/5 rounded-r">
+              <div className="flex items-center gap-2 pb-1.5">
+                <SolarIcon icon="check-circle-bold" className="h-4 w-4 text-primary" />
+                <h2 className="text-lg font-semibold">Conclusion</h2>
+                <span className="text-[11px] text-muted-foreground font-normal">(orientée solutions)</span>
               </div>
-              <p className="text-base leading-relaxed whitespace-pre-wrap text-foreground">{article.conclusion}</p>
+              <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground">{article.conclusion}</p>
             </section>
           )}
 
@@ -297,21 +297,21 @@ export default function PublicArticlePage() {
         {/* Débat associé */}
         {article.debatId && (
           <>
-            <Separator />
-            <div className="border-l-4 border-primary/30 pl-4 py-3 bg-primary/5 rounded-r">
-              <div className="flex items-center justify-between mb-2">
+            <Separator className="border-border/60" />
+            <div className="border-l-2 border-primary/40 pl-3 py-2 bg-primary/5 rounded-r">
+              <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-2">
-                  <SolarIcon icon="chat-round-bold" className="h-5 w-5 text-primary" />
-                  <h3 className="text-lg font-bold">Débat associé</h3>
+                  <SolarIcon icon="chat-round-bold" className="h-4 w-4 text-primary" />
+                  <h3 className="text-base font-semibold">Débat associé</h3>
                 </div>
-                <Button variant="outline" size="sm" asChild>
+                <Button variant="outline" size="sm" className="h-7 text-xs" asChild>
                   <Link href={`/debats?articleId=${article._id}`}>
                     Voir le débat
-                    <SolarIcon icon="alt-arrow-right-bold" className="h-4 w-4 ml-2" />
+                    <SolarIcon icon="alt-arrow-right-bold" className="h-3 w-3 ml-1.5" />
                   </Link>
                 </Button>
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 Cet article est associé à un débat. Consultez les arguments pour et contre.
               </p>
             </div>
@@ -333,12 +333,20 @@ export default function PublicArticlePage() {
             </div>
           </>
         )}
+
+        {/* Section commentaires - Mobile */}
+        {article._id && article.status === "published" && (
+          <div className="lg:hidden">
+            <Separator className="mb-6" />
+            <CommentsSection targetType="article" targetId={article._id} />
+          </div>
+        )}
         </article>
 
         {/* Sidebar sticky avec contribution et votes */}
         {article._id && (
           <aside className="hidden lg:block">
-            <div className="sticky top-24 space-y-6">
+            <div className="sticky top-20 flex flex-col max-h-[calc(100vh-5rem)] space-y-4">
               {/* Votes */}
               <ArticleVotes articleId={article._id} />
 
@@ -349,17 +357,17 @@ export default function PublicArticlePage() {
                 sourcesCount={article.sourcesCount || 0}
                 counterArgumentsCount={article.counterArguments?.length || 0}
               />
+
+              {/* Section commentaires - Desktop */}
+              {article.status === "published" && (
+                <div className="pt-2 flex-1 min-h-0">
+                  <CommentsSection targetType="article" targetId={article._id} />
+                </div>
+              )}
             </div>
           </aside>
         )}
       </div>
-
-      {/* Section commentaires */}
-      {article._id && article.status === "published" && (
-        <div className="mt-12">
-          <CommentsSection targetType="article" targetId={article._id} />
-        </div>
-      )}
     </div>
   );
 }

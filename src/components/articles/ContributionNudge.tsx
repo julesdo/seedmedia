@@ -70,9 +70,9 @@ export function ContributionNudge({
       return {
         type: "source" as const,
         icon: "link-bold" as const,
-        title: "Aidez à enrichir cet article",
-        description: `Cet article a besoin de ${2 - sourcesCount} source(s) supplémentaire(s) pour être complet.`,
-        cta: "Proposer une source",
+        title: "Enrichir l'article",
+        description: `${2 - sourcesCount} source(s) manquante(s)`,
+        cta: "Ajouter une source",
         color: "text-blue-600 dark:text-blue-400",
       };
     }
@@ -80,8 +80,8 @@ export function ContributionNudge({
       return {
         type: "contre_argument" as const,
         icon: "question-circle-bold" as const,
-        title: "Partagez votre point de vue",
-        description: "Cet article manque de contre-arguments. Aidez à équilibrer le débat.",
+        title: "Équilibrer le débat",
+        description: "Aucun contre-argument pour le moment",
         cta: "Ajouter un contre-argument",
         color: "text-orange-600 dark:text-orange-400",
       };
@@ -89,8 +89,8 @@ export function ContributionNudge({
     return {
       type: "fact_check" as const,
       icon: "verified-check-bold" as const,
-      title: "Contribuez à la qualité",
-      description: "Votre expertise peut améliorer cet article. Proposez une correction ou une amélioration.",
+      title: "Améliorer l'article",
+      description: "Proposez une correction ou une amélioration",
       cta: "Proposer une amélioration",
       color: "text-green-600 dark:text-green-400",
     };
@@ -129,20 +129,16 @@ export function ContributionNudge({
 
   if (!isAuthenticated) {
     return (
-      <div className="border-l-4 border-primary/50 pl-4 py-4 bg-gradient-to-r from-primary/10 to-transparent rounded-r space-y-3">
-        <div className="flex items-start gap-3">
-          <div className="p-2 rounded-lg bg-primary/20 shrink-0">
-            <SolarIcon icon={suggestedAction.icon} className={`h-5 w-5 ${suggestedAction.color}`} />
-          </div>
-          <div className="flex-1 space-y-1">
-            <h3 className="font-bold text-base leading-tight">{suggestedAction.title}</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">{suggestedAction.description}</p>
-          </div>
+      <div className="border-l-2 border-primary/40 pl-3 py-2.5 bg-muted/20 rounded-r space-y-2">
+        <div className="flex items-center gap-2">
+          <SolarIcon icon={suggestedAction.icon} className={`h-3.5 w-3.5 ${suggestedAction.color}`} />
+          <h3 className="font-semibold text-sm">{suggestedAction.title}</h3>
         </div>
-        <Button asChild variant="default" className="w-full">
+        <p className="text-xs text-muted-foreground">{suggestedAction.description}</p>
+        <Button asChild variant="default" size="sm" className="h-7 text-xs shadow-none">
           <Link href="/signin">
-            <SolarIcon icon="login-3-bold" className="h-4 w-4 mr-2" />
-            Connectez-vous pour contribuer
+            <SolarIcon icon="login-3-bold" className="h-3 w-3 mr-1.5" />
+            Se connecter
           </Link>
         </Button>
       </div>
@@ -150,26 +146,20 @@ export function ContributionNudge({
   }
 
   return (
-    <div className="border-l-4 border-primary/50 pl-4 py-4 bg-gradient-to-r from-primary/10 to-transparent rounded-r space-y-3">
-      <div className="flex items-start gap-3">
-        <div className="p-2 rounded-lg bg-primary/20 shrink-0">
-          <SolarIcon icon={suggestedAction.icon} className={`h-5 w-5 ${suggestedAction.color}`} />
-        </div>
-        <div className="flex-1 space-y-1">
-          <div className="flex items-start justify-between gap-2">
-            <h3 className="font-bold text-base leading-tight">{suggestedAction.title}</h3>
-            <Badge variant="secondary" className="shrink-0 text-xs">
-              <SolarIcon icon="star-bold" className="h-3 w-3 mr-1" />
-              +Crédibilité
-            </Badge>
-          </div>
-          <p className="text-sm text-muted-foreground leading-relaxed">{suggestedAction.description}</p>
-        </div>
+    <div className="border-l-2 border-primary/40 pl-3 py-2.5 bg-muted/20 rounded-r space-y-2">
+      <div className="flex items-center gap-2">
+        <SolarIcon icon={suggestedAction.icon} className={`h-3.5 w-3.5 ${suggestedAction.color}`} />
+        <h3 className="font-semibold text-sm">{suggestedAction.title}</h3>
+        <Badge variant="secondary" className="text-[11px] px-1.5 py-0 ml-auto">
+          <SolarIcon icon="star-bold" className="h-3 w-3 mr-0.5" />
+          +Crédibilité
+        </Badge>
       </div>
+      <p className="text-xs text-muted-foreground">{suggestedAction.description}</p>
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogTrigger asChild>
-          <Button variant="default" className="w-full">
-            <SolarIcon icon="add-circle-bold" className="h-4 w-4 mr-2" />
+          <Button variant="default" size="sm" className="h-7 text-xs shadow-none">
+            <SolarIcon icon="add-circle-bold" className="h-3 w-3 mr-1.5" />
             {suggestedAction.cta}
           </Button>
         </DialogTrigger>

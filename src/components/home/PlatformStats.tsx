@@ -17,10 +17,10 @@ export function PlatformStats() {
 
   if (!stats) {
     return (
-      <div className="border-b border-border pb-8">
-        <div className="space-y-3">
+      <div className="border-b border-border/60 pb-6">
+        <div className="space-y-2">
           {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-12 w-full" />
+            <Skeleton key={i} className="h-10 w-full" />
           ))}
         </div>
       </div>
@@ -51,23 +51,23 @@ export function PlatformStats() {
   ];
 
   return (
-    <div className="border-b border-border pb-8">
+    <div className="border-b border-border/60 pb-6">
       <div className="space-y-0">
         {statItems.map((item, index) => (
           <div key={item.label}>
-            <div className="flex items-center justify-between py-3">
-              <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="flex items-center justify-between py-2.5">
+              <div className="flex items-center gap-2.5 flex-1 min-w-0">
                 <SolarIcon
                   icon={item.icon as any}
-                  className="h-5 w-5 text-muted-foreground shrink-0"
+                  className="h-4 w-4 text-muted-foreground shrink-0"
                 />
                 <span className="text-sm font-medium">{item.label}</span>
               </div>
-              <div className="text-lg font-bold shrink-0 ml-4">
+              <div className="text-base font-bold shrink-0 ml-3">
                 {item.value.toLocaleString()}
               </div>
             </div>
-            {index < statItems.length - 1 && <Separator />}
+            {index < statItems.length - 1 && <Separator className="border-border/60" />}
           </div>
         ))}
       </div>

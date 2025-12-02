@@ -691,9 +691,25 @@ export const toggleCommentReaction = mutation({
       .first();
 
     if (existingReaction) {
-      // Retirer la réaction
-      await ctx.db.delete(existingReaction._id);
-      return { success: true, added: false };
+      // Si c'est le même type de réaction, on la retire
+      if (existingReaction.type === args.type) {
+        await ctx.db.delete(existingReaction._id);
+        return { success: true, added: false };
+      } else {
+        // Si c'est un type différent, on remplace l'ancienne par la nouvelle
+        await ctx.db.delete(existingReaction._id);
+        
+        // Créer la nouvelle réaction
+        await ctx.db.insert("reactions", {
+          userId: appUser._id,
+          targetType: "comment",
+          targetId: args.commentId,
+          type: args.type,
+          createdAt: Date.now(),
+        });
+        
+        return { success: true, added: true };
+      }
     } else {
       // Ajouter la réaction
       await ctx.db.insert("reactions", {
@@ -789,6 +805,195 @@ export const toggleFavorite = mutation({
       });
       return { success: true, favorited: true };
     }
+  },
+});
+
+/**
+ * Recherche globale dans tous les contenus
+ */
+export const globalSearch = query({
+  args: {
+    query: v.string(),
+    limit: v.optional(v.number()),
+    limits: v.optional(
+      v.object({
+        articles: v.optional(v.number()),
+        projects: v.optional(v.number()),
+        actions: v.optional(v.number()),
+        debates: v.optional(v.number()),
+        categories: v.optional(v.number()),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    const defaultLimit = args.limit || 10;
+    const limits = args.limits || {
+      articles: defaultLimit,
+      projects: defaultLimit,
+      actions: defaultLimit,
+      debates: defaultLimit,
+      categories: defaultLimit,
+    };
+    
+    const searchQuery = args.query.toLowerCase().trim();
+
+    if (!searchQuery || searchQuery.length < 2) {
+      return {
+        articles: [],
+        projects: [],
+        actions: [],
+        debates: [],
+        categories: [],
+      };
+    }
+
+    // Recherche dans les articles
+    const allArticles = await ctx.db
+      .query("articles")
+      .withIndex("status", (q) => q.eq("status", "published"))
+      .collect();
+
+    const matchingArticles = allArticles
+      .filter((article) => {
+        const titleMatch = article.title.toLowerCase().includes(searchQuery);
+        const summaryMatch = article.summary?.toLowerCase().includes(searchQuery);
+        const tagMatch = article.tags?.some((tag) => tag.toLowerCase().includes(searchQuery));
+        return titleMatch || summaryMatch || tagMatch;
+      })
+      .slice(0, limits.articles || defaultLimit);
+
+    // Enrichir les articles avec auteur et catégories
+    const articlesWithData = await Promise.all(
+      matchingArticles.map(async (article) => {
+        const author = await ctx.db.get(article.authorId);
+        const categories = article.categoryIds && article.categoryIds.length > 0
+          ? (await Promise.all(
+              article.categoryIds.map(async (categoryId) => {
+                const category = await ctx.db.get(categoryId);
+                return category
+                  ? {
+                      _id: category._id,
+                      name: category.name,
+                      slug: category.slug,
+                      icon: category.icon,
+                    }
+                  : null;
+              })
+            )).filter((cat): cat is NonNullable<typeof cat> => cat !== null)
+          : [];
+
+        return {
+          _id: article._id,
+          title: article.title,
+          summary: article.summary,
+          slug: article.slug,
+          coverImage: article.coverImage,
+          qualityScore: article.qualityScore,
+          views: article.views,
+          publishedAt: article.publishedAt,
+          author: author
+            ? {
+                _id: author._id,
+                name: author.name || author.email?.split("@")[0] || "Auteur",
+                image: author.image || null,
+              }
+            : null,
+          categories,
+          tags: article.tags || [],
+        };
+      })
+    );
+
+    // Recherche dans les projets
+    const allProjects = await ctx.db.query("projects").collect();
+    const matchingProjects = allProjects
+      .filter((project) => {
+        const titleMatch = project.title.toLowerCase().includes(searchQuery);
+        const summaryMatch = project.summary?.toLowerCase().includes(searchQuery);
+        const tagMatch = project.tags?.some((tag) => tag.toLowerCase().includes(searchQuery));
+        return titleMatch || summaryMatch || tagMatch;
+      })
+      .slice(0, limits.projects || defaultLimit)
+      .map((project) => ({
+        _id: project._id,
+        title: project.title,
+        summary: project.summary,
+        slug: project.slug,
+        images: project.images || [],
+        views: project.views || 0,
+        stage: project.stage,
+        createdAt: project.createdAt,
+      }));
+
+    // Recherche dans les actions
+    const allActions = await ctx.db.query("actions").collect();
+    const matchingActions = allActions
+      .filter((action) => {
+        const titleMatch = action.title.toLowerCase().includes(searchQuery);
+        const descriptionMatch = action.description?.toLowerCase().includes(searchQuery);
+        const tagMatch = action.tags?.some((tag) => tag.toLowerCase().includes(searchQuery));
+        return titleMatch || descriptionMatch || tagMatch;
+      })
+      .slice(0, limits.actions || defaultLimit)
+      .map((action) => ({
+        _id: action._id,
+        title: action.title,
+        description: action.description,
+        slug: action.slug,
+        type: action.type,
+        status: action.status,
+        participants: action.participants || 0,
+        deadline: action.deadline,
+        createdAt: action.createdAt,
+      }));
+
+    // Recherche dans les débats
+    const allDebates = await ctx.db
+      .query("debates")
+      .withIndex("status", (q) => q.eq("status", "open"))
+      .collect();
+    const matchingDebates = allDebates
+      .filter((debat) => {
+        const questionMatch = debat.question.toLowerCase().includes(searchQuery);
+        const descriptionMatch = debat.description?.toLowerCase().includes(searchQuery);
+        return questionMatch || descriptionMatch;
+      })
+      .slice(0, limits.debates || defaultLimit)
+      .map((debat) => ({
+        _id: debat._id,
+        question: debat.question,
+        description: debat.description,
+        slug: debat.slug,
+        argumentsForCount: debat.argumentsForCount || 0,
+        argumentsAgainstCount: debat.argumentsAgainstCount || 0,
+        polarizationScore: debat.polarizationScore || 0,
+        createdAt: debat.createdAt,
+      }));
+
+    // Recherche dans les catégories
+    const allCategories = await ctx.db.query("categories").collect();
+    const matchingCategories = allCategories
+      .filter((category) => {
+        const nameMatch = category.name.toLowerCase().includes(searchQuery);
+        const descriptionMatch = category.description?.toLowerCase().includes(searchQuery);
+        return nameMatch || descriptionMatch;
+      })
+      .slice(0, limits.categories || defaultLimit)
+      .map((category) => ({
+        _id: category._id,
+        name: category.name,
+        slug: category.slug,
+        icon: category.icon,
+        description: category.description,
+      }));
+
+    return {
+      articles: articlesWithData,
+      projects: matchingProjects,
+      actions: matchingActions,
+      debates: matchingDebates,
+      categories: matchingCategories,
+    };
   },
 });
 

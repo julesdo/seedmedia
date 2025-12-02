@@ -3,7 +3,6 @@
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { useParams } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -78,159 +77,166 @@ export default function DebateDetailPage() {
   const argumentsAgainst = debate.argumentsAgainst || [];
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <article className="space-y-8">
+    <div className="container mx-auto px-4 py-4 md:py-6 max-w-6xl">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
+        <article className="space-y-6 min-w-0">
         {/* Header */}
         <header className="space-y-4">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1 space-y-4">
-              <h1 className="text-4xl md:text-5xl font-bold">{debate.question}</h1>
-              
-              {debate.description && (
-                <p className="text-lg text-muted-foreground">{debate.description}</p>
-              )}
-
-              <div className="flex items-center gap-4 flex-wrap">
-                <Badge
-                  variant={
-                    debate.status === "closed"
-                      ? "secondary"
-                      : debate.polarizationScore && debate.polarizationScore >= 70
-                      ? "destructive"
-                      : "default"
-                  }
-                >
-                  {debate.status === "closed" ? (
-                    <>
-                      <SolarIcon icon="lock-bold" className="h-4 w-4 mr-1" />
-                      Fermé
-                    </>
-                  ) : (
-                    <>
-                      <SolarIcon icon="pulse-bold" className="h-4 w-4 mr-1" />
-                      Polarisation: {Math.round(debate.polarizationScore || 0)}%
-                    </>
-                  )}
-                </Badge>
-
-                <span className="text-sm text-muted-foreground">
-                  {formatDistanceToNow(new Date(debate.createdAt), {
-                    addSuffix: true,
-                    locale: fr,
-                  })}
-                </span>
-
-                {debate.article && (
-                  <Link href={`/articles/${debate.article.slug}`}>
-                    <Badge variant="outline" className="cursor-pointer">
-                      <SolarIcon icon="document-bold" className="h-3 w-3 mr-1" />
-                      Article associé
-                    </Badge>
-                  </Link>
+          {/* Status et métriques */}
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Badge
+                variant={
+                  debate.status === "closed"
+                    ? "secondary"
+                    : debate.polarizationScore && debate.polarizationScore >= 70
+                    ? "destructive"
+                    : "default"
+                }
+                className="text-[11px] font-semibold px-2 py-0.5"
+              >
+                {debate.status === "closed" ? (
+                  <>
+                    <SolarIcon icon="lock-bold" className="h-3 w-3 mr-1" />
+                    Fermé
+                  </>
+                ) : (
+                  <>
+                    <SolarIcon icon="pulse-bold" className="h-3 w-3 mr-1" />
+                    Polarisation: {Math.round(debate.polarizationScore || 0)}%
+                  </>
                 )}
+              </Badge>
+
+              {debate.article && (
+                <Link href={`/articles/${debate.article.slug}`}>
+                  <span className="text-[11px] text-muted-foreground inline-flex items-center gap-1 hover:text-foreground transition-colors">
+                    <SolarIcon icon="document-bold" className="h-3 w-3 shrink-0" />
+                    Article associé
+                  </span>
+                </Link>
+              )}
+            </div>
+            
+            {/* Métriques */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                <SolarIcon icon="chat-round-bold" className="h-3 w-3" />
+                <span className="font-medium">{argumentsFor.length + argumentsAgainst.length}</span>
               </div>
             </div>
           </div>
+
+          {/* Question */}
+          <h1 className="text-2xl md:text-3xl font-bold leading-tight tracking-tight">
+            {debate.question}
+          </h1>
+              
+          {/* Description et date */}
+          {debate.description && (
+            <p className="text-sm text-muted-foreground leading-relaxed">{debate.description}</p>
+          )}
+
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="text-muted-foreground">
+              {formatDistanceToNow(new Date(debate.createdAt), {
+                addSuffix: true,
+                locale: fr,
+              })}
+            </span>
+          </div>
         </header>
 
-        <Separator />
+        <Separator className="border-border/60" />
 
         {/* Synthèse éditoriale */}
         {debate.synthesis && (
-          <Card className="border-primary/20 bg-primary/5">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                <SolarIcon icon="document-text-bold" className="h-5 w-5 text-primary" />
+          <div className="border-l-2 border-primary/40 pl-3 py-2 bg-muted/20 rounded-r">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <SolarIcon icon="document-text-bold" className="h-3.5 w-3.5 text-primary" />
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Synthèse {debate.synthesisType === "editorial" ? "éditoriale" : "automatique"}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-base leading-relaxed whitespace-pre-wrap">{debate.synthesis}</p>
-            </CardContent>
-          </Card>
+              </span>
+            </div>
+            <p className="text-sm leading-relaxed whitespace-pre-wrap">{debate.synthesis}</p>
+          </div>
         )}
 
         {/* Arguments */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Arguments POUR */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <SolarIcon icon="check-circle-bold" className="h-6 w-6 text-green-500" />
-              <h2 className="text-2xl font-bold">Arguments POUR ({argumentsFor.length})</h2>
+            <div className="flex items-center gap-2 pb-1.5 border-b border-border/60">
+              <SolarIcon icon="check-circle-bold" className="h-4 w-4 text-green-500" />
+              <h2 className="text-lg font-semibold">Arguments POUR ({argumentsFor.length})</h2>
             </div>
 
             {argumentsFor.length === 0 ? (
-              <Card>
-                <CardContent className="py-8 text-center text-muted-foreground">
-                  Aucun argument POUR pour le moment.
-                </CardContent>
-              </Card>
+              <div className="border border-border/60 rounded-lg bg-muted/20 p-6 text-center text-muted-foreground">
+                <p className="text-xs">Aucun argument POUR pour le moment.</p>
+              </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {argumentsFor.map((arg: any) => (
-                  <Card key={arg._id} className="border-l-4 border-l-green-500">
-                    <CardHeader>
-                      <div className="flex items-start justify-between gap-2">
-                        <CardTitle className="text-base flex-1">{arg.title}</CardTitle>
-                        {arg.author && (
-                          <div className="flex items-center gap-2 shrink-0">
-                            <Avatar className="h-6 w-6">
-                              <AvatarFallback>
-                                {arg.author.name?.[0]?.toUpperCase() || "?"}
-                              </AvatarFallback>
-                            </Avatar>
-                            {arg.author.credibilityScore !== undefined && (
-                              <Badge variant="secondary" className="text-xs">
-                                <SolarIcon icon="star-bold" className="h-3 w-3 mr-1" />
-                                {arg.author.credibilityScore}
-                              </Badge>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                        {arg.content}
-                      </p>
-
-                      {/* Sources */}
-                      {arg.sources && arg.sources.length > 0 && (
-                        <div className="space-y-1">
-                          <p className="text-xs font-medium text-muted-foreground">Sources :</p>
-                          <ul className="space-y-1">
-                            {arg.sources.map((source: string, index: number) => (
-                              <li key={index}>
-                                <a
-                                  href={source}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-xs text-primary hover:underline break-all"
-                                >
-                                  {source}
-                                </a>
-                              </li>
-                            ))}
-                          </ul>
+                  <div key={arg._id} className="border-l-2 border-green-500/40 pl-3 py-2.5 bg-muted/20 rounded-r">
+                    <div className="flex items-start justify-between gap-2 mb-1.5">
+                      <h3 className="text-sm font-semibold flex-1">{arg.title}</h3>
+                      {arg.author && (
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <Avatar className="h-5 w-5">
+                            <AvatarFallback className="text-[10px]">
+                              {arg.author.name?.[0]?.toUpperCase() || "?"}
+                            </AvatarFallback>
+                          </Avatar>
+                          {arg.author.credibilityScore !== undefined && (
+                            <Badge variant="secondary" className="text-[11px] px-1.5 py-0">
+                              <SolarIcon icon="star-bold" className="h-3 w-3 mr-0.5" />
+                              {arg.author.credibilityScore}
+                            </Badge>
+                          )}
                         </div>
                       )}
+                    </div>
+                    <p className="text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed mb-2">
+                      {arg.content}
+                    </p>
 
-                      {/* Votes et métadonnées */}
-                      <div className="flex items-center justify-between pt-2 border-t">
-                        <ArgumentVotes
-                          argumentId={arg._id}
-                          upvotes={arg.upvotes || 0}
-                          downvotes={arg.downvotes || 0}
-                        />
-                        <span className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(arg.createdAt), {
-                            addSuffix: true,
-                            locale: fr,
-                          })}
-                        </span>
+                    {/* Sources */}
+                    {arg.sources && arg.sources.length > 0 && (
+                      <div className="space-y-1 mb-2">
+                        <p className="text-[11px] font-medium text-muted-foreground">Sources :</p>
+                        <ul className="space-y-0.5">
+                          {arg.sources.map((source: string, index: number) => (
+                            <li key={index}>
+                              <a
+                                href={source}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-[11px] text-primary hover:underline break-all"
+                              >
+                                {source}
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
                       </div>
-                    </CardContent>
-                  </Card>
+                    )}
+
+                    {/* Votes et métadonnées */}
+                    <div className="flex items-center justify-between pt-1.5 border-t border-border/60">
+                      <ArgumentVotes
+                        argumentId={arg._id}
+                        upvotes={arg.upvotes || 0}
+                        downvotes={arg.downvotes || 0}
+                      />
+                      <span className="text-[11px] text-muted-foreground">
+                        {formatDistanceToNow(new Date(arg.createdAt), {
+                          addSuffix: true,
+                          locale: fr,
+                        })}
+                      </span>
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
@@ -241,8 +247,8 @@ export default function DebateDetailPage() {
                 position="for"
                 onSuccess={handleArgumentAdded}
                 trigger={
-                  <Button variant="outline" className="w-full">
-                    <SolarIcon icon="plus-bold" className="h-4 w-4 mr-2" />
+                  <Button variant="default" size="sm" className="w-full h-8 text-xs shadow-none">
+                    <SolarIcon icon="plus-bold" className="h-3.5 w-3.5 mr-1.5" />
                     Ajouter un argument POUR
                   </Button>
                 }
@@ -252,83 +258,77 @@ export default function DebateDetailPage() {
 
           {/* Arguments CONTRE */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <SolarIcon icon="close-circle-bold" className="h-6 w-6 text-red-500" />
-              <h2 className="text-2xl font-bold">Arguments CONTRE ({argumentsAgainst.length})</h2>
+            <div className="flex items-center gap-2 pb-1.5 border-b border-border/60">
+              <SolarIcon icon="close-circle-bold" className="h-4 w-4 text-red-500" />
+              <h2 className="text-lg font-semibold">Arguments CONTRE ({argumentsAgainst.length})</h2>
             </div>
 
             {argumentsAgainst.length === 0 ? (
-              <Card>
-                <CardContent className="py-8 text-center text-muted-foreground">
-                  Aucun argument CONTRE pour le moment.
-                </CardContent>
-              </Card>
+              <div className="border border-border/60 rounded-lg bg-muted/20 p-6 text-center text-muted-foreground">
+                <p className="text-xs">Aucun argument CONTRE pour le moment.</p>
+              </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {argumentsAgainst.map((arg: any) => (
-                  <Card key={arg._id} className="border-l-4 border-l-red-500">
-                    <CardHeader>
-                      <div className="flex items-start justify-between gap-2">
-                        <CardTitle className="text-base flex-1">{arg.title}</CardTitle>
-                        {arg.author && (
-                          <div className="flex items-center gap-2 shrink-0">
-                            <Avatar className="h-6 w-6">
-                              <AvatarFallback>
-                                {arg.author.name?.[0]?.toUpperCase() || "?"}
-                              </AvatarFallback>
-                            </Avatar>
-                            {arg.author.credibilityScore !== undefined && (
-                              <Badge variant="secondary" className="text-xs">
-                                <SolarIcon icon="star-bold" className="h-3 w-3 mr-1" />
-                                {arg.author.credibilityScore}
-                              </Badge>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                        {arg.content}
-                      </p>
-
-                      {/* Sources */}
-                      {arg.sources && arg.sources.length > 0 && (
-                        <div className="space-y-1">
-                          <p className="text-xs font-medium text-muted-foreground">Sources :</p>
-                          <ul className="space-y-1">
-                            {arg.sources.map((source: string, index: number) => (
-                              <li key={index}>
-                                <a
-                                  href={source}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-xs text-primary hover:underline break-all"
-                                >
-                                  {source}
-                                </a>
-                              </li>
-                            ))}
-                          </ul>
+                  <div key={arg._id} className="border-l-2 border-red-500/40 pl-3 py-2.5 bg-muted/20 rounded-r">
+                    <div className="flex items-start justify-between gap-2 mb-1.5">
+                      <h3 className="text-sm font-semibold flex-1">{arg.title}</h3>
+                      {arg.author && (
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <Avatar className="h-5 w-5">
+                            <AvatarFallback className="text-[10px]">
+                              {arg.author.name?.[0]?.toUpperCase() || "?"}
+                            </AvatarFallback>
+                          </Avatar>
+                          {arg.author.credibilityScore !== undefined && (
+                            <Badge variant="secondary" className="text-[11px] px-1.5 py-0">
+                              <SolarIcon icon="star-bold" className="h-3 w-3 mr-0.5" />
+                              {arg.author.credibilityScore}
+                            </Badge>
+                          )}
                         </div>
                       )}
+                    </div>
+                    <p className="text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed mb-2">
+                      {arg.content}
+                    </p>
 
-                      {/* Votes et métadonnées */}
-                      <div className="flex items-center justify-between pt-2 border-t">
-                        <ArgumentVotes
-                          argumentId={arg._id}
-                          upvotes={arg.upvotes || 0}
-                          downvotes={arg.downvotes || 0}
-                        />
-                        <span className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(arg.createdAt), {
-                            addSuffix: true,
-                            locale: fr,
-                          })}
-                        </span>
+                    {/* Sources */}
+                    {arg.sources && arg.sources.length > 0 && (
+                      <div className="space-y-1 mb-2">
+                        <p className="text-[11px] font-medium text-muted-foreground">Sources :</p>
+                        <ul className="space-y-0.5">
+                          {arg.sources.map((source: string, index: number) => (
+                            <li key={index}>
+                              <a
+                                href={source}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-[11px] text-primary hover:underline break-all"
+                              >
+                                {source}
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
                       </div>
-                    </CardContent>
-                  </Card>
+                    )}
+
+                    {/* Votes et métadonnées */}
+                    <div className="flex items-center justify-between pt-1.5 border-t border-border/60">
+                      <ArgumentVotes
+                        argumentId={arg._id}
+                        upvotes={arg.upvotes || 0}
+                        downvotes={arg.downvotes || 0}
+                      />
+                      <span className="text-[11px] text-muted-foreground">
+                        {formatDistanceToNow(new Date(arg.createdAt), {
+                          addSuffix: true,
+                          locale: fr,
+                        })}
+                      </span>
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
@@ -339,8 +339,8 @@ export default function DebateDetailPage() {
                 position="against"
                 onSuccess={handleArgumentAdded}
                 trigger={
-                  <Button variant="outline" className="w-full">
-                    <SolarIcon icon="plus-bold" className="h-4 w-4 mr-2" />
+                  <Button variant="default" size="sm" className="w-full h-8 text-xs shadow-none">
+                    <SolarIcon icon="plus-bold" className="h-3.5 w-3.5 mr-1.5" />
                     Ajouter un argument CONTRE
                   </Button>
                 }
@@ -349,34 +349,74 @@ export default function DebateDetailPage() {
           </div>
         </div>
 
+        {/* Mobile: Alerts et actions */}
         {!isAuthenticated && isOpen && (
-          <Alert>
-            <SolarIcon icon="info-circle-bold" className="h-4 w-4" />
-            <AlertDescription>
-              <Link href="/signin" className="font-medium underline">
-                Connectez-vous
-              </Link>{" "}
-              pour participer au débat en ajoutant vos arguments.
-            </AlertDescription>
-          </Alert>
+          <div className="lg:hidden">
+            <Separator className="mb-4" />
+            <div className="rounded-lg border border-border/60 bg-muted/20 p-2.5">
+              <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                <SolarIcon icon="info-circle-bold" className="h-3.5 w-3.5 shrink-0" />
+                <span>
+                  <Link href="/signin" className="font-medium text-foreground underline hover:no-underline">
+                    Connectez-vous
+                  </Link>{" "}
+                  pour participer au débat
+                </span>
+              </div>
+            </div>
+          </div>
         )}
 
         {!isOpen && (
-          <Alert>
-            <SolarIcon icon="lock-bold" className="h-4 w-4" />
-            <AlertDescription>
-              Ce débat est fermé. Aucun nouvel argument ne peut être ajouté.
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Bouton fermer le débat (éditeurs uniquement) */}
-        {isEditor && isOpen && (
-          <div className="flex justify-end">
-            <CloseDebateDialog debateId={debate._id} debateSlug={debate.slug} />
+          <div className="lg:hidden">
+            <Separator className="mb-4" />
+            <div className="rounded-lg border border-border/60 bg-muted/20 p-2.5">
+              <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                <SolarIcon icon="lock-bold" className="h-3.5 w-3.5 shrink-0" />
+                <span>Ce débat est fermé. Aucun nouvel argument ne peut être ajouté.</span>
+              </div>
+            </div>
           </div>
         )}
-      </article>
+
+        </article>
+
+        {/* Sidebar sticky */}
+        {debate._id && (
+          <aside className="hidden lg:block">
+            <div className="sticky top-20 space-y-4">
+              {/* Alerts */}
+              {!isAuthenticated && isOpen && (
+                <div className="border-l-2 border-primary/40 pl-3 py-2.5 bg-muted/20 rounded-r">
+                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                    <SolarIcon icon="info-circle-bold" className="h-3.5 w-3.5 shrink-0" />
+                    <span>
+                      <Link href="/signin" className="font-medium text-foreground underline hover:no-underline">
+                        Connectez-vous
+                      </Link>{" "}
+                      pour participer
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {!isOpen && (
+                <div className="border-l-2 border-primary/40 pl-3 py-2.5 bg-muted/20 rounded-r">
+                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                    <SolarIcon icon="lock-bold" className="h-3.5 w-3.5 shrink-0" />
+                    <span>Débat fermé</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Bouton fermer le débat (éditeurs uniquement) */}
+              {isEditor && isOpen && (
+                <CloseDebateDialog debateId={debate._id} debateSlug={debate.slug} />
+              )}
+            </div>
+          </aside>
+        )}
+      </div>
     </div>
   );
 }

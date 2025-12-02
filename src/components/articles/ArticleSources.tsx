@@ -3,7 +3,6 @@
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SolarIcon } from "@/components/icons/SolarIcon";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -52,20 +51,16 @@ export function ArticleSources({ articleId }: ArticleSourcesProps) {
 
   if (sources === undefined) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold flex items-center gap-2">
-            <SolarIcon icon="document-bold" className="h-5 w-5" />
-            Sources
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <Skeleton className="h-16 w-full" />
-            <Skeleton className="h-16 w-full" />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="border border-border/60 rounded-lg bg-muted/20 p-3">
+        <div className="flex items-center gap-2 mb-3">
+          <SolarIcon icon="document-bold" className="h-4 w-4 text-muted-foreground" />
+          <h3 className="text-sm font-semibold">Sources</h3>
+        </div>
+        <div className="space-y-2">
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+        </div>
+      </div>
     );
   }
 
@@ -74,15 +69,14 @@ export function ArticleSources({ articleId }: ArticleSourcesProps) {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg font-semibold flex items-center gap-2">
-          <SolarIcon icon="document-bold" className="h-5 w-5" />
+    <div className="border border-border/60 rounded-lg bg-muted/20 p-3">
+      <div className="flex items-center gap-2 mb-3">
+        <SolarIcon icon="document-bold" className="h-4 w-4 text-muted-foreground" />
+        <h3 className="text-sm font-semibold">
           Sources ({sources.length})
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
+        </h3>
+      </div>
+      <div className="space-y-2.5">
           {sources.map((source) => {
             const sourceType = source.sourceType as keyof typeof SOURCE_TYPE_LABELS;
             const icon = SOURCE_TYPE_ICONS[sourceType] || "file-bold";
@@ -90,13 +84,13 @@ export function ArticleSources({ articleId }: ArticleSourcesProps) {
             return (
               <div
                 key={source._id}
-                className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                className="flex items-start gap-2 p-2.5 rounded-lg border border-border/60 bg-background/50 hover:bg-muted/30 transition-colors"
               >
                 <div className="shrink-0 mt-0.5">
-                  <SolarIcon icon={icon as any} className="h-5 w-5 text-muted-foreground" />
+                  <SolarIcon icon={icon as any} className="h-3.5 w-3.5 text-muted-foreground" />
                 </div>
                 
-                <div className="flex-1 min-w-0 space-y-2">
+                <div className="flex-1 min-w-0 space-y-1.5">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       {source.url ? (
@@ -104,28 +98,28 @@ export function ArticleSources({ articleId }: ArticleSourcesProps) {
                           href={source.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="font-medium text-sm hover:text-primary transition-colors line-clamp-2"
+                          className="font-medium text-xs hover:text-primary transition-colors line-clamp-2"
                         >
                           {source.title || source.url}
                           <SolarIcon
                             icon="external-link-bold"
-                            className="h-3 w-3 inline-block ml-1"
+                            className="h-2.5 w-2.5 inline-block ml-1"
                           />
                         </Link>
                       ) : (
-                        <p className="font-medium text-sm">{source.title || "Source sans titre"}</p>
+                        <p className="font-medium text-xs">{source.title || "Source sans titre"}</p>
                       )}
                     </div>
                     <Badge
                       variant={getReliabilityBadgeVariant(source.reliabilityScore)}
-                      className="shrink-0 text-xs"
+                      className="shrink-0 text-[11px] px-1.5 py-0"
                     >
                       {getReliabilityLabel(source.reliabilityScore)}
                     </Badge>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                    <Badge variant="outline" className="text-xs">
+                  <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
+                    <Badge variant="outline" className="text-[11px] px-1.5 py-0">
                       {SOURCE_TYPE_LABELS[sourceType]}
                     </Badge>
                     
@@ -145,7 +139,7 @@ export function ArticleSources({ articleId }: ArticleSourcesProps) {
 
                     {source.addedByUser && (
                       <span className="flex items-center gap-1">
-                        <Avatar className="h-4 w-4">
+                        <Avatar className="h-3.5 w-3.5">
                           <AvatarFallback className="text-[8px]">
                             {source.addedByUser.name[0]?.toUpperCase() || "?"}
                           </AvatarFallback>
@@ -158,9 +152,8 @@ export function ArticleSources({ articleId }: ArticleSourcesProps) {
               </div>
             );
           })}
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 

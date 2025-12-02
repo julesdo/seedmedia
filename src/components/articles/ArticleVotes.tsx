@@ -4,11 +4,10 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Progress } from "@/components/ui/progress";
 import { SolarIcon } from "@/components/icons/SolarIcon";
 import { Link } from "next-view-transitions";
 import { useConvexAuth } from "convex/react";
+import { cn } from "@/lib/utils";
 
 interface ArticleVotesProps {
   articleId: Id<"articles">;
@@ -79,97 +78,73 @@ export function ArticleVotes({ articleId }: ArticleVotesProps) {
   const { counts, total } = votes;
 
   return (
-    <div className="border-l-4 border-primary/50 pl-4 py-4 bg-gradient-to-r from-primary/10 to-transparent rounded-r space-y-4">
+    <div className="border-l-2 border-primary/40 pl-3 py-3 bg-muted/20 rounded-r space-y-3">
       <div className="flex items-center gap-2">
-        <div className="p-1.5 rounded-lg bg-primary/20">
-          <SolarIcon icon="hand-stars-bold" className="h-4 w-4 text-primary" />
-        </div>
-        <div>
-          <h3 className="font-bold text-base">Votre avis</h3>
-          {total > 0 && (
-            <p className="text-xs text-muted-foreground">
-              {total} vote{total > 1 ? "s" : ""} au total
-            </p>
-          )}
-        </div>
+        <SolarIcon icon="hand-stars-bold" className="h-4 w-4 text-primary" />
+        <h3 className="font-semibold text-sm">Votre avis</h3>
+        {total > 0 && (
+          <span className="text-[11px] text-muted-foreground">
+            ({total} vote{total > 1 ? "s" : ""})
+          </span>
+        )}
       </div>
 
       {isAuthenticated ? (
-        <>
-          {/* Boutons de vote */}
-          <div className="grid grid-cols-2 gap-2">
-            {VOTE_TYPES.map((voteType) => {
-              const isSelected = myVote?.voteType === voteType.type;
-              const count = counts[voteType.type] || 0;
-              const percentage = total > 0 ? (count / total) * 100 : 0;
+        <div className="flex flex-wrap gap-2">
+          {VOTE_TYPES.map((voteType) => {
+            const isSelected = myVote?.voteType === voteType.type;
+            const count = counts[voteType.type] || 0;
 
-              return (
-                <Button
-                  key={voteType.type}
-                  variant={isSelected ? "default" : "outline"}
-                  size="sm"
-                  className={`flex flex-col items-center gap-1.5 h-auto py-2.5 transition-all ${
-                    isSelected ? `${voteType.bgColor} ${voteType.borderColor} border-2` : ""
-                  } hover:scale-105 active:scale-95`}
-                  onClick={() => handleVote(voteType.type)}
-                >
-                  <SolarIcon
-                    icon={voteType.icon}
-                    className={`h-4 w-4 ${isSelected ? voteType.color : "text-muted-foreground"}`}
-                  />
-                  <span className={`text-xs font-semibold ${isSelected ? "" : "text-muted-foreground"}`}>
-                    {voteType.label}
-                  </span>
-                  {count > 0 && (
-                    <span className={`text-[10px] ${isSelected ? "text-foreground/70" : "text-muted-foreground"}`}>
-                      {count}
-                    </span>
+            return (
+              <Button
+                key={voteType.type}
+                variant={isSelected ? "accent" : "ghost"}
+                size="sm"
+                className={cn(
+                  "h-8 px-3 text-xs transition-all duration-200 shadow-none relative overflow-hidden group",
+                  !isSelected && "hover:bg-muted/50 border border-border/60 hover:border-border/80 hover:scale-105 active:scale-95"
+                )}
+                onClick={() => handleVote(voteType.type)}
+              >
+                <SolarIcon
+                  icon={voteType.icon}
+                  className={cn(
+                    "h-3.5 w-3.5 mr-1.5 transition-all duration-200",
+                    isSelected 
+                      ? "text-white" 
+                      : `${voteType.color} group-hover:scale-110`
                   )}
-                </Button>
-              );
-            })}
-          </div>
-
-          {/* Graphique des résultats */}
-          {total > 0 && (
-            <div className="space-y-2 pt-3 border-t border-border/50">
-              {VOTE_TYPES.map((voteType) => {
-                const count = counts[voteType.type] || 0;
-                const percentage = total > 0 ? (count / total) * 100 : 0;
-
-                if (count === 0) return null;
-
-                return (
-                  <div key={voteType.type} className="space-y-1">
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-1.5">
-                        <SolarIcon
-                          icon={voteType.icon}
-                          className={`h-3.5 w-3.5 ${voteType.color}`}
-                        />
-                        <span className="font-medium">{voteType.label}</span>
-                      </div>
-                      <span className="text-muted-foreground font-medium">
-                        {count} ({Math.round(percentage)}%)
-                      </span>
-                    </div>
-                    <Progress value={percentage} className="h-1.5" />
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </>
+                />
+                <span className={cn(
+                  "font-medium transition-colors",
+                  isSelected ? "text-white" : "text-foreground"
+                )}>
+                  {voteType.label}
+                </span>
+                {count > 0 && (
+                  <span className={cn(
+                    "ml-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded transition-all",
+                    isSelected 
+                      ? "bg-white/20 text-white" 
+                      : `${voteType.bgColor} ${voteType.color} group-hover:scale-110`
+                  )}>
+                    {count}
+                  </span>
+                )}
+              </Button>
+            );
+          })}
+        </div>
       ) : (
-        <Alert className="py-2">
-          <SolarIcon icon="info-circle-bold" className="h-4 w-4" />
-          <AlertDescription className="text-xs">
-            <Link href="/signin" className="font-medium underline">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/30 border border-border/60 rounded-md px-3 py-2">
+          <SolarIcon icon="info-circle-bold" className="h-3.5 w-3.5 shrink-0" />
+          <span>
+            <Link href="/signin" className="font-medium text-foreground underline hover:no-underline transition-colors">
               Connectez-vous
             </Link>{" "}
-            pour voter sur cet article.
-          </AlertDescription>
-        </Alert>
+            pour partager votre avis
+          </span>
+        </div>
       )}
     </div>
   );

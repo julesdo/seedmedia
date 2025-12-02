@@ -22,11 +22,11 @@ export function HeroWidget() {
 
   if (!content) {
     return (
-      <div className="border-b border-border pb-8">
-        <Skeleton className="h-6 w-32 mb-6" />
-        <div className="space-y-3">
+      <div className="border-b border-border/60 pb-6">
+        <Skeleton className="h-5 w-32 mb-4" />
+        <div className="space-y-2">
           {[...Array(2)].map((_, i) => (
-            <Skeleton key={i} className="h-16 w-full" />
+            <Skeleton key={i} className="h-14 w-full" />
           ))}
         </div>
       </div>
@@ -47,14 +47,14 @@ export function HeroWidget() {
   };
 
   return (
-    <div className="border-b border-border pb-8">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="font-bold text-lg">
+    <div className="border-b border-border/60 pb-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-bold text-base">
           {content.type === "debates" ? "Débats en cours" : "Actions récentes"}
         </h3>
         <Link 
           href={content.type === "debates" ? "/debats" : "/actions"} 
-          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
           Voir tout
         </Link>
@@ -64,7 +64,7 @@ export function HeroWidget() {
           <div key={item._id}>
             <Link
               href={content.type === "debates" ? `/debats/${item.slug}` : `/actions/${item.slug}`}
-              className="block py-3 group"
+              className="block py-2.5 group"
             >
               <div className="space-y-1">
                 {content.type === "debates" ? (
@@ -72,7 +72,7 @@ export function HeroWidget() {
                     <h4 className="font-semibold text-sm line-clamp-2 group-hover:opacity-80 transition-opacity">
                       {item.question}
                     </h4>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2.5 text-[11px] text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <SolarIcon icon="check-circle-bold" className="h-3 w-3 text-green-500" />
                         {item.argumentsForCount || 0} pour
@@ -85,14 +85,14 @@ export function HeroWidget() {
                   </>
                 ) : (
                   <>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground uppercase">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[11px] text-muted-foreground uppercase">
                         {getActionTypeLabel(item.type)}
                       </span>
                       {item.deadline && (
                         <>
-                          <span className="text-xs text-muted-foreground">•</span>
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-[11px] text-muted-foreground">•</span>
+                          <span className="text-[11px] text-muted-foreground">
                             {formatDistanceToNow(new Date(item.deadline), {
                               addSuffix: true,
                               locale: fr,
@@ -104,7 +104,7 @@ export function HeroWidget() {
                     <h4 className="font-semibold text-sm line-clamp-2 group-hover:opacity-80 transition-opacity">
                       {item.title}
                     </h4>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
                       <SolarIcon icon="users-group-two-rounded-bold" className="h-3 w-3" />
                       <span>{item.participants || 0} participants</span>
                     </div>
@@ -112,7 +112,7 @@ export function HeroWidget() {
                 )}
               </div>
             </Link>
-            {index < Math.min(content.items.length, 2) - 1 && <Separator />}
+            {index < Math.min(content.items.length, 2) - 1 && <Separator className="border-border/60" />}
           </div>
         ))}
       </div>

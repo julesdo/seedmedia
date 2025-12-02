@@ -27,11 +27,11 @@ export function TrendingTopics() {
 
   if (!categories || !articles) {
     return (
-      <div className="border-b border-border pb-8">
-        <Skeleton className="h-6 w-32 mb-4" />
-        <div className="space-y-3">
+      <div className="border-b border-border/60 pb-6">
+        <Skeleton className="h-5 w-32 mb-4" />
+        <div className="space-y-2">
           {[...Array(5)].map((_, i) => (
-            <Skeleton key={i} className="h-6 w-full" />
+            <Skeleton key={i} className="h-8 w-full" />
           ))}
         </div>
       </div>
@@ -39,20 +39,14 @@ export function TrendingTopics() {
   }
 
   return (
-    <div className="border-b border-border pb-8">
-      <div className="flex items-center gap-2 mb-6">
-        <img 
-          src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Fire.png" 
-          alt="Fire" 
-          width="20" 
-          height="20" 
-          className="shrink-0"
-        />
-        <h3 className="font-bold text-lg">Sujets tendances</h3>
+    <div className="border-b border-border/60 pb-6">
+      <div className="flex items-center gap-2 mb-4">
+        <SolarIcon icon="fire-bold" className="h-4 w-4 text-orange-500 shrink-0" />
+        <h3 className="font-bold text-base">Sujets tendances</h3>
       </div>
       <div className="space-y-0">
         {trendingCategories.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             Aucun sujet tendance pour le moment
           </p>
         ) : (
@@ -60,27 +54,27 @@ export function TrendingTopics() {
             <div key={category._id || category.slug}>
               <Link
                 href={`/articles?category=${category.slug}`}
-                className="flex items-center justify-between py-3 group"
+                className="flex items-center justify-between py-2.5 group"
               >
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <span className="text-sm font-medium text-muted-foreground w-6 shrink-0">
+                <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                  <span className="text-xs font-medium text-muted-foreground w-5 shrink-0">
                     {index + 1}
                   </span>
                   {category.icon && (
                     <SolarIcon
                       icon={category.icon as any}
-                      className="h-4 w-4 shrink-0 text-muted-foreground"
+                      className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
                     />
                   )}
                   <span className="font-medium text-sm truncate group-hover:opacity-80 transition-opacity">
                     {category.name}
                   </span>
                 </div>
-                <span className="text-xs text-muted-foreground shrink-0 ml-2">
+                <span className="text-[11px] text-muted-foreground shrink-0 ml-2">
                   {category.usageCount}
                 </span>
               </Link>
-              {index < trendingCategories.length - 1 && <Separator />}
+              {index < trendingCategories.length - 1 && <Separator className="border-border/60" />}
             </div>
           ))
         )}

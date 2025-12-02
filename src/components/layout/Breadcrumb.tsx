@@ -19,10 +19,14 @@ const routeLabels: Record<string, string> = {
   "/": "Accueil",
   "/discover": "Découvrir",
   "/articles": "Articles",
+  "/projets": "Projets",
+  "/actions": "Actions",
+  "/gouvernance": "Gouvernance",
+  "/debats": "Débats",
+  "/dossiers": "Dossiers",
   "/map": "Carte",
   "/projects": "Projets",
   "/organizations": "Organisations",
-  "/actions": "Actions",
   "/jobs": "Jobs",
   "/campaigns": "Campagnes",
   "/statistics": "Statistiques",
@@ -42,6 +46,11 @@ function isConvexId(str: string): boolean {
 
 export function Breadcrumb() {
   const pathname = usePathname();
+
+  // Ne pas afficher si pathname n'est pas encore défini
+  if (!pathname) {
+    return null;
+  }
 
   // Générer les breadcrumbs à partir du pathname
   const generateBreadcrumbs = (): BreadcrumbItem[] => {
@@ -192,40 +201,40 @@ export function Breadcrumb() {
     return item;
   });
 
-  if (enrichedBreadcrumbs.length <= 1) {
-    return null; // Ne pas afficher si on est sur la page d'accueil
-  }
+  // Toujours afficher le breadcrumb, même s'il n'y a qu'un seul élément (page d'accueil)
 
   return (
-    <nav className="flex items-center gap-2 text-sm" aria-label="Breadcrumb">
-      {enrichedBreadcrumbs.map((item, index) => {
-        const isLast = index === enrichedBreadcrumbs.length - 1;
-        return (
-          <div key={item.href} className="flex items-center gap-2">
-            {index > 0 && (
-              <SolarIcon 
-                icon="alt-arrow-right-bold" 
-                className="h-3.5 w-3.5 icon-gradient-light opacity-50" 
-              />
-            )}
-            {isLast ? (
-              <span className="font-semibold text-gradient-light">
-                {item.isLoading ? "..." : item.label}
-              </span>
-            ) : (
-              <Link
-                href={item.href}
-                className={cn(
-                  "text-gradient-light opacity-70 hover:opacity-100 transition-opacity",
-                  index === 0 && "font-medium"
-                )}
-              >
-                {item.isLoading ? "..." : item.label}
-              </Link>
-            )}
-          </div>
-        );
-      })}
+    <nav className="flex items-center gap-2 text-sm min-w-0 flex-1" aria-label="Breadcrumb">
+      <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
+        {enrichedBreadcrumbs.map((item, index) => {
+          const isLast = index === enrichedBreadcrumbs.length - 1;
+          return (
+            <div key={item.href} className="flex items-center gap-2 min-w-0 shrink-0">
+              {index > 0 && (
+                <SolarIcon 
+                  icon="alt-arrow-right-bold" 
+                  className="h-3.5 w-3.5 icon-gradient-light opacity-50 shrink-0" 
+                />
+              )}
+              {isLast ? (
+                <span className="font-semibold text-gradient-light truncate min-w-0 max-w-full">
+                  {item.isLoading ? "..." : item.label}
+                </span>
+              ) : (
+                <Link
+                  href={item.href}
+                  className={cn(
+                    "text-gradient-light opacity-70 hover:opacity-100 transition-opacity truncate max-w-[120px]",
+                    index === 0 && "font-medium"
+                  )}
+                >
+                  {item.isLoading ? "..." : item.label}
+                </Link>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </nav>
   );
 }

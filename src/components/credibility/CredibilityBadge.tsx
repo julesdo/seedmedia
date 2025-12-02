@@ -46,9 +46,8 @@ export function CredibilityBadge({ userId, score: scoreProp, compact = false, sh
     <Badge
       variant="outline"
       className={cn(
-        "inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold transition-all",
-        "hover:scale-105 hover:shadow-md",
-        "backdrop-blur-sm",
+        "inline-flex items-center gap-1.5 px-2 py-1 text-xs font-semibold transition-colors",
+        "hover:opacity-80",
         level.bgColor,
         level.color,
         level.borderColor,

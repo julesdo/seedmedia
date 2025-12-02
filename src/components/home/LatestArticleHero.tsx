@@ -44,7 +44,7 @@ export function LatestArticleHero({ article }: LatestArticleHeroProps) {
 
   return (
     <Link href={`/articles/${article.slug}`} className="block h-full">
-      <div className="group relative h-full overflow-hidden rounded-lg cursor-pointer border border-border hover:border-primary transition-colors">
+      <div className="group relative h-full overflow-hidden rounded-lg cursor-pointer border border-border/60 hover:border-border/80 transition-colors">
         {/* Image de fond */}
         {article.coverImage ? (
           <div className="absolute inset-0 h-full w-full">
@@ -55,23 +55,23 @@ export function LatestArticleHero({ article }: LatestArticleHeroProps) {
               className="object-cover transition-transform duration-500 group-hover:scale-105"
               priority
             />
-            {/* Overlay gradient pour la lisibilité */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
+            {/* Overlay gradient pour la lisibilité - plus sobre */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/35 to-black/15" />
           </div>
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-primary/5 to-muted" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-primary/4 to-muted" />
         )}
 
         {/* Contenu - positionné par-dessus avec z-index */}
-        <div className="relative z-10 h-full flex flex-col justify-end p-6 md:p-8 text-white">
-          <div className="space-y-4">
+        <div className="relative z-10 h-full flex flex-col justify-end p-5 md:p-6 text-white">
+          <div className="space-y-3">
             {/* Catégories et Tags */}
-            <div className="flex flex-wrap gap-3 items-center">
-              <span className="text-xs text-white/80 font-medium">Dernier article</span>
+            <div className="flex flex-wrap gap-2 items-center">
+              <span className="text-[11px] text-white/75 font-medium">Dernier article</span>
               {article.categories && article.categories.length > 0 && (
                 <>
                   {article.categories.slice(0, 2).map((category) => (
-                    <span key={category._id} className="text-xs text-white/70 inline-flex items-center gap-1.5">
+                    <span key={category._id} className="text-[11px] text-white/65 inline-flex items-center gap-1">
                       {category.icon && (
                         <SolarIcon icon={category.icon as any} className="h-3 w-3 shrink-0" />
                       )}
@@ -82,9 +82,9 @@ export function LatestArticleHero({ article }: LatestArticleHeroProps) {
               )}
               {article.tags && article.tags.length > 0 && (
                 <>
-                  {article.categories && article.categories.length > 0 && <span className="text-xs text-white/70">•</span>}
+                  {article.categories && article.categories.length > 0 && <span className="text-[11px] text-white/65">•</span>}
                   {article.tags.slice(0, 2).map((tag) => (
-                    <span key={tag} className="text-xs text-white/70">
+                    <span key={tag} className="text-[11px] text-white/65">
                       #{tag}
                     </span>
                   ))}
@@ -93,19 +93,19 @@ export function LatestArticleHero({ article }: LatestArticleHeroProps) {
             </div>
 
             {/* Titre */}
-            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight text-white group-hover:opacity-90 transition-opacity line-clamp-3">
+            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold leading-tight text-white group-hover:opacity-90 transition-opacity line-clamp-3">
               {article.title}
             </h1>
 
             {/* Résumé */}
             {article.summary && (
-              <p className="text-sm md:text-base text-white/90 line-clamp-2">
+              <p className="text-xs md:text-sm text-white/85 line-clamp-2">
                 {article.summary}
               </p>
             )}
 
             {/* Footer: Auteur + Métriques */}
-            <div className="flex items-center justify-between pt-2">
+            <div className="flex items-center justify-between pt-1.5">
               {article.author && (
                 <Author
                   author={article.author}
@@ -115,16 +115,16 @@ export function LatestArticleHero({ article }: LatestArticleHeroProps) {
                   textColor="white"
                 />
               )}
-              <div className="flex items-center gap-3 text-xs text-white/90">
+              <div className="flex items-center gap-2 text-[11px] text-white/85">
                 {article.qualityScore !== undefined && (
-                  <div className="flex items-center gap-1 bg-white/10 px-2 py-1 rounded-md">
-                    <SolarIcon icon="star-bold" className="h-4 w-4" />
+                  <div className="flex items-center gap-1 bg-white/8 px-1.5 py-0.5 rounded">
+                    <SolarIcon icon="star-bold" className="h-3 w-3" />
                     <span>{article.qualityScore}</span>
                   </div>
                 )}
                 {article.views !== undefined && (
-                  <div className="flex items-center gap-1 bg-white/10 px-2 py-1 rounded-md">
-                    <SolarIcon icon="eye-bold" className="h-4 w-4" />
+                  <div className="flex items-center gap-1 bg-white/8 px-1.5 py-0.5 rounded">
+                    <SolarIcon icon="eye-bold" className="h-3 w-3" />
                     <span>{article.views}</span>
                   </div>
                 )}

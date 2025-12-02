@@ -77,13 +77,7 @@ export default function PublicArticlesPage() {
         break;
     }
 
-    return filtered.map((article) => ({
-      ...article,
-      author: {
-        _id: article.authorId as Id<"users">,
-        name: "Auteur",
-      },
-    }));
+    return filtered;
   }, [allArticles, searchQuery, selectedTag, sortBy]);
 
   if (allArticles === undefined) {
@@ -104,96 +98,269 @@ export default function PublicArticlesPage() {
     );
   }
 
+  // Séparer le premier article (hero) des autres
+  const heroArticle = filteredArticles.length > 0 ? filteredArticles[0] : null;
+  const otherArticles = filteredArticles.slice(1);
+
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-12 max-w-6xl">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 py-6 md:py-8 max-w-7xl">
         {/* Header */}
-        <div className="mb-12 space-y-2">
-          <h1 className="text-4xl md:text-5xl font-bold">Articles</h1>
-          <p className="text-lg text-muted-foreground">
+        <div className="mb-8 space-y-1.5">
+          <h1 className="text-2xl md:text-3xl font-bold">Articles</h1>
+          <p className="text-xs text-muted-foreground">
             Explorez tous les articles publiés sur Seed
           </p>
         </div>
 
         {/* Filtres et recherche */}
-        <div className="mb-8 space-y-4">
+        <div className="mb-6 flex flex-wrap items-center gap-2">
           {/* Barre de recherche */}
-          <div className="relative">
+          <div className="relative flex-1 min-w-[200px]">
             <SolarIcon
-              icon="magnifer-bold"
-              className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground"
+              icon="search-bold"
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/70 pointer-events-none z-10"
             />
             <Input
               type="text"
               placeholder="Rechercher un article..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-12"
+              className="pl-8 h-8 text-xs"
             />
           </div>
 
           {/* Filtres */}
-          <div className="flex flex-wrap gap-4">
-            <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Trier par" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="recent">Plus récents</SelectItem>
-                <SelectItem value="quality">Meilleure qualité</SelectItem>
-                <SelectItem value="popular">Plus populaires</SelectItem>
-                <SelectItem value="verified">Mieux vérifiés</SelectItem>
-              </SelectContent>
-            </Select>
+          <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+            <SelectTrigger className="w-[140px] h-8 text-xs border-border/60 bg-muted/30 hover:bg-muted/50">
+              <SelectValue placeholder="Trier par" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="recent">Plus récents</SelectItem>
+              <SelectItem value="quality">Meilleure qualité</SelectItem>
+              <SelectItem value="popular">Plus populaires</SelectItem>
+              <SelectItem value="verified">Mieux vérifiés</SelectItem>
+            </SelectContent>
+          </Select>
 
-            <Select
-              value={selectedTag || "all"}
-              onValueChange={(value) => setSelectedTag(value === "all" ? null : value)}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Tag" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous les tags</SelectItem>
-                {allTags.map((tag) => (
-                  <SelectItem key={tag} value={tag}>
-                    {tag}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <Select
+            value={selectedTag || "all"}
+            onValueChange={(value) => setSelectedTag(value === "all" ? null : value)}
+          >
+            <SelectTrigger className="w-[120px] h-8 text-xs border-border/60 bg-muted/30 hover:bg-muted/50">
+              <SelectValue placeholder="Tag" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les tags</SelectItem>
+              {allTags.map((tag) => (
+                <SelectItem key={tag} value={tag}>
+                  {tag}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Résultats */}
-        <div className="mb-6">
-          <p className="text-sm text-muted-foreground">
-            {filteredArticles.length} article{filteredArticles.length > 1 ? "s" : ""} trouvé
-            {filteredArticles.length > 1 ? "s" : ""}
-          </p>
-        </div>
+        {filteredArticles.length > 0 && (
+          <div className="mb-6">
+            <p className="text-xs text-muted-foreground">
+              {filteredArticles.length} article{filteredArticles.length > 1 ? "s" : ""} trouvé{filteredArticles.length > 1 ? "s" : ""}
+            </p>
+          </div>
+        )}
 
-        {/* Grille d'articles - 2 colonnes */}
+        {/* Hero Article - Grand format */}
+        {heroArticle && (
+          <div className="mb-10">
+            <Link href={`/articles/${heroArticle.slug}`}>
+              <article className="group relative h-[400px] md:h-[500px] overflow-hidden rounded-lg cursor-pointer border border-border/60 hover:border-border/80 transition-colors">
+                {/* Image de fond */}
+                {heroArticle.coverImage ? (
+                  <div className="absolute inset-0 h-full w-full">
+                    <Image
+                      src={heroArticle.coverImage}
+                      alt={heroArticle.title}
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      priority
+                    />
+                    {/* Overlay gradient */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
+                  </div>
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-primary/5 to-muted" />
+                )}
+
+                {/* Contenu */}
+                <div className="relative z-10 h-full flex flex-col justify-end p-6 md:p-8 text-white">
+                  <div className="space-y-3">
+                    {/* Catégories et Tags */}
+                    <div className="flex flex-wrap gap-2 items-center">
+                      {heroArticle.categories && heroArticle.categories.length > 0 && (
+                        <>
+                          {heroArticle.categories.slice(0, 2).map((category) => (
+                            <span key={category._id} className="text-[11px] text-white/70 inline-flex items-center gap-1">
+                              {category.icon && (
+                                <SolarIcon icon={category.icon} className="h-3 w-3 shrink-0" />
+                              )}
+                              {category.name}
+                            </span>
+                          ))}
+                        </>
+                      )}
+                      {heroArticle.tags && heroArticle.tags.length > 0 && (
+                        <>
+                          {heroArticle.categories && heroArticle.categories.length > 0 && <span className="text-[11px] text-white/70">•</span>}
+                          {heroArticle.tags.slice(0, 2).map((tag) => (
+                            <span key={tag} className="text-[11px] text-white/70">
+                              #{tag}
+                            </span>
+                          ))}
+                        </>
+                      )}
+                    </div>
+
+                    {/* Titre */}
+                    <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight text-white group-hover:opacity-90 transition-opacity line-clamp-3">
+                      {heroArticle.title}
+                    </h2>
+
+                    {/* Résumé */}
+                    {heroArticle.summary && (
+                      <p className="text-sm md:text-base text-white/90 line-clamp-2">
+                        {heroArticle.summary}
+                      </p>
+                    )}
+
+                    {/* Footer: Auteur + Métriques */}
+                    <div className="flex items-center justify-between pt-2">
+                      {heroArticle.author && (
+                        <Author
+                          author={heroArticle.author}
+                          variant="hero"
+                          showDate
+                          date={heroArticle.publishedAt ? new Date(heroArticle.publishedAt) : new Date(heroArticle.createdAt)}
+                          textColor="white"
+                          linkToProfile={false}
+                        />
+                      )}
+                      <div className="flex items-center gap-2 text-[11px] text-white/85">
+                        {heroArticle.qualityScore !== undefined && (
+                          <div className="flex items-center gap-1 bg-white/8 px-1.5 py-0.5 rounded">
+                            <SolarIcon icon="star-bold" className="h-3 w-3" />
+                            <span>{heroArticle.qualityScore}</span>
+                          </div>
+                        )}
+                        {heroArticle.views !== undefined && (
+                          <div className="flex items-center gap-1 bg-white/8 px-1.5 py-0.5 rounded">
+                            <SolarIcon icon="eye-bold" className="h-3 w-3" />
+                            <span>{heroArticle.views}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            </Link>
+          </div>
+        )}
+
+        {/* Grille d'articles variée */}
         {filteredArticles.length === 0 ? (
-          <div className="text-center py-12">
-            <SolarIcon icon="document-text-bold" className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <p className="text-lg font-medium mb-2">Aucun article trouvé</p>
-            <p className="text-sm text-muted-foreground">
+          <div className="text-center py-12 border border-border/60 rounded-lg bg-muted/20">
+            <SolarIcon icon="document-text-bold" className="h-8 w-8 mx-auto mb-3 text-muted-foreground opacity-50" />
+            <p className="text-sm font-semibold mb-1">Aucun article trouvé</p>
+            <p className="text-xs text-muted-foreground">
               Essayez de modifier vos critères de recherche ou de filtres
             </p>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {filteredArticles.map((article) => {
+        ) : otherArticles.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {otherArticles.map((article, index) => {
               const publishedDate = article.publishedAt
                 ? new Date(article.publishedAt)
                 : new Date(article.createdAt);
 
+              // Alterner les formats : grand pour les premiers, moyen pour les autres
+              const isLargeFormat = index < 2 && otherArticles.length > 3;
+
+              if (isLargeFormat) {
+                // Format grand - 2 colonnes
+                return (
+                  <Link key={article._id} href={`/articles/${article.slug}`} className={index === 0 ? "md:col-span-2" : ""}>
+                    <article className="group cursor-pointer h-full">
+                      <div className="relative aspect-[16/9] w-full overflow-hidden rounded-lg mb-3 bg-muted border border-border/60 hover:border-border/80 transition-colors">
+                        {article.coverImage ? (
+                          <Image
+                            src={article.coverImage}
+                            alt={article.title}
+                            fill
+                            className="object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-muted flex items-center justify-center">
+                            <SolarIcon icon="document-text-bold" className="h-10 w-10 text-muted-foreground" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          {article.author && (
+                            <Author
+                              author={article.author}
+                              variant="default"
+                              size="sm"
+                              showDate
+                              date={publishedDate}
+                              linkToProfile={false}
+                            />
+                          )}
+                        </div>
+                        <h3 className="text-lg font-bold leading-tight group-hover:text-primary transition-colors line-clamp-2">
+                          {article.title}
+                        </h3>
+                        {article.summary && (
+                          <p className="text-xs text-muted-foreground line-clamp-2">{article.summary}</p>
+                        )}
+                        <div className="flex items-center justify-between pt-1">
+                          <div className="flex flex-wrap gap-1.5 items-center">
+                            {article.categories && article.categories.length > 0 && (
+                              <>
+                                {article.categories.slice(0, 1).map((category) => (
+                                  <span key={category._id} className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
+                                    {category.icon && (
+                                      <SolarIcon icon={category.icon} className="h-3 w-3 shrink-0" />
+                                    )}
+                                    {category.name}
+                                  </span>
+                                ))}
+                              </>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <SolarIcon icon="star-bold" className="h-3 w-3" />
+                              <span>{article.qualityScore}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <SolarIcon icon="eye-bold" className="h-3 w-3" />
+                              <span>{article.views}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </article>
+                  </Link>
+                );
+              }
+
+              // Format moyen/compact - 1 colonne
               return (
                 <Link key={article._id} href={`/articles/${article.slug}`}>
-                  <article className="group cursor-pointer">
-                    {/* Image */}
-                    <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg mb-4 bg-muted">
+                  <article className="group cursor-pointer h-full flex flex-col">
+                    <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg mb-3 bg-muted border border-border/60 hover:border-border/80 transition-colors">
                       {article.coverImage ? (
                         <Image
                           src={article.coverImage}
@@ -203,15 +370,12 @@ export default function PublicArticlesPage() {
                         />
                       ) : (
                         <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-muted flex items-center justify-center">
-                          <SolarIcon icon="document-text-bold" className="h-12 w-12 text-muted-foreground" />
+                          <SolarIcon icon="document-text-bold" className="h-8 w-8 text-muted-foreground" />
                         </div>
                       )}
                     </div>
-
-                    {/* Contenu */}
-                    <div className="space-y-3">
-                      {/* Métadonnées */}
-                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                    <div className="space-y-2 flex-1">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         {article.author && (
                           <Author
                             author={article.author}
@@ -219,27 +383,22 @@ export default function PublicArticlesPage() {
                             size="sm"
                             showDate
                             date={publishedDate}
+                            linkToProfile={false}
                           />
                         )}
                       </div>
-
-                      {/* Titre */}
-                      <h2 className="text-2xl font-bold leading-tight group-hover:text-primary transition-colors line-clamp-2">
+                      <h3 className="text-base font-bold leading-tight group-hover:text-primary transition-colors line-clamp-2">
                         {article.title}
-                      </h2>
-
-                      {/* Résumé */}
+                      </h3>
                       {article.summary && (
-                        <p className="text-sm text-muted-foreground line-clamp-3">{article.summary}</p>
+                        <p className="text-xs text-muted-foreground line-clamp-2">{article.summary}</p>
                       )}
-
-                      {/* Catégories, Tags et métriques */}
-                      <div className="flex items-center justify-between pt-2">
-                        <div className="flex flex-wrap gap-2 items-center">
+                      <div className="flex items-center justify-between pt-1 mt-auto">
+                        <div className="flex flex-wrap gap-1.5 items-center">
                           {article.categories && article.categories.length > 0 && (
                             <>
-                              {article.categories.slice(0, 2).map((category) => (
-                                <span key={category._id} className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
+                              {article.categories.slice(0, 1).map((category) => (
+                                <span key={category._id} className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
                                   {category.icon && (
                                     <SolarIcon icon={category.icon} className="h-3 w-3 shrink-0" />
                                   )}
@@ -248,18 +407,8 @@ export default function PublicArticlesPage() {
                               ))}
                             </>
                           )}
-                          {article.tags && article.tags.length > 0 && (
-                            <>
-                              {article.categories && article.categories.length > 0 && <span className="text-xs text-muted-foreground">•</span>}
-                              {article.tags.slice(0, 2).map((tag) => (
-                                <span key={tag} className="text-xs text-muted-foreground">
-                                  #{tag}
-                                </span>
-                              ))}
-                            </>
-                          )}
                         </div>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                           <div className="flex items-center gap-1">
                             <SolarIcon icon="star-bold" className="h-3 w-3" />
                             <span>{article.qualityScore}</span>
@@ -276,12 +425,12 @@ export default function PublicArticlesPage() {
               );
             })}
           </div>
-        )}
+        ) : null}
 
         {/* Load More */}
         {filteredArticles.length >= 20 && (
-          <div className="mt-12 text-center">
-            <Button variant="outline" size="lg">
+          <div className="mt-8 text-center">
+            <Button variant="outline" size="sm">
               Charger plus d'articles
             </Button>
           </div>
