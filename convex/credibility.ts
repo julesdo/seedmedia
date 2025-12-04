@@ -441,23 +441,57 @@ export const getCredibilityHistory = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    // Vérifier que l'utilisateur existe
+    const user = await ctx.db.get(args.userId);
+    if (!user) {
+      // Retourner un tableau vide si l'utilisateur n'existe pas
+      return [];
+    }
+
     const limit = args.limit || 50;
 
-    const history = await ctx.db
-      .query("credibilityHistory")
-      .withIndex("userId_createdAt", (q: any) => q.eq("userId", args.userId))
-      .order("desc")
-      .take(limit);
+    try {
+      // Essayer d'abord avec l'index userId_createdAt
+      let history;
+      try {
+        history = await ctx.db
+          .query("credibilityHistory")
+          .withIndex("userId_createdAt", (q: any) => q.eq("userId", args.userId))
+          .order("desc")
+          .take(limit);
+      } catch (indexError) {
+        // Si l'index n'existe pas encore, utiliser l'index userId comme fallback
+        try {
+          const allHistory = await ctx.db
+            .query("credibilityHistory")
+            .withIndex("userId", (q: any) => q.eq("userId", args.userId))
+            .collect();
+          
+          // Trier manuellement par createdAt et prendre les N premiers
+          history = allHistory
+            .sort((a: any, b: any) => b.createdAt - a.createdAt)
+            .slice(0, limit);
+        } catch (fallbackError) {
+          // Si même le fallback échoue, retourner un tableau vide
+          console.error("Error fetching credibility history (fallback):", fallbackError);
+          return [];
+        }
+      }
 
-    return history.map((entry: any) => ({
-      _id: entry._id,
-      previousScore: entry.previousScore,
-      newScore: entry.newScore,
-      pointsGained: entry.pointsGained,
-      actionType: entry.actionType,
-      actionDetails: entry.actionDetails || {},
-      createdAt: entry.createdAt,
-    }));
+      return history.map((entry: any) => ({
+        _id: entry._id,
+        previousScore: entry.previousScore,
+        newScore: entry.newScore,
+        pointsGained: entry.pointsGained,
+        actionType: entry.actionType,
+        actionDetails: entry.actionDetails || {},
+        createdAt: entry.createdAt,
+      }));
+    } catch (error) {
+      // Si tout échoue, retourner un tableau vide
+      console.error("Error fetching credibility history:", error);
+      return [];
+    }
   },
 });
 

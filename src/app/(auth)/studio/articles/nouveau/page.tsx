@@ -52,6 +52,7 @@ const defaultPlateValue = normalizeNodeId([
 export default function NewArticlePage() {
   const router = useRouter();
   const createArticle = useMutation(api.articles.createArticle);
+  const credibilityPoints = useCredibilityPoints();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 

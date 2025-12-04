@@ -114,17 +114,20 @@ export const getCurrentUser = query({
       .withIndex("email", (q) => q.eq("email", betterAuthUser.email))
       .first();
 
-    // If no app user found, just return the Better Auth user data
+    // If no app user found, return null instead of Better Auth user data
+    // This ensures that components don't try to use an invalid _id
     if (!appUser) {
-      console.warn(`No app user found for email: ${betterAuthUser.email}`);
-      return betterAuthUser;
+      console.warn(`No app user found for email: ${betterAuthUser.email}. User may not be fully initialized yet.`);
+      return null;
     }
 
     // Merge app user data with Better Auth user data
     // Better Auth data takes precedence for fields like email, name, image
+    // But we keep appUser._id which is the valid Convex ID
     return {
       ...appUser,
       ...betterAuthUser,
+      _id: appUser._id, // Ensure we use the Convex _id, not Better Auth id
     };
   },
 });
