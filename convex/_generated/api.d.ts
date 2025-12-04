@@ -44,6 +44,7 @@ import type * as projects from "../projects.js";
 import type * as scripts_addSuperAdmin from "../scripts/addSuperAdmin.js";
 import type * as stats from "../stats.js";
 import type * as storage from "../storage.js";
+import type * as translations from "../translations.js";
 import type * as users from "../users.js";
 import type * as util from "../util.js";
 
@@ -98,6 +99,7 @@ declare const fullApi: ApiFromModules<{
   "scripts/addSuperAdmin": typeof scripts_addSuperAdmin;
   stats: typeof stats;
   storage: typeof storage;
+  translations: typeof translations;
   users: typeof users;
   util: typeof util;
 }>;

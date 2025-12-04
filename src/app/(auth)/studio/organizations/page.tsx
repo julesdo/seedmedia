@@ -72,6 +72,12 @@ export default function OrganizationsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <Button variant="outline" asChild>
+            <Link href="/studio/organizations/discover">
+              <SolarIcon icon="magnifer-bold" className="h-4 w-4 mr-2" />
+              Découvrir
+            </Link>
+          </Button>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -179,58 +185,70 @@ export default function OrganizationsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {organizations.map((org) => (
-            <Link key={org._id} href={`/discover/organizations/${org._id}`}>
-              <Card className="hover:scale-[1.02] transition-transform cursor-pointer h-full">
-                <CardHeader>
-                  <div className="flex items-start gap-4">
-                    <Avatar className="h-12 w-12 ring-2 ring-border/50">
-                      <AvatarImage src={org.logo || undefined} alt={org.name} />
-                      <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10">
-                        {org.name[0]?.toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <CardTitle className="truncate">{org.name}</CardTitle>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span
-                          className={`text-xs px-2 py-0.5 rounded ${
-                            org.role === "owner"
-                              ? "bg-primary/20 text-primary"
-                              : org.role === "admin"
-                                ? "bg-blue-500/20 text-blue-500"
-                                : "bg-muted text-muted-foreground"
-                          }`}
-                        >
-                          {org.role === "owner" ? "Propriétaire" : org.role === "admin" ? "Admin" : "Membre"}
-                        </span>
-                      </div>
+            <Card key={org._id} className="h-full flex flex-col">
+              <CardHeader>
+                <div className="flex items-start gap-4">
+                  <Avatar className="h-12 w-12 ring-2 ring-border/50">
+                    <AvatarImage src={org.logo || undefined} alt={org.name} />
+                    <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10">
+                      {org.name[0]?.toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <CardTitle className="truncate">{org.name}</CardTitle>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded ${
+                          org.role === "owner"
+                            ? "bg-primary/20 text-primary"
+                            : org.role === "admin"
+                              ? "bg-blue-500/20 text-blue-500"
+                              : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {org.role === "owner" ? "Propriétaire" : org.role === "admin" ? "Admin" : "Membre"}
+                      </span>
                     </div>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="line-clamp-2 mb-4">{org.description}</CardDescription>
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <SolarIcon icon="users-group-two-rounded-bold" className="h-4 w-4" />
-                      <span>Voir les détails</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {org.verified && (
-                        <span className="text-xs px-2 py-0.5 rounded bg-green-500/20 text-green-500 flex items-center gap-1">
-                          <SolarIcon icon="verified-check-bold" className="h-3 w-3" />
-                          Vérifiée
-                        </span>
-                      )}
-                      {org.premiumTier !== "free" && (
-                        <span className="text-xs px-2 py-0.5 rounded bg-primary/20 text-primary">
-                          {org.premiumTier === "starter" ? "Starter" : org.premiumTier === "pro" ? "Pro" : "Impact"}
-                        </span>
-                      )}
-                    </div>
+                </div>
+              </CardHeader>
+              <CardContent className="flex-1 flex flex-col">
+                <CardDescription className="line-clamp-2 mb-4 flex-1">
+                  {org.description}
+                </CardDescription>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    {org.verified && (
+                      <span className="text-xs px-2 py-0.5 rounded bg-green-500/20 text-green-500 flex items-center gap-1">
+                        <SolarIcon icon="verified-check-bold" className="h-3 w-3" />
+                        Vérifiée
+                      </span>
+                    )}
+                    {org.premiumTier !== "free" && (
+                      <span className="text-xs px-2 py-0.5 rounded bg-primary/20 text-primary">
+                        {org.premiumTier === "starter" ? "Starter" : org.premiumTier === "pro" ? "Pro" : "Impact"}
+                      </span>
+                    )}
                   </div>
-                </CardContent>
-              </Card>
-            </Link>
+                  <div className="flex items-center gap-2 pt-2">
+                    <Button variant="outline" size="sm" className="flex-1" asChild>
+                      <Link href={`/discover/organizations/${org._id}`}>
+                        <SolarIcon icon="eye-bold" className="h-4 w-4 mr-2" />
+                        Voir le profil
+                      </Link>
+                    </Button>
+                    {org.canEdit && (
+                      <Button variant="default" size="sm" className="flex-1" asChild>
+                        <Link href={`/studio/organizations/${org._id}`}>
+                          <SolarIcon icon="settings-bold" className="h-4 w-4 mr-2" />
+                          Modifier
+                        </Link>
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}

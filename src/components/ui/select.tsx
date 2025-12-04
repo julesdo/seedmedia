@@ -5,11 +5,137 @@ import * as SelectPrimitive from "@radix-ui/react-select"
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { Combobox } from "@/components/ui/combobox"
+
+const SelectRoot = SelectPrimitive.Root
+
+// Helper pour extraire les options des enfants React
+function extractSelectOptions(children: React.ReactNode): Array<{ value: string; label: string; disabled?: boolean }> {
+  const options: Array<{ value: string; label: string; disabled?: boolean }> = []
+
+  React.Children.forEach(children, (child) => {
+    if (!React.isValidElement(child)) return
+
+    const props = child.props as any
+    
+    // Si c'est SelectContent, extraire ses enfants récursivement
+    if (child.props.children) {
+      const contentOptions = extractSelectOptions(child.props.children)
+      options.push(...contentOptions)
+    }
+    
+    // Si c'est un SelectItem (a une prop value)
+    if (props.value !== undefined) {
+      const label = typeof props.children === "string" 
+        ? props.children 
+        : React.Children.toArray(props.children).find(
+            (c) => typeof c === "string"
+          ) || props.value || ""
+      
+      options.push({
+        value: props.value,
+        label: String(label),
+        disabled: props.disabled || false,
+      })
+    }
+  })
+
+  return options
+}
+
+// Helper pour extraire le placeholder depuis SelectValue
+function extractPlaceholder(children: React.ReactNode): string | undefined {
+  let placeholder: string | undefined
+
+  React.Children.forEach(children, (child) => {
+    if (!React.isValidElement(child)) return
+
+    const props = child.props as any
+    
+    // Si c'est SelectValue, extraire le placeholder
+    if (props.placeholder !== undefined) {
+      placeholder = props.placeholder
+    }
+    
+    // Sinon, chercher récursivement
+    if (child.props.children) {
+      const found = extractPlaceholder(child.props.children)
+      if (found) placeholder = found
+    }
+  })
+
+  return placeholder
+}
+
+// Helper pour extraire la taille et className depuis SelectTrigger
+function extractTriggerProps(children: React.ReactNode): { size?: "sm" | "default"; className?: string } {
+  let size: "sm" | "default" | undefined
+  let className: string | undefined
+
+  React.Children.forEach(children, (child) => {
+    if (!React.isValidElement(child)) return
+
+    const props = child.props as any
+    
+    // Si c'est SelectTrigger, extraire size et className
+    if (props.size !== undefined || props.className !== undefined) {
+      if (props.size !== undefined) size = props.size
+      if (props.className !== undefined) className = props.className
+    }
+    
+    // Sinon, chercher récursivement
+    if (child.props.children) {
+      const found = extractTriggerProps(child.props.children)
+      if (found.size) size = found.size
+      if (found.className) className = found.className
+    }
+  })
+
+  return { size, className }
+}
+
+interface SelectProps extends React.ComponentProps<typeof SelectPrimitive.Root> {
+  // Prop optionnel pour forcer l'utilisation du Select même si > 2 options
+  forceSelect?: boolean
+  children: React.ReactNode
+}
 
 function Select({
+  forceSelect = false,
+  children,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Root>) {
-  return <SelectPrimitive.Root data-slot="select" {...props} />
+}: SelectProps) {
+  // Extraire les options depuis les enfants
+  const options = React.useMemo(() => {
+    return extractSelectOptions(children)
+  }, [children])
+
+  // Extraire le placeholder depuis SelectValue
+  const placeholder = React.useMemo(() => {
+    return extractPlaceholder(children) || (props.placeholder as string)
+  }, [children, props.placeholder])
+
+  // Extraire la taille et className depuis SelectTrigger
+  const triggerProps = React.useMemo(() => {
+    return extractTriggerProps(children)
+  }, [children])
+
+  // Si plus de 2 options et pas forcé, utiliser Combobox
+  if (!forceSelect && options.length > 2) {
+    return (
+      <Combobox
+        options={options}
+        value={props.value}
+        onValueChange={props.onValueChange}
+        placeholder={placeholder}
+        disabled={props.disabled}
+        size={triggerProps.size || "default"}
+        className={triggerProps.className}
+      />
+    )
+  }
+
+  return <SelectRoot data-slot="select" {...props}>{children}</SelectRoot>
 }
 
 function SelectGroup({
@@ -50,6 +176,27 @@ function SelectTrigger({
   )
 }
 
+// Helper pour compter les SelectItem dans les enfants
+function countSelectItems(children: React.ReactNode): number {
+  let count = 0
+  
+  React.Children.forEach(children, (child) => {
+    if (!React.isValidElement(child)) return
+    
+    const props = child.props as any
+    // Si c'est un SelectItem (a une prop value)
+    if (props.value !== undefined) {
+      count++
+    }
+    // Si c'est un SelectGroup, compter récursivement
+    else if (child.props.children) {
+      count += countSelectItems(child.props.children)
+    }
+  })
+  
+  return count
+}
+
 function SelectContent({
   className,
   children,
@@ -57,10 +204,18 @@ function SelectContent({
   align = "center",
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Content>) {
+  // Compter le nombre d'items
+  const itemCount = React.useMemo(() => countSelectItems(children), [children])
+  
+  // Si plus de 2 items, ajouter une classe pour indiquer qu'on devrait utiliser Combobox
+  // (on ne peut pas changer le composant ici car SelectContent est déjà rendu)
+  // Cette logique sera gérée au niveau du composant parent SelectWrapper
+  
   return (
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
         data-slot="select-content"
+        data-item-count={itemCount}
         className={cn(
           "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative z-50 max-h-(--radix-select-content-available-height) min-w-[8rem] origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-md border shadow-md",
           position === "popper" &&

@@ -1,0 +1,31 @@
+{
+  "common": {
+    "search": "Rechercher",
+    "notifications": "Notifications",
+    "profile": "Profil",
+    "settings": "Paramètres",
+    "logout": "Déconnexion",
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "create": "Créer",
+    "view": "Voir",
+    "close": "Fermer"
+  },
+  "studio": {
+    "dashboard": "Dashboard",
+    "articles": "Articles",
+    "projects": "Projets",
+    "actions": "Actions",
+    "debates": "Débats",
+    "governance": "Gouvernance",
+    "credibility": "Crédibilité",
+    "missions": "Missions",
+    "organizations": "Organisations",
+    "stats": "Statistiques"
+  }
+}
+

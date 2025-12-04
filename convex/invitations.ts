@@ -21,14 +21,18 @@ export const getUserInvitations = query({
   args: {},
   handler: async (ctx) => {
     const betterAuthUser = await betterAuthComponent.safeGetAuthUser(ctx as any);
-    if (!betterAuthUser) {
+    if (!betterAuthUser || !betterAuthUser.email) {
       return [];
     }
 
+    // Normaliser l'email (minuscules, sans espaces)
+    const normalizedEmail = betterAuthUser.email.toLowerCase().trim();
+
     // Récupérer toutes les invitations pour cet email (tous statuts)
+    // Utiliser l'index email pour une recherche plus efficace
     const allInvitations = await ctx.db
       .query("invitations")
-      .filter((q) => q.eq(q.field("email"), betterAuthUser.email))
+      .withIndex("email", (q) => q.eq("email", normalizedEmail))
       .collect();
 
     // Vérifier les expirations et enrichir avec les infos de l'organisation
@@ -166,11 +170,14 @@ export const inviteUser = mutation({
       }
     }
 
+    // Normaliser l'email (minuscules, sans espaces) pour garantir la cohérence
+    const normalizedEmail = args.email.toLowerCase().trim();
+
     // Vérifier qu'il n'y a pas déjà une invitation en attente
     const existingInvitation = await ctx.db
       .query("invitations")
       .withIndex("organizationId", (q) => q.eq("organizationId", args.organizationId))
-      .filter((q) => q.eq(q.field("email"), args.email))
+      .filter((q) => q.eq(q.field("email"), normalizedEmail))
       .filter((q) => q.eq(q.field("status"), "pending"))
       .first();
 
@@ -183,7 +190,7 @@ export const inviteUser = mutation({
 
     const invitationId = await ctx.db.insert("invitations", {
       organizationId: args.organizationId,
-      email: args.email,
+      email: normalizedEmail,
       invitedBy: appUser._id,
       role: args.role,
       token: generateInvitationToken(),

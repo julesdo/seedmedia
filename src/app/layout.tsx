@@ -3,7 +3,9 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import { ViewTransitions } from "next-view-transitions";
 import "./globals.css";
 import { ThemeProvider } from "@/components/next-theme/theme-provider";
-
+import { LanguageProvider } from "@/contexts/LanguageContext";
+// Temporairement désactivé - à réactiver plus tard
+// import { AutoTranslateProvider } from "@/components/translation/AutoTranslateProvider";
 import { ConvexClientProvider } from "./ConvexClientProvider";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
@@ -24,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <ViewTransitions>
-      <html lang="en" suppressHydrationWarning>
+      <html lang="fr" suppressHydrationWarning>
         <body
           className={`${plusJakartaSans.variable} antialiased font-sans`}
         >
@@ -55,11 +57,12 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <ConvexClientProvider>
-            <main>
-              {children}
-            </main>
+              <LanguageProvider>
+                <main>
+                  {children}
+                </main>
+              </LanguageProvider>
             </ConvexClientProvider>
-            
           </ThemeProvider>
         </body>
       </html>

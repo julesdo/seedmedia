@@ -638,7 +638,7 @@ export function UserProfileCard({ user, accounts = [] }: UserProfileCardProps) {
             <p className="text-xs font-medium truncate text-gradient-light">
               {displayUser?.name || "Utilisateur"}
             </p>
-            <p className="text-[10px] truncate opacity-50 text-muted-foreground">
+            <p className="text-[10px] truncate text-gray-600 dark:text-gray-400">
               {displayUser?.email || "email@example.com"}
             </p>
           </div>
@@ -696,75 +696,7 @@ export function UserProfileCard({ user, accounts = [] }: UserProfileCardProps) {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link href="/profile" className="flex items-center gap-2 cursor-pointer">
-            <SolarIcon icon="user-bold" className="h-4 w-4 icon-gradient-light" />
-            <span className="text-gradient-light">Profil</span>
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/settings" className="flex items-center gap-2 cursor-pointer">
-            <SolarIcon icon="settings-bold" className="h-4 w-4 icon-gradient-light" />
-            <span className="text-gradient-light">Paramètres</span>
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/billing" className="flex items-center gap-2 cursor-pointer">
-            <SolarIcon icon="wallet-money-bold" className="h-4 w-4 icon-gradient-light" />
-            <span className="text-gradient-light">Facturation</span>
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link href="/help" className="flex items-center gap-2 cursor-pointer">
-            <SolarIcon icon="question-circle-bold" className="h-4 w-4 icon-gradient-light" />
-            <span className="text-gradient-light">Aide</span>
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
 
-        {/* Section Organisations */}
-        {organizations && organizations.length > 0 && (
-          <>
-            <DropdownMenuLabel className="px-3 py-2 text-xs font-semibold text-muted-foreground">
-              Organisations
-            </DropdownMenuLabel>
-            {organizations.slice(0, 3).map((org) => (
-              <DropdownMenuItem key={org._id} asChild>
-                <Link
-                  href={`/discover/organizations/${org._id}`}
-                  className="flex items-center gap-2 cursor-pointer"
-                >
-                  <Avatar className="h-5 w-5 flex-shrink-0">
-                    <AvatarImage src={org.logo || undefined} alt={org.name} />
-                    <AvatarFallback className="text-[10px]">
-                      {org.name[0]?.toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-xs truncate text-gradient-light flex-1 min-w-0">
-                    {org.name}
-                  </span>
-                  {org.role === "owner" && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/20 text-primary">
-                      Owner
-                    </span>
-                  )}
-                </Link>
-              </DropdownMenuItem>
-            ))}
-            {organizations.length > 3 && (
-              <DropdownMenuItem asChild>
-                <Link href="/organizations" className="flex items-center gap-2 cursor-pointer text-xs">
-                  <SolarIcon icon="arrow-right-bold" className="h-3 w-3 icon-gradient-light" />
-                  <span className="text-gradient-light">
-                    Voir toutes ({organizations.length})
-                  </span>
-                </Link>
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuSeparator />
-          </>
-        )}
         
         {/* Section Comptes Actifs */}
         {(() => {

@@ -77,7 +77,7 @@ export function CredibilityBreakdown({ breakdown, className }: CredibilityBreakd
   ];
 
   return (
-    <Card className={className}>
+    <Card className={cn("border border-border/60 bg-card", className)}>
       <CardHeader>
         <CardTitle>Décomposition du score</CardTitle>
         <CardDescription>

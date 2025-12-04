@@ -171,11 +171,9 @@ export default function ProfilePage() {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
           <TabsTrigger value="edit">Modifier</TabsTrigger>
-          <TabsTrigger value="accounts">Comptes</TabsTrigger>
-          <TabsTrigger value="organizations">Organisations</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -481,126 +479,6 @@ export default function ProfilePage() {
                   )}
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="accounts" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Mes comptes</CardTitle>
-                  <CardDescription>Gérez vos comptes connectés</CardDescription>
-                </div>
-                <Link href="/studio/accounts">
-                  <Button variant="outline" size="sm">
-                    <SolarIcon icon="settings-bold" className="h-4 w-4 mr-2" />
-                    Gérer les comptes
-                  </Button>
-                </Link>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {uniqueAccounts.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground opacity-70">
-                  <SolarIcon icon="user-id-bold" className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  <p className="text-sm mb-4">Aucun compte connecté</p>
-                  <Link href="/studio/accounts">
-                    <Button variant="outline" size="sm">
-                      <SolarIcon icon="user-plus-bold" className="h-4 w-4 mr-2" />
-                      Ajouter un compte
-                    </Button>
-                  </Link>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {uniqueAccounts.map((account: any) => (
-                    <div
-                      key={account.id}
-                      className="flex items-center gap-3 p-4 rounded-lg bg-background border border-border/50"
-                    >
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={account.image || undefined} alt={account.name || ""} />
-                        <AvatarFallback>
-                          {account.name?.[0]?.toUpperCase() || "U"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium truncate">
-                          {account.name || account.email}
-                        </div>
-                        <div className="text-xs text-muted-foreground opacity-70 truncate">
-                          {account.email}
-                        </div>
-                      </div>
-                      <Badge variant="outline" className="text-xs">
-                        {account.provider === "github" ? "GitHub" : account.provider === "google" ? "Google" : "Email"}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="organizations" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Mes organisations</CardTitle>
-                  <CardDescription>Organisations dont vous faites partie</CardDescription>
-                </div>
-                <Link href="/studio/organizations">
-                  <Button variant="outline" size="sm">
-                    <SolarIcon icon="buildings-bold" className="h-4 w-4 mr-2" />
-                    Voir toutes
-                  </Button>
-                </Link>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {organizations === undefined ? (
-                <div className="text-center py-8 text-muted-foreground opacity-70">
-                  <div className="text-sm">Chargement...</div>
-                </div>
-              ) : organizations.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground opacity-70">
-                  <SolarIcon icon="buildings-bold" className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  <p className="text-sm mb-4">Aucune organisation</p>
-                  <Link href="/studio/organizations">
-                    <Button variant="outline" size="sm">
-                      <SolarIcon icon="add-circle-bold" className="h-4 w-4 mr-2" />
-                      Créer une organisation
-                    </Button>
-                  </Link>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {organizations.slice(0, 4).map((org) => (
-                    <Link key={org._id} href={`/discover/organizations/${org._id}`}>
-                      <div className="flex items-center gap-3 p-4 rounded-lg bg-background border border-border/50 hover:border-primary/50 transition-colors cursor-pointer">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={org.logo || undefined} alt={org.name} />
-                          <AvatarFallback>
-                            {org.name[0]?.toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium truncate">
-                            {org.name}
-                          </div>
-                          <div className="text-xs text-muted-foreground opacity-70">
-                            {org.role === "owner" ? "Propriétaire" : org.role === "admin" ? "Admin" : "Membre"}
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
             </CardContent>
           </Card>
         </TabsContent>

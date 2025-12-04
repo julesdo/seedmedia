@@ -51,6 +51,8 @@ export default defineSchema({
       v.literal("editeur") // Peut valider articles, vote pondéré x4
     ),
     expertiseDomains: v.array(v.string()), // Domaines d'expertise (validés)
+    // Préférences
+    preferredLanguage: v.optional(v.string()), // Langue préférée (ex: "fr", "en", "es")
     // Timestamps
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -1250,4 +1252,18 @@ export default defineSchema({
   })
     .index("userId", ["userId"])
     .index("userId_createdAt", ["userId", "createdAt"]),
+
+  // ============================================
+  // TRANSLATION CACHE
+  // ============================================
+  translationCache: defineTable({
+    cacheKey: v.string(), // Clé unique: "sourceLang_targetLang_text"
+    sourceText: v.string(), // Texte original
+    translatedText: v.string(), // Texte traduit
+    sourceLanguage: v.string(), // Langue source (ex: "fr")
+    targetLanguage: v.string(), // Langue cible (ex: "en")
+    createdAt: v.number(), // Timestamp de création
+  })
+    .index("cacheKey", ["cacheKey"])
+    .index("sourceLanguage_targetLanguage", ["sourceLanguage", "targetLanguage"]),
 });

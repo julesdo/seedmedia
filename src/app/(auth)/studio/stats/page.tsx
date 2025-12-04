@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
+import { api } from "../../../../../convex/_generated/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SolarIcon } from "@/components/icons/SolarIcon";
@@ -96,18 +96,18 @@ export default function StatsPage() {
   ];
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <div className="space-y-6">
+    <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-10 max-w-7xl">
+      <div className="space-y-8">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Statistiques de la plateforme</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl md:text-3xl font-bold mb-2">Statistiques de la plateforme</h1>
+          <p className="text-sm text-muted-foreground">
             Vue d'ensemble des métriques clés de Seed Media
           </p>
         </div>
 
         {/* Métriques clés */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card className="border border-border/60 bg-card">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Utilisateurs</CardTitle>
               <SolarIcon icon="users-group-rounded-bold" className="h-4 w-4 text-muted-foreground" />
@@ -120,7 +120,7 @@ export default function StatsPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border border-border/60 bg-card">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Articles</CardTitle>
               <SolarIcon icon="document-bold" className="h-4 w-4 text-muted-foreground" />
@@ -133,7 +133,7 @@ export default function StatsPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border border-border/60 bg-card">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Organisations</CardTitle>
               <SolarIcon icon="buildings-bold" className="h-4 w-4 text-muted-foreground" />
@@ -146,7 +146,7 @@ export default function StatsPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border border-border/60 bg-card">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Crédibilité moyenne</CardTitle>
               <SolarIcon icon="star-bold" className="h-4 w-4 text-muted-foreground" />
@@ -163,7 +163,7 @@ export default function StatsPage() {
         {/* Graphiques */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Utilisateurs par rôle */}
-          <Card>
+          <Card className="border border-border/60 bg-card">
             <CardHeader>
               <CardTitle>Utilisateurs par rôle</CardTitle>
               <CardDescription>Répartition des utilisateurs selon leur rôle</CardDescription>
@@ -199,7 +199,7 @@ export default function StatsPage() {
           </Card>
 
           {/* Articles par statut */}
-          <Card>
+          <Card className="border border-border/60 bg-card">
             <CardHeader>
               <CardTitle>Articles par statut</CardTitle>
               <CardDescription>Répartition des articles selon leur statut</CardDescription>
@@ -235,7 +235,7 @@ export default function StatsPage() {
           </Card>
 
           {/* Comparaison des contenus */}
-          <Card>
+          <Card className="border border-border/60 bg-card">
             <CardHeader>
               <CardTitle>Comparaison des contenus</CardTitle>
               <CardDescription>Nombre de contenus par type</CardDescription>
@@ -263,7 +263,7 @@ export default function StatsPage() {
           </Card>
 
           {/* Votes sur articles */}
-          <Card>
+          <Card className="border border-border/60 bg-card">
             <CardHeader>
               <CardTitle>Votes sur articles</CardTitle>
               <CardDescription>Répartition des votes positifs et négatifs</CardDescription>
@@ -298,7 +298,7 @@ export default function StatsPage() {
           </Card>
 
           {/* Propositions de gouvernance */}
-          <Card>
+          <Card className="border border-border/60 bg-card">
             <CardHeader>
               <CardTitle>Propositions de gouvernance</CardTitle>
               <CardDescription>Statut des propositions</CardDescription>
@@ -325,7 +325,7 @@ export default function StatsPage() {
           </Card>
 
           {/* Corrections */}
-          <Card>
+          <Card className="border border-border/60 bg-card">
             <CardHeader>
               <CardTitle>Corrections proposées</CardTitle>
               <CardDescription>Statut des corrections</CardDescription>
@@ -362,8 +362,8 @@ export default function StatsPage() {
         </div>
 
         {/* Métriques supplémentaires */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Card className="border border-border/60 bg-card">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Commentaires</CardTitle>
               <SolarIcon icon="chat-round-bold" className="h-4 w-4 text-muted-foreground" />
@@ -376,7 +376,7 @@ export default function StatsPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border border-border/60 bg-card">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Votes</CardTitle>
               <SolarIcon icon="hand-stars-bold" className="h-4 w-4 text-muted-foreground" />
@@ -389,7 +389,7 @@ export default function StatsPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border border-border/60 bg-card">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Favoris</CardTitle>
               <SolarIcon icon="star-bold" className="h-4 w-4 text-muted-foreground" />
@@ -402,7 +402,7 @@ export default function StatsPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border border-border/60 bg-card">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Follows</CardTitle>
               <SolarIcon icon="user-plus-rounded-bold" className="h-4 w-4 text-muted-foreground" />
@@ -415,7 +415,7 @@ export default function StatsPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border border-border/60 bg-card">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Débats</CardTitle>
               <SolarIcon icon="question-circle-bold" className="h-4 w-4 text-muted-foreground" />
@@ -428,7 +428,7 @@ export default function StatsPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border border-border/60 bg-card">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Actions</CardTitle>
               <SolarIcon icon="hand-stars-bold" className="h-4 w-4 text-muted-foreground" />

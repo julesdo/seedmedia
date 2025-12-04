@@ -1,0 +1,7 @@
+{
+  "buildCommand": "npx convex deploy --cmd 'pnpm run build'",
+  "installCommand": "pnpm install",
+  "framework": "nextjs",
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD ./"
+}
+

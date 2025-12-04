@@ -90,6 +90,11 @@ export const PlaceholderElement = withHOC(
     const [customUploadedFile, setCustomUploadedFile] = React.useState<any>(undefined);
     const [customUploadingFile, setCustomUploadingFile] = React.useState<File | undefined>(undefined);
 
+    // Utiliser uploadedFile ou customUploadedFile selon le contexte
+    const finalUploadedFile = imageUploadContext ? customUploadedFile : uploadedFile;
+    const finalIsUploading = imageUploadContext ? customUploading : isUploading;
+    const finalUploadingFile = imageUploadContext ? customUploadingFile : uploadingFile;
+
     const loading = finalIsUploading && finalUploadingFile;
 
     const currentContent = CONTENT[element.mediaType];
@@ -147,11 +152,6 @@ export const PlaceholderElement = withHOC(
       },
       [api.placeholder, element.id, imageUploadContext, uploadThingHook]
     );
-
-    // Utiliser uploadedFile ou customUploadedFile selon le contexte
-    const finalUploadedFile = imageUploadContext ? customUploadedFile : uploadedFile;
-    const finalIsUploading = imageUploadContext ? customUploading : isUploading;
-    const finalUploadingFile = imageUploadContext ? customUploadingFile : uploadingFile;
 
     React.useEffect(() => {
       if (!finalUploadedFile) return;

@@ -19,6 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { LanguageSelectorCompact } from "@/components/translation/LanguageSelectorCompact";
 
 export function PublicHeader() {
   const { isAuthenticated, isLoading } = useConvexAuth();
@@ -60,6 +61,9 @@ export function PublicHeader() {
         </div>
 
         <div className="flex items-center justify-end gap-2">
+          {/* Language Selector */}
+          <LanguageSelectorCompact variant="ghost" size="sm" className="hidden lg:flex" />
+          
           {isLoading ? (
             <div className="h-8 w-16 animate-pulse rounded bg-muted/50" />
           ) : isAuthenticated && user ? (
@@ -78,7 +82,7 @@ export function PublicHeader() {
                   </div>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-52 shadow-none border border-border/60 bg-background/95 backdrop-blur">
+              <DropdownMenuContent align="end" className="w-52 shadow-none border border-border/60">
                 <div className="flex items-center gap-2 px-2 py-2">
                   <Avatar className="h-7 w-7">
                     <AvatarImage src={user.image || undefined} />

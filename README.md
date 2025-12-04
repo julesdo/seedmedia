@@ -367,5 +367,5 @@ pnpm convex env set RESEND_API_KEY re_Nob7st7b_A54QcAU4yQSXgVfaEkD5bj7A#   s e e
  
 
 git add .
-git commit -m "maj 1.3 prod"
+git commit -m "maj 1.4 prod"
 git push -u origin main

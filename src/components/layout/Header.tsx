@@ -31,6 +31,10 @@ import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useMutation } from "convex/react";
 import { Id } from "../../../convex/_generated/dataModel";
+import { LanguageSelectorCompact } from "@/components/translation/LanguageSelectorCompact";
+// Traduction désactivée temporairement
+// import { TranslatedInput } from "@/components/translation/TranslatedInput";
+// import { TranslatedText } from "@/components/translation/TranslatedText";
 import { useRouter } from "next/navigation";
 
 export function Header() {
@@ -78,18 +82,7 @@ export function Header() {
         {/* Right: Actions */}
         <div className="flex items-center gap-2 flex-shrink-0">
           {/* Language */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="glass" size="sm" className="gap-1.5 hidden lg:flex">
-                <span className="text-gradient-light">FR</span>
-                <SolarIcon icon="alt-arrow-down-bold" className="h-3.5 w-3.5 icon-gradient-light" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>FR</DropdownMenuItem>
-              <DropdownMenuItem>EN</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <LanguageSelectorCompact variant="glass" size="sm" />
 
           {/* Theme Toggle */}
           <ThemeToggle variant="ghost" />
@@ -143,7 +136,9 @@ export function Header() {
                   {notifications.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-12 text-center">
                       <SolarIcon icon="bell-off-bold" className="h-12 w-12 text-muted-foreground/50 mb-4" />
-                      <p className="text-sm text-muted-foreground">Aucune notification</p>
+                      <p className="text-sm text-muted-foreground">
+                        Aucune notification
+                      </p>
                     </div>
                   ) : (
                     notifications.map((notification) => (

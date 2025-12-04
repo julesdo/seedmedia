@@ -41,39 +41,63 @@ export default function InvitationsPage() {
 
   if (invitations === undefined) {
     return (
-      <div className="space-y-4">
-        {[1, 2, 3].map((i) => (
-          <Card key={i}>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <Skeleton className="h-16 w-16 rounded-full" />
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="h-5 w-48" />
-                  <Skeleton className="h-4 w-64" />
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-10 max-w-7xl">
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="border border-border/60 bg-card">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <Skeleton className="h-16 w-16 rounded-full" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-5 w-48" />
+                    <Skeleton className="h-4 w-64" />
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     );
   }
 
-  const pendingInvitations = invitations.filter((inv) => inv.status === "pending");
-  const expiredInvitations = invitations.filter((inv) => inv.status === "expired");
-  const acceptedInvitations = invitations.filter((inv) => inv.status === "accepted");
-  const rejectedInvitations = invitations.filter((inv) => inv.status === "rejected");
+  // S'assurer que invitations est toujours un tableau
+  const invitationsList = Array.isArray(invitations) ? invitations : [];
+  
+  // Debug: afficher les invitations pour comprendre le problème
+  // console.log("All invitations:", invitationsList);
+  
+  const pendingInvitations = invitationsList.filter((inv) => {
+    // Vérifier si l'invitation est expirée (même si le statut est "pending")
+    const now = Date.now();
+    const isExpired = inv.status === "pending" && inv.expiresAt < now;
+    return inv.status === "pending" && !isExpired;
+  });
+  
+  const expiredInvitations = invitationsList.filter((inv) => {
+    const now = Date.now();
+    // Vérifier si le statut est "expired" ou si l'invitation est expirée (même si le statut est "pending")
+    const isExpired = inv.status === "expired" || (inv.status === "pending" && inv.expiresAt < now);
+    return isExpired;
+  });
+  
+  // Debug: afficher les invitations expirées
+  // console.log("Expired invitations:", expiredInvitations);
+  
+  const acceptedInvitations = invitationsList.filter((inv) => inv.status === "accepted");
+  const rejectedInvitations = invitationsList.filter((inv) => inv.status === "rejected");
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Mes invitations</h1>
-        <p className="text-muted-foreground mt-2">
-          Gérez toutes vos invitations à rejoindre des organisations
-        </p>
-      </div>
+    <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-10 max-w-7xl">
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Mes invitations</h1>
+          <p className="text-muted-foreground mt-2">
+            Gérez toutes vos invitations à rejoindre des organisations
+          </p>
+        </div>
 
-      {invitations.length === 0 ? (
+        {invitationsList.length === 0 ? (
         <Empty>
           <EmptyHeader>
             <EmptyMedia variant="icon">
@@ -295,11 +319,13 @@ export default function InvitationsPage() {
               <h2 className="text-xl font-semibold">
                 Invitations expirées ({expiredInvitations.length})
               </h2>
+              {/* Debug: afficher le nombre d'invitations expirées */}
+              {/* {console.log("Rendering expired invitations:", expiredInvitations)} */}
               {expiredInvitations.map((invitation) => (
-                <Card key={invitation._id} className="opacity-60">
+                <Card key={invitation._id} className="opacity-60 border border-border/60 bg-card">
                   <CardContent className="p-6">
                     <div className="flex items-start gap-4">
-                      {invitation.organization && (
+                      {invitation.organization ? (
                         <>
                           <Avatar className="h-16 w-16 ring-2 ring-border/50">
                             <AvatarImage
@@ -338,6 +364,32 @@ export default function InvitationsPage() {
                             </div>
                           </div>
                         </>
+                      ) : (
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-4 mb-2">
+                            <div>
+                              <h3 className="text-lg font-semibold">
+                                Organisation supprimée
+                              </h3>
+                              <p className="text-sm text-muted-foreground/80 mt-1">
+                                Cette organisation n'existe plus
+                              </p>
+                            </div>
+                            <Badge variant="outline" className="bg-gray-500/20 text-gray-500 border-gray-500/30">
+                              Expirée
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground/70 mt-3">
+                            <SolarIcon icon="calendar-bold" className="h-3.5 w-3.5" />
+                            <span>
+                              Expirée le {new Date(invitation.expiresAt).toLocaleDateString("fr-FR", {
+                                day: "numeric",
+                                month: "long",
+                                year: "numeric",
+                              })}
+                            </span>
+                          </div>
+                        </div>
                       )}
                     </div>
                   </CardContent>
@@ -346,7 +398,8 @@ export default function InvitationsPage() {
             </div>
           )}
         </>
-      )}
+        )}
+      </div>
     </div>
   );
 }
