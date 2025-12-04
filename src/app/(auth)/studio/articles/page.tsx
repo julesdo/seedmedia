@@ -147,34 +147,36 @@ export default function MyArticlesPage() {
               </Button>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Titre</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead>Score</TableHead>
-                  <TableHead>Sources</TableHead>
-                  <TableHead>Vues</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {allArticles.map((article: any) => {
-                  const publishedDate = article.publishedAt
-                    ? new Date(article.publishedAt)
-                    : new Date(article.createdAt);
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="min-w-[200px] max-w-[400px]">Titre</TableHead>
+                    <TableHead>Statut</TableHead>
+                    <TableHead>Score</TableHead>
+                    <TableHead>Sources</TableHead>
+                    <TableHead>Vues</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {allArticles.map((article: any) => {
+                    const publishedDate = article.publishedAt
+                      ? new Date(article.publishedAt)
+                      : new Date(article.createdAt);
 
-                  return (
-                    <TableRow key={article._id}>
-                      <TableCell className="font-medium">
-                        <Link
-                          href={`/studio/articles/${article.slug || article._id}`}
-                          className="hover:text-primary transition-colors"
-                        >
-                          {article.title}
-                        </Link>
-                      </TableCell>
+                    return (
+                      <TableRow key={article._id}>
+                        <TableCell className="font-medium min-w-[200px] max-w-[400px]">
+                          <Link
+                            href={`/studio/articles/${article.slug || article._id}`}
+                            className="hover:text-primary transition-colors block truncate"
+                            title={article.title}
+                          >
+                            {article.title}
+                          </Link>
+                        </TableCell>
                       <TableCell>
                         <Badge
                           variant={
@@ -218,8 +220,9 @@ export default function MyArticlesPage() {
                     </TableRow>
                   );
                 })}
-              </TableBody>
-            </Table>
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>

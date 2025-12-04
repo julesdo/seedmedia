@@ -261,7 +261,14 @@ export function PlateEditorWrapper({
 
   return (
     <ImageUploadProvider handleImageUpload={handleImageUpload}>
-      <div className="h-full w-full flex flex-col" style={{ height: '100%', maxHeight: '100%', overflow: 'hidden' }}>
+      <div 
+        className="h-full w-full flex flex-col article-editor-wrapper" 
+        style={{ 
+          height: '100%', 
+          maxHeight: '100%', 
+          overflow: 'hidden',
+        }}
+      >
         <Plate 
           editor={editor}
           readOnly={readOnly}
@@ -270,19 +277,17 @@ export function PlateEditorWrapper({
           }}
         >
           <div className="h-full w-full flex flex-col overflow-hidden">
-            <EditorContainer className="h-full flex flex-col min-h-0 overflow-hidden px-0">
-              {/* Zone de contenu éditable avec padding */}
+            <EditorContainer className="h-full flex flex-col min-h-0 overflow-hidden">
+              {/* Zone de contenu éditable - padding appliqué directement sur l'éditeur */}
               <div 
-                className="flex-1 overflow-y-auto min-h-0 px-4 md:px-6 lg:px-8"
-                style={{ height: '100%', maxHeight: '100%' }}
+                className="flex-1 overflow-y-auto min-h-0"
               >
                 <PlateEditor 
                   variant="demo" 
                   placeholder={placeholder} 
                   className={cn(
-                    "w-full",
-                    "!px-0 !pt-2 !pb-20 max-w-none!",
-                    "!h-auto !min-h-full",
+                    "w-full h-full",
+                    "!px-6 !pt-4 !pb-4 max-w-none!",
                     readOnly && "opacity-100 cursor-default"
                   )}
                 />

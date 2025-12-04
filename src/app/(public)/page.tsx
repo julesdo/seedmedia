@@ -21,6 +21,7 @@ import { HeroWidget } from "@/components/home/HeroWidget";
 import { PlatformStats } from "@/components/home/PlatformStats";
 import { TrendingTopics } from "@/components/home/TrendingTopics";
 import { ActiveActions } from "@/components/home/ActiveActions";
+import { ArticleCard } from "@/components/articles/ArticleCard";
 
 export default function PublicHomePage() {
   // Récupérer les articles
@@ -96,87 +97,9 @@ export default function PublicHomePage() {
                     <p>Aucun article pour le moment.</p>
                   </div>
                 ) : (
-                  gridArticles.map((article) => {
-                    const publishedDate = article.publishedAt
-                      ? new Date(article.publishedAt)
-                      : new Date(article.createdAt);
-
-                    return (
-                      <Link key={article._id} href={`/articles/${article.slug}`}>
-                        <article className="group cursor-pointer">
-                          {/* Image */}
-                          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg mb-4 bg-muted">
-                            {article.coverImage ? (
-                              <Image
-                                src={article.coverImage}
-                                alt={article.title}
-                                fill
-                                className="object-cover transition-transform duration-500 group-hover:scale-105"
-                              />
-                            ) : (
-                              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-muted flex items-center justify-center">
-                                <SolarIcon icon="document-text-bold" className="h-12 w-12 text-muted-foreground" />
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Contenu */}
-                          <div className="space-y-2.5">
-                            {/* Métadonnées */}
-                            <div className="flex items-center gap-2.5 text-xs text-muted-foreground">
-                              {article.author && (
-                                <Author
-                                  author={article.author}
-                                  variant="default"
-                                  size="sm"
-                                  showDate
-                                  date={publishedDate}
-                                />
-                              )}
-                            </div>
-
-                            {/* Titre */}
-                            <h3 className="text-lg font-bold leading-tight group-hover:opacity-80 transition-opacity line-clamp-2">
-                              {article.title}
-                            </h3>
-
-                            {/* Résumé */}
-                            {article.summary && (
-                              <p className="text-xs text-muted-foreground line-clamp-2">
-                                {article.summary}
-                              </p>
-                            )}
-
-                            {/* Catégories et Tags */}
-                            <div className="flex flex-wrap gap-1.5 items-center">
-                              {article.categories && article.categories.length > 0 && (
-                                <>
-                                  {article.categories.slice(0, 2).map((category) => (
-                                    <span key={category?._id} className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
-                                      {category?.icon && (
-                                        <SolarIcon icon={category?.icon} className="h-3 w-3 shrink-0" />
-                                      )}
-                                      {category?.name}
-                                    </span>
-                                  ))}
-                                </>
-                              )}
-                              {article.tags && article.tags.length > 0 && (
-                                <>
-                                  {article.categories && article.categories.length > 0 && <span className="text-[11px] text-muted-foreground">•</span>}
-                                  {article.tags.slice(0, 2).map((tag) => (
-                                    <span key={tag} className="text-[11px] text-muted-foreground">
-                                      #{tag}
-                                    </span>
-                                  ))}
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        </article>
-                      </Link>
-                    );
-                  })
+                  gridArticles.map((article) => (
+                    <ArticleCard key={article._id} article={article} />
+                  ))
                 )}
               </div>
 

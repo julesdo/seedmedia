@@ -86,9 +86,15 @@ export const SuggestionLineBreak: RenderNodeWrapper<SuggestionConfig> = ({
   api,
   element,
 }) => {
+  // Vérifier que l'API de suggestion existe (peut être undefined en mode lecture seule)
+  if (!api.suggestion) return;
+  
   if (!api.suggestion.isBlockSuggestion(element)) return;
 
   const suggestionData = element.suggestion;
+
+  // Vérifier que suggestionData existe avant de l'utiliser
+  if (!suggestionData) return;
 
   return function Component({ children }) {
     return (

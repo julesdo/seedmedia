@@ -20,8 +20,10 @@ export function StudioSidebarLayout({
         <Header />
         
         {/* Content Area */}
-        <main className="flex-1 bg-background p-6">
-          {children}
+        <main className="flex-1 bg-background p-6 min-w-0 overflow-hidden">
+          <div className="w-full min-w-0 max-w-full">
+            {children}
+          </div>
         </main>
       </SidebarInset>
       <CredibilityGainProvider />

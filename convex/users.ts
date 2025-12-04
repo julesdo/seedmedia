@@ -1,4 +1,4 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { betterAuthComponent } from "./auth";
 import { Id } from "./_generated/dataModel";
@@ -58,85 +58,99 @@ export const getCurrentUser = query({
 });
 
 /**
+ * Helper function pour garantir qu'un utilisateur existe dans la table users
+ * Peut être utilisée dans les mutations et internalMutations
+ * @internal - Utilisée en interne, utiliser ensureUserExists pour les appels externes
+ */
+export async function ensureUserExistsHelper(ctx: any): Promise<Id<"users">> {
+  const betterAuthUser = await betterAuthComponent.safeGetAuthUser(ctx);
+  if (!betterAuthUser) {
+    throw new Error("Not authenticated");
+  }
+
+  let appUser = await ctx.db
+    .query("users")
+    .withIndex("email", (q: any) => q.eq("email", betterAuthUser.email))
+    .first();
+
+  // Si l'utilisateur n'existe pas, le créer
+  if (!appUser) {
+    const now = Date.now();
+    const userData: any = {
+      email: betterAuthUser.email,
+      level: 1,
+      reachRadius: 10,
+      tags: [],
+      links: [],
+      profileCompletion: 0,
+      premiumTier: "free",
+      boostCredits: 0,
+      credibilityScore: 0,
+      role: "explorateur",
+      expertiseDomains: [],
+      createdAt: now,
+      updatedAt: now,
+    };
+    
+    // Ajouter name et image depuis Better Auth si disponibles
+    if (betterAuthUser.name) {
+      userData.name = betterAuthUser.name;
+    }
+    if (betterAuthUser.image) {
+      userData.image = betterAuthUser.image;
+    }
+    
+    const userId = await ctx.db.insert("users", userData);
+    
+    // Initialiser les missions pour le nouvel utilisateur
+    try {
+      await ctx.runMutation(internal.missions.initializeMissionsInternal, {
+        userId,
+      });
+    } catch (error) {
+      // Ignorer les erreurs d'initialisation des missions (peut ne pas exister ou échouer)
+      console.error("Erreur initialisation missions:", error);
+    }
+    
+    return userId;
+  }
+
+  // Sinon, synchroniser les données depuis Better Auth si nécessaire
+  const updates: any = {
+    updatedAt: Date.now(),
+  };
+  
+  // Synchroniser l'email si nécessaire
+  if (appUser.email !== betterAuthUser.email) {
+    updates.email = betterAuthUser.email;
+  }
+  
+  // Synchroniser le nom si l'utilisateur n'en a pas ou si Better Auth en a un
+  if (betterAuthUser.name && (!appUser.name || appUser.name === appUser.email.split("@")[0])) {
+    updates.name = betterAuthUser.name;
+  }
+  
+  // Synchroniser l'image si l'utilisateur n'en a pas et que Better Auth en a une
+  if (betterAuthUser.image && !appUser.image) {
+    updates.image = betterAuthUser.image;
+  }
+  
+  // Appliquer les mises à jour si nécessaire
+  if (Object.keys(updates).length > 1) { // Plus que updatedAt
+    await ctx.db.patch(appUser._id, updates);
+  }
+
+  return appUser._id;
+}
+
+/**
  * Crée ou synchronise l'utilisateur dans la table users
  * À appeler après une connexion OAuth pour s'assurer que l'utilisateur existe
  */
 export const ensureUserExists = mutation({
   args: {},
   handler: async (ctx) => {
-    const betterAuthUser = await betterAuthComponent.safeGetAuthUser(ctx as any);
-    if (!betterAuthUser) {
-      throw new Error("Not authenticated");
-    }
-
-    let appUser = await ctx.db
-      .query("users")
-      .withIndex("email", (q) => q.eq("email", betterAuthUser.email))
-      .first();
-
-    // Si l'utilisateur n'existe pas, le créer
-    if (!appUser) {
-      const now = Date.now();
-      const userData: any = {
-        email: betterAuthUser.email,
-        level: 1,
-        reachRadius: 10,
-        tags: [],
-        links: [],
-        profileCompletion: 0,
-        premiumTier: "free",
-        boostCredits: 0,
-        credibilityScore: 0,
-        role: "explorateur",
-        expertiseDomains: [],
-        createdAt: now,
-        updatedAt: now,
-      };
-      
-      // Ajouter name et image depuis Better Auth si disponibles
-      if (betterAuthUser.name) {
-        userData.name = betterAuthUser.name;
-      }
-      if (betterAuthUser.image) {
-        userData.image = betterAuthUser.image;
-      }
-      
-      const userId = await ctx.db.insert("users", userData);
-      
-      // Initialiser les missions pour le nouvel utilisateur
-      await ctx.runMutation(internal.missions.initializeMissionsInternal, {
-        userId,
-      });
-      
-      return userId;
-    }
-
-    // Sinon, synchroniser les données depuis Better Auth si nécessaire
-    const updates: any = {
-      updatedAt: Date.now(),
-    };
-    
-    // Synchroniser l'email si nécessaire
-    if (appUser.email !== betterAuthUser.email) {
-      updates.email = betterAuthUser.email;
-    }
-    
-    // Synchroniser le nom si l'utilisateur n'en a pas ou si Better Auth en a un
-    if (betterAuthUser.name && (!appUser.name || appUser.name === appUser.email.split("@")[0])) {
-      updates.name = betterAuthUser.name;
-    }
-    
-    // Synchroniser l'image si l'utilisateur n'en a pas et que Better Auth en a une
-    if (betterAuthUser.image && !appUser.image) {
-      updates.image = betterAuthUser.image;
-    }
-    
-    // Appliquer les mises à jour si nécessaire
-    if (Object.keys(updates).length > 1) { // Plus que updatedAt
-      await ctx.db.patch(appUser._id, updates);
-    }
-
-    return appUser._id;
+    return await ensureUserExistsHelper(ctx);
   },
 });
 

@@ -6,6 +6,7 @@ import { api, internal } from "./_generated/api";
 import { getEditorialRulesForArticleType, getArticleQualityRules, getRuleValueAsNumber } from "./configurableRules.helpers";
 import { getDefaultCategory } from "./categories.defaults";
 import { updateCredibilityScoreWithAction } from "./credibility";
+import { ensureUserExistsHelper } from "./users";
 
 // ============================================
 // HELPER FUNCTIONS
@@ -508,18 +509,11 @@ export const createArticle = mutation({
     sourcesCount: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const betterAuthUser = await betterAuthComponent.safeGetAuthUser(ctx as any);
-    if (!betterAuthUser) {
-      throw new Error("Not authenticated");
-    }
-
-    const appUser = await ctx.db
-      .query("users")
-      .withIndex("email", (q) => q.eq("email", betterAuthUser.email))
-      .first();
-
+    // Garantir que l'utilisateur existe (création automatique si nécessaire)
+    const userId = await ensureUserExistsHelper(ctx);
+    const appUser = await ctx.db.get(userId);
     if (!appUser) {
-      throw new Error("User not found");
+      throw new Error("Failed to get user");
     }
 
     const now = Date.now();
@@ -1190,6 +1184,44 @@ export const addSourceToClaim = mutation({
       addedBy: appUser._id,
       createdAt: now,
     });
+
+    return { success: true };
+  },
+});
+
+/**
+ * Supprime un article
+ */
+export const deleteArticle = mutation({
+  args: {
+    articleId: v.id("articles"),
+  },
+  handler: async (ctx, args) => {
+    const betterAuthUser = await betterAuthComponent.safeGetAuthUser(ctx as any);
+    if (!betterAuthUser) {
+      throw new Error("Not authenticated");
+    }
+
+    const appUser = await ctx.db
+      .query("users")
+      .withIndex("email", (q) => q.eq("email", betterAuthUser.email))
+      .first();
+
+    if (!appUser) {
+      throw new Error("User not found");
+    }
+
+    const article = await ctx.db.get(args.articleId);
+    if (!article) {
+      throw new Error("Article not found");
+    }
+
+    // Vérifier les permissions (seul l'auteur peut supprimer)
+    if (article.authorId !== appUser._id) {
+      throw new Error("Unauthorized: Vous ne pouvez supprimer que vos propres articles");
+    }
+
+    await ctx.db.delete(args.articleId);
 
     return { success: true };
   },

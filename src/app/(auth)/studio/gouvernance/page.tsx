@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Link } from "next-view-transitions";
 import { SolarIcon } from "@/components/icons/SolarIcon";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatDistanceToNow } from "date-fns";
@@ -95,6 +97,27 @@ export default function GovernancePage() {
     return "";
   };
 
+  // Calculer les statistiques
+  const stats = React.useMemo(() => {
+    const allProposals = [
+      ...(openProposals || []),
+      ...(myProposals || []),
+      ...(history || []),
+    ];
+    
+    // Dédupliquer par _id
+    const uniqueProposals = Array.from(
+      new Map(allProposals.map((p: any) => [p._id, p])).values()
+    );
+    
+    return {
+      total: uniqueProposals.length,
+      open: (openProposals || []).length,
+      my: (myProposals || []).length,
+      closed: (history || []).length,
+    };
+  }, [openProposals, myProposals, history]);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -113,6 +136,46 @@ export default function GovernancePage() {
         </Button>
       </div>
 
+      {/* Stats */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total</CardTitle>
+            <SolarIcon icon="document-bold" className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.total}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Votes ouverts</CardTitle>
+            <SolarIcon icon="vote-bold" className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.open}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Mes propositions</CardTitle>
+            <SolarIcon icon="user-bold" className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.my}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Fermées</CardTitle>
+            <SolarIcon icon="history-bold" className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.closed}</div>
+          </CardContent>
+        </Card>
+      </div>
+
       <Tabs defaultValue="open" className="space-y-4">
         <TabsList>
           <TabsTrigger value="open">
@@ -129,7 +192,12 @@ export default function GovernancePage() {
 
         <TabsContent value="open" className="space-y-4">
           {/* Filtres */}
-          <div className="flex flex-wrap gap-4 items-end">
+          <Card>
+            <CardHeader>
+              <CardTitle>Filtres</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-4 items-end">
             <div className="w-[200px]">
               <label className="text-sm font-medium mb-2 block">Statut</label>
               <Select
@@ -186,25 +254,38 @@ export default function GovernancePage() {
                 </SelectContent>
               </Select>
             </div>
-          </div>
+              </div>
+            </CardContent>
+          </Card>
 
           {openProposals === undefined ? (
             <Skeleton className="h-64 w-full" />
           ) : (openProposals as any[]).length === 0 ? (
-            <div className="text-center py-12">
-              <SolarIcon
-                icon="vote-bold"
-                className="h-12 w-12 mx-auto text-muted-foreground mb-4"
-              />
-              <h3 className="text-lg font-semibold mb-2">
-                Aucune proposition ouverte
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                Il n'y a actuellement aucune proposition en cours de vote
-              </p>
-            </div>
+            <Card>
+              <CardContent className="p-12 text-center">
+                <SolarIcon
+                  icon="vote-bold"
+                  className="h-12 w-12 mx-auto text-muted-foreground mb-4"
+                />
+                <h3 className="text-lg font-semibold mb-2">
+                  Aucune proposition ouverte
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Il n'y a actuellement aucune proposition en cours de vote
+                </p>
+              </CardContent>
+            </Card>
           ) : (
-            <Table>
+            <Card>
+              <CardHeader>
+                <CardTitle>Votes ouverts</CardTitle>
+                <CardDescription>
+                  {(openProposals as any[]).length} proposition{(openProposals as any[]).length > 1 ? "s" : ""} en cours de vote
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Titre</TableHead>
@@ -309,14 +390,22 @@ export default function GovernancePage() {
                     </TableRow>
                   );
                 })}
-              </TableBody>
-            </Table>
+                  </TableBody>
+                </Table>
+                </div>
+              </CardContent>
+            </Card>
           )}
         </TabsContent>
 
         <TabsContent value="my" className="space-y-4">
           {/* Filtres pour mes propositions */}
-          <div className="flex flex-wrap gap-4 items-end">
+          <Card>
+            <CardHeader>
+              <CardTitle>Filtres</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-4 items-end">
             <div className="w-[200px]">
               <label className="text-sm font-medium mb-2 block">Statut</label>
               <Select
@@ -352,30 +441,43 @@ export default function GovernancePage() {
                 </SelectContent>
               </Select>
             </div>
-          </div>
+              </div>
+            </CardContent>
+          </Card>
 
           {myProposals === undefined ? (
             <Skeleton className="h-64 w-full" />
           ) : (myProposals as any[]).length === 0 ? (
-            <div className="text-center py-12">
-              <SolarIcon
-                icon="document-add-bold"
-                className="h-12 w-12 mx-auto text-muted-foreground mb-4"
-              />
-              <h3 className="text-lg font-semibold mb-2">
-                Aucune proposition pour le moment
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Créez une nouvelle proposition pour faire évoluer Seed
-              </p>
-              <Button asChild>
-                <Link href="/studio/gouvernance/nouvelle">
-                  Nouvelle proposition
-                </Link>
-              </Button>
-            </div>
+            <Card>
+              <CardContent className="p-12 text-center">
+                <SolarIcon
+                  icon="document-add-bold"
+                  className="h-12 w-12 mx-auto text-muted-foreground mb-4"
+                />
+                <h3 className="text-lg font-semibold mb-2">
+                  Aucune proposition pour le moment
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Créez une nouvelle proposition pour faire évoluer Seed
+                </p>
+                <Button asChild>
+                  <Link href="/studio/gouvernance/nouvelle">
+                    Nouvelle proposition
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
           ) : (
-            <Table>
+            <Card>
+              <CardHeader>
+                <CardTitle>Mes propositions</CardTitle>
+                <CardDescription>
+                  {(myProposals as any[]).length} proposition{(myProposals as any[]).length > 1 ? "s" : ""} créée{(myProposals as any[]).length > 1 ? "s" : ""} par vous
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Titre</TableHead>
@@ -491,14 +593,22 @@ export default function GovernancePage() {
                     </TableRow>
                   );
                 })}
-              </TableBody>
-            </Table>
+                  </TableBody>
+                </Table>
+                </div>
+              </CardContent>
+            </Card>
           )}
         </TabsContent>
 
         <TabsContent value="history" className="space-y-4">
           {/* Filtres pour l'historique */}
-          <div className="flex flex-wrap gap-4 items-end">
+          <Card>
+            <CardHeader>
+              <CardTitle>Filtres</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-4 items-end">
             <div className="w-[200px]">
               <label className="text-sm font-medium mb-2 block">Type</label>
               <Select
@@ -552,25 +662,38 @@ export default function GovernancePage() {
                 </SelectContent>
               </Select>
             </div>
-          </div>
+              </div>
+            </CardContent>
+          </Card>
 
           {history === undefined ? (
             <Skeleton className="h-64 w-full" />
           ) : (history as any[]).length === 0 ? (
-            <div className="text-center py-12">
-              <SolarIcon
-                icon="history-bold"
-                className="h-12 w-12 mx-auto text-muted-foreground mb-4"
-              />
-              <h3 className="text-lg font-semibold mb-2">
-                Aucun historique pour le moment
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                Les propositions fermées apparaîtront ici
-              </p>
-            </div>
+            <Card>
+              <CardContent className="p-12 text-center">
+                <SolarIcon
+                  icon="history-bold"
+                  className="h-12 w-12 mx-auto text-muted-foreground mb-4"
+                />
+                <h3 className="text-lg font-semibold mb-2">
+                  Aucun historique pour le moment
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Les propositions fermées apparaîtront ici
+                </p>
+              </CardContent>
+            </Card>
           ) : (
-            <Table>
+            <Card>
+              <CardHeader>
+                <CardTitle>Historique</CardTitle>
+                <CardDescription>
+                  {(history as any[]).length} proposition{(history as any[]).length > 1 ? "s" : ""} fermée{(history as any[]).length > 1 ? "s" : ""}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Titre</TableHead>
@@ -661,8 +784,11 @@ export default function GovernancePage() {
                     </TableRow>
                   );
                 })}
-              </TableBody>
-            </Table>
+                  </TableBody>
+                </Table>
+                </div>
+              </CardContent>
+            </Card>
           )}
         </TabsContent>
       </Tabs>

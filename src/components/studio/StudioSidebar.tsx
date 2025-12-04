@@ -214,7 +214,7 @@ export function StudioSidebar() {
   const accounts = useQuery(api.accounts.getUserAccounts);
 
   return (
-    <Sidebar className="w-[18rem] border-r border-sidebar-border/50 backdrop-blur-[18px]">
+    <Sidebar className="w-[18rem] border-r border-sidebar-border/50 backdrop-blur-[18px] bg-card">
       <SidebarHeader className="px-[18px] h-16 flex border-b border-sidebar-border/50">
         <Link href="/studio" className="flex items-center gap-2 group">
           <Image

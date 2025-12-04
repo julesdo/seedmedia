@@ -1,11 +1,13 @@
 "use client";
 
+import * as React from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SolarIcon } from "@/components/icons/SolarIcon";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -73,6 +75,16 @@ export default function CategoriesPage() {
     }
   };
 
+  // Calculer les statistiques
+  const stats = React.useMemo(() => {
+    return {
+      total: activeCategories?.length || 0,
+      my: myCategories?.length || 0,
+      active: activeCategories?.filter((c: any) => c.status === "active").length || 0,
+      pending: activeCategories?.filter((c: any) => c.status === "pending").length || 0,
+    };
+  }, [activeCategories, myCategories]);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -87,10 +99,50 @@ export default function CategoriesPage() {
           onClick={() => {
             window.location.href = "/studio/gouvernance/nouvelle?proposalType=category_addition";
           }}
-          icon="add-circle-bold"
         >
+          <SolarIcon icon="add-circle-bold" className="h-4 w-4 mr-2" />
           Créer une proposition
         </Button>
+      </div>
+
+      {/* Stats */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total</CardTitle>
+            <SolarIcon icon="tag-bold" className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.total}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Actives</CardTitle>
+            <SolarIcon icon="check-circle-bold" className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.active}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">En attente</CardTitle>
+            <SolarIcon icon="clock-circle-bold" className="h-4 w-4 text-yellow-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.pending}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Mes catégories</CardTitle>
+            <SolarIcon icon="user-bold" className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.my}</div>
+          </CardContent>
+        </Card>
       </div>
 
       {isSuperAdmin === false && (
@@ -116,28 +168,43 @@ export default function CategoriesPage() {
 
         <TabsContent value="all" className="space-y-4">
           {activeCategories === undefined ? (
-            <Skeleton className="h-64 w-full" />
+            <Card>
+              <CardContent className="p-6">
+                <Skeleton className="h-64 w-full" />
+              </CardContent>
+            </Card>
           ) : activeCategories.length === 0 ? (
-            <div className="text-center py-12">
-              <SolarIcon
-                icon="tag-bold"
-                className="h-12 w-12 mx-auto text-muted-foreground mb-4"
-              />
-              <h3 className="text-lg font-semibold mb-2">Aucune catégorie active</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Créez une proposition de gouvernance pour ajouter une nouvelle catégorie
-              </p>
-              <Button
-                onClick={() => {
-                  window.location.href = "/studio/gouvernance/nouvelle?proposalType=category_addition";
-                }}
-                icon="add-circle-bold"
-              >
-                Créer une proposition
-              </Button>
-            </div>
+            <Card>
+              <CardContent className="p-12 text-center">
+                <SolarIcon
+                  icon="tag-bold"
+                  className="h-12 w-12 mx-auto text-muted-foreground mb-4"
+                />
+                <h3 className="text-lg font-semibold mb-2">Aucune catégorie active</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Créez une proposition de gouvernance pour ajouter une nouvelle catégorie
+                </p>
+                <Button
+                  onClick={() => {
+                    window.location.href = "/studio/gouvernance/nouvelle?proposalType=category_addition";
+                  }}
+                >
+                  <SolarIcon icon="add-circle-bold" className="h-4 w-4 mr-2" />
+                  Créer une proposition
+                </Button>
+              </CardContent>
+            </Card>
           ) : (
-            <Table>
+            <Card>
+              <CardHeader>
+                <CardTitle>Toutes les catégories</CardTitle>
+                <CardDescription>
+                  {activeCategories.length} catégorie{activeCategories.length > 1 ? "s" : ""} active{activeCategories.length > 1 ? "s" : ""}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Nom</TableHead>
@@ -198,9 +265,10 @@ export default function CategoriesPage() {
                       <TableCell className="text-right">
                         <Button
                           variant="ghost"
+                          size="sm"
                           onClick={() => setCategoryToArchive(category._id)}
-                          icon="archive-bold"
                         >
+                          <SolarIcon icon="archive-bold" className="h-4 w-4 mr-2" />
                           Archiver
                         </Button>
                       </TableCell>
@@ -209,33 +277,51 @@ export default function CategoriesPage() {
                 ))}
               </TableBody>
             </Table>
+                </div>
+              </CardContent>
+            </Card>
           )}
         </TabsContent>
 
         <TabsContent value="my" className="space-y-4">
           {myCategories === undefined ? (
-            <Skeleton className="h-64 w-full" />
+            <Card>
+              <CardContent className="p-6">
+                <Skeleton className="h-64 w-full" />
+              </CardContent>
+            </Card>
           ) : myCategories.length === 0 ? (
-            <div className="text-center py-12">
-              <SolarIcon
-                icon="tag-bold"
-                className="h-12 w-12 mx-auto text-muted-foreground mb-4"
-              />
-              <h3 className="text-lg font-semibold mb-2">Aucune catégorie proposée</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Vous n'avez pas encore proposé de catégories. Créez une proposition de gouvernance pour en proposer une.
-              </p>
-              <Button
-                onClick={() => {
-                  window.location.href = "/studio/gouvernance/nouvelle?proposalType=category_addition";
-                }}
-                icon="add-circle-bold"
-              >
-                Créer une proposition
-              </Button>
-            </div>
+            <Card>
+              <CardContent className="p-12 text-center">
+                <SolarIcon
+                  icon="tag-bold"
+                  className="h-12 w-12 mx-auto text-muted-foreground mb-4"
+                />
+                <h3 className="text-lg font-semibold mb-2">Aucune catégorie proposée</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Vous n'avez pas encore proposé de catégories. Créez une proposition de gouvernance pour en proposer une.
+                </p>
+                <Button
+                  onClick={() => {
+                    window.location.href = "/studio/gouvernance/nouvelle?proposalType=category_addition";
+                  }}
+                >
+                  <SolarIcon icon="add-circle-bold" className="h-4 w-4 mr-2" />
+                  Créer une proposition
+                </Button>
+              </CardContent>
+            </Card>
           ) : (
-            <Table>
+            <Card>
+              <CardHeader>
+                <CardTitle>Mes catégories</CardTitle>
+                <CardDescription>
+                  {myCategories.length} catégorie{myCategories.length > 1 ? "s" : ""} proposée{myCategories.length > 1 ? "s" : ""} par vous
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Nom</TableHead>
@@ -300,8 +386,8 @@ export default function CategoriesPage() {
                           variant="ghost"
                           size="sm"
                           onClick={() => setCategoryToArchive(category._id)}
-                          icon="archive-bold"
                         >
+                          <SolarIcon icon="archive-bold" className="h-4 w-4 mr-2" />
                           Archiver
                         </Button>
                       </TableCell>
@@ -310,6 +396,9 @@ export default function CategoriesPage() {
                 ))}
               </TableBody>
             </Table>
+                </div>
+              </CardContent>
+            </Card>
           )}
         </TabsContent>
       </Tabs>

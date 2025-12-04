@@ -7,6 +7,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 // Temporairement désactivé - à réactiver plus tard
 // import { AutoTranslateProvider } from "@/components/translation/AutoTranslateProvider";
 import { ConvexClientProvider } from "./ConvexClientProvider";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   variable: "--font-sans",
@@ -56,13 +57,15 @@ export default function RootLayout({
             enableSystem={false}
             disableTransitionOnChange
           >
-            <ConvexClientProvider>
-              <LanguageProvider>
-                <main>
-                  {children}
-                </main>
-              </LanguageProvider>
-            </ConvexClientProvider>
+            <NuqsAdapter>
+              <ConvexClientProvider>
+                <LanguageProvider>
+                  <main>
+                    {children}
+                  </main>
+                </LanguageProvider>
+              </ConvexClientProvider>
+            </NuqsAdapter>
           </ThemeProvider>
         </body>
       </html>

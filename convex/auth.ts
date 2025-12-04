@@ -11,45 +11,70 @@ export const betterAuthComponent = createClient(components.betterAuth, {
   triggers: {
     user: {
       onCreate: async (ctx, user) => {
-        // Initialize user with Seed defaults
-        const now = Date.now();
-        // Récupérer les valeurs initiales depuis les règles configurables
-        // Note: Dans un trigger onCreate, on ne peut pas utiliser les queries Convex
-        // On utilise donc les valeurs par défaut directement
-        const initialLevel = 1;
-        const initialReachRadius = 10;
+        try {
+          // Vérifier d'abord si l'utilisateur n'existe pas déjà (éviter les doublons)
+          const existingUser = await ctx.db
+            .query("users")
+            .withIndex("email", (q) => q.eq("email", user.email))
+            .first();
 
-        const userData: any = {
-          email: user.email,
-          level: initialLevel,
-          reachRadius: initialReachRadius,
-          tags: [],
-          links: [],
-          profileCompletion: 0,
-          premiumTier: "free",
-          boostCredits: 0,
-          credibilityScore: 0, // Score initial de crédibilité
-          role: "explorateur", // Rôle par défaut
-          expertiseDomains: [], // Domaines d'expertise (vide au départ)
-          createdAt: now,
-          updatedAt: now,
-        };
-        
-        // Ajouter name et image seulement s'ils existent
-        if (user.name) {
-          userData.name = user.name;
-        }
-        if (user.image) {
-          userData.image = user.image;
-        }
-        
-        const userId = await ctx.db.insert("users", userData);
+          if (existingUser) {
+            // L'utilisateur existe déjà, ne rien faire
+            console.log(`User ${user.email} already exists in Convex, skipping creation`);
+            return;
+          }
 
-        // Initialize missions for new user (via internal mutation)
-        // Note: We use internal mutation to avoid circular dependencies
-        await ctx.runMutation(internal.missions.initializeMissionsInternal, {
-          userId,
-        });
+          // Initialize user with Seed defaults
+          const now = Date.now();
+          // Récupérer les valeurs initiales depuis les règles configurables
+          // Note: Dans un trigger onCreate, on ne peut pas utiliser les queries Convex
+          // On utilise donc les valeurs par défaut directement
+          const initialLevel = 1;
+          const initialReachRadius = 10;
+
+          const userData: any = {
+            email: user.email,
+            level: initialLevel,
+            reachRadius: initialReachRadius,
+            tags: [],
+            links: [],
+            profileCompletion: 0,
+            premiumTier: "free",
+            boostCredits: 0,
+            credibilityScore: 0, // Score initial de crédibilité
+            role: "explorateur", // Rôle par défaut
+            expertiseDomains: [], // Domaines d'expertise (vide au départ)
+            createdAt: now,
+            updatedAt: now,
+          };
+          
+          // Ajouter name et image seulement s'ils existent
+          if (user.name) {
+            userData.name = user.name;
+          }
+          if (user.image) {
+            userData.image = user.image;
+          }
+          
+          const userId = await ctx.db.insert("users", userData);
+          console.log(`Created user ${user.email} in Convex with ID: ${userId}`);
+
+          // Initialize missions for new user (via internal mutation)
+          // Note: We use internal mutation to avoid circular dependencies
+          try {
+            await ctx.runMutation(internal.missions.initializeMissionsInternal, {
+              userId,
+            });
+          } catch (missionError) {
+            // Ignorer les erreurs d'initialisation des missions (peut ne pas exister ou échouer)
+            // Mais on continue car l'utilisateur est créé
+            console.error(`Error initializing missions for user ${user.email}:`, missionError);
+          }
+        } catch (error) {
+          // Logger l'erreur mais ne pas la propager pour éviter de bloquer la création dans Better Auth
+          console.error(`Error in onCreate trigger for user ${user.email}:`, error);
+          // Ne pas throw pour éviter de bloquer la création dans Better Auth
+        }
       },
       onUpdate: async (ctx, newUser, oldUser) => {
         // Keep the user's email, name, and image synced

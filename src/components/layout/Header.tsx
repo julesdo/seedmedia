@@ -57,32 +57,17 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-sidebar/80 backdrop-blur-xl supports-[backdrop-filter]:bg-sidebar/80">
-      <div className="flex items-center gap-3 px-4 h-16">
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-card backdrop-blur-xl supports-[backdrop-filter]:bg-card">
+      <div className="flex items-center justify-between gap-3 px-4 h-14 w-full">
         {/* Left: Breadcrumb */}
         <div className="flex-shrink-0 min-w-0">
           <Breadcrumb />
         </div>
 
-        {/* Center: Search */}
-        <div className="flex-1 max-w-2xl mx-auto">
-          <div className="relative">
-            <SolarIcon 
-              icon="magnifer-bold" 
-              className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 icon-gradient-light z-10" 
-            />
-            <Input
-              type="search"
-              placeholder="Rechercher un article, un projet..."
-              className="pl-9 h-9"
-            />
-          </div>
-        </div>
-
         {/* Right: Actions */}
         <div className="flex items-center gap-2 flex-shrink-0">
           {/* Language */}
-          <LanguageSelectorCompact variant="glass" size="sm" />
+          <LanguageSelectorCompact variant="ghost" size="sm" />
 
           {/* Theme Toggle */}
           <ThemeToggle variant="ghost" />
@@ -95,12 +80,12 @@ export function Header() {
           {/* Notifications */}
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="glass" size="icon" className="relative">
+              <Button variant="ghost" size="icon" className="relative h-9 w-9">
                 <SolarIcon icon="bell-bold" className="h-4 w-4 icon-gradient-light" />
                 {notificationsCount > 0 && (
                   <Badge
                     variant="default"
-                    className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs font-semibold"
+                    className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs font-semibold min-w-[20px]"
                   >
                     {notificationsCount > 99 ? "99+" : notificationsCount}
                   </Badge>
@@ -191,7 +176,7 @@ export function Header() {
           {/* User Avatar */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="glass" size="icon" className="rounded-full p-0.5">
+              <Button variant="ghost" size="icon" className="rounded-full p-0.5 h-9 w-9">
                 <Avatar className="h-8 w-8 ring-1 ring-border/50">
                   <AvatarImage src={user?.image || undefined} alt={user?.name || ""} />
                   <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-gradient-light font-semibold">

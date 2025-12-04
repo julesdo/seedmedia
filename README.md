@@ -329,43 +329,6 @@ If you encounter any issues:
 
 **Happy coding! :D**
 
-
-
-
-# Convex (automatic)
-CONVEX_DEPLOYMENT=dev:rightful-monitor-255 # team: julesdo, project: seed-38685
-NEXT_PUBLIC_CONVEX_URL=https://rightful-monitor-255.convex.cloud
-NEXT_PUBLIC_CONVEX_SITE_URL=https://rightful-monitor-255.convex.site
-
-# Site Configuration
-SITE_URL=http://localhost:3000
-
-# Google OAuth (optional)
-GOOGLE_CLIENT_ID=34786906762-dbd2j6d7qa59u3cb1105oo8ie5tabnm5.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=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
-
-# GitHub OAuth (optional)
-GITHUB_CLIENT_ID=Ov23ctblXHlGzyCv9ulo
-GITHUB_CLIENT_SECRET=659fb5c458c4fd61a4761b6075d530e2c721238a
-
-# Better Auth
-BETTER_AUTH_SECRET=18JFBycXsG7Kdg0w3TofrOdGdFcEZK3A
-
-# Resend 
-RESEND_API_KEY=re_Nob7st7b_A54QcAU4yQSXgVfaEkD5bj7A
-
-pnpm convex env set SITE_URL http://localhost:3000
-pnpm convex env set BETTER_AUTH_SECRET 18JFBycXsG7Kdg0w3TofrOdGdFcEZK3A
-pnpm convex env set GOOGLE_CLIENT_ID 34786906762-dbd2j6d7qa59u3cb1105oo8ie5tabnm5.apps.googleusercontent.com
-pnpm convex env set GOOGLE_CLIENT_SECRET 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
-pnpm convex env set GITHUB_CLIENT_ID Ov23ctblXHlGzyCv9ulo
-pnpm convex env set GITHUB_CLIENT_SECRET 659fb5c458c4fd61a4761b6075d530e2c721238a
-pnpm convex env set RESEND_API_KEY re_Nob7st7b_A54QcAU4yQSXgVfaEkD5bj7A#   s e e d m e d i a 
- 
- #   s e e d m e d i a 
- 
- 
-
 git add .
-git commit -m "maj 1.54 prod"
+git commit -m "maj 1.6 rod"
 git push -u origin main

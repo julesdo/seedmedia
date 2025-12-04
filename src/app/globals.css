@@ -212,6 +212,14 @@
   --brand: oklch(0.707 0.165 254.624);
 }
 
+/* Style pour retirer le padding de la toolbar dans l'éditeur d'article */
+.article-editor-wrapper [data-slot="toolbar"],
+.article-editor-wrapper [role="toolbar"],
+.article-editor-wrapper .sticky[class*="px-"] {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

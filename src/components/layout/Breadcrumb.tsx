@@ -204,8 +204,8 @@ export function Breadcrumb() {
   // Toujours afficher le breadcrumb, même s'il n'y a qu'un seul élément (page d'accueil)
 
   return (
-    <nav className="flex items-center gap-2 text-sm min-w-0 flex-1" aria-label="Breadcrumb">
-      <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
+    <nav className="flex items-center gap-2 text-sm min-w-0" aria-label="Breadcrumb">
+      <div className="flex items-center gap-2 min-w-0 overflow-hidden">
         {enrichedBreadcrumbs.map((item, index) => {
           const isLast = index === enrichedBreadcrumbs.length - 1;
           return (
@@ -217,7 +217,7 @@ export function Breadcrumb() {
                 />
               )}
               {isLast ? (
-                <span className="font-semibold text-gradient-light truncate min-w-0 max-w-full">
+                <span className="font-semibold text-gradient-light truncate min-w-0 max-w-[180px]">
                   {item.isLoading ? "..." : item.label}
                 </span>
               ) : (
