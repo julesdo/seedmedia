@@ -38,6 +38,12 @@ const nextConfig: NextConfig = {
         hostname: "rightful-monitor-255.convex.cloud",
         port: "",
         pathname: "/**", // Allows any path under this hostname
+      },
+      {
+        protocol: "https", // Production Convex
+        hostname: "judicious-mandrill-471.convex.cloud",
+        port: "",
+        pathname: "/**", // Allows any path under this hostname
       }
       // You can add other hostnames here if needed
       // Example:
