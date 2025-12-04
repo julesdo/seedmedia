@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 
@@ -8,7 +8,7 @@ import { authClient } from "@/lib/auth-client";
  * Page de callback OAuth qui détecte si on est en mode "ajouter un compte"
  * et envoie un message à la fenêtre parente si c'est le cas
  */
-export default function CallbackPage() {
+function CallbackContent() {
   const searchParams = useSearchParams();
   const isAddingAccount = searchParams.get("add_account") === "true";
   const isSilent = searchParams.get("silent") === "true"; // Mode silencieux pour switch de compte
@@ -228,6 +228,20 @@ export default function CallbackPage() {
         <p className="text-sm text-muted-foreground">Connexion en cours...</p>
       </div>
     </div>
+  );
+}
+
+export default function CallbackPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen w-full flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-sm text-muted-foreground">Chargement...</p>
+        </div>
+      </div>
+    }>
+      <CallbackContent />
+    </Suspense>
   );
 }
 

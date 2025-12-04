@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../../../../convex/_generated/api";
@@ -37,7 +37,7 @@ const PROPOSAL_TYPES = [
   { value: "other", label: "Autre" },
 ] as const;
 
-export default function NewProposalPage() {
+function NewProposalPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const createProposal = useMutation(api.governance.createProposal);
@@ -479,6 +479,21 @@ export default function NewProposalPage() {
         {sidebarContent}
       </aside>
     </form>
+  );
+}
+
+export default function NewProposalPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-[calc(100vh-4rem)] w-full items-center justify-center">
+        <div className="text-center">
+          <SolarIcon icon="spinner-circle" className="h-8 w-8 animate-spin mx-auto mb-2" />
+          <p className="text-sm text-muted-foreground">Chargement...</p>
+        </div>
+      </div>
+    }>
+      <NewProposalPageContent />
+    </Suspense>
   );
 }
 
