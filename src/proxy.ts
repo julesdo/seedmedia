@@ -1,23 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { getSessionCookie } from "better-auth/cookies";
-import { createAuth } from "./lib/auth";
 import { NextRequest, NextResponse } from "next/server";
-import { betterFetch } from "@better-fetch/fetch";
-
-type Session = ReturnType<typeof createAuth>["$Infer"]["Session"];
-const getSession = async (request: NextRequest) => {
-  const { data: session } = await betterFetch<Session>(
-    "/api/auth/get-session",
-    {
-      baseURL: request.nextUrl.origin,
-      headers: {
-        cookie: request.headers.get("cookie") ?? "",
-        origin: request.nextUrl.origin,
-      },
-    },
-  );
-  return session;
-};
 
 const signInRoutes = ["/sign-in", "/sign-up", "/verify-2fa", "/callback", "/oauth-callback"];
 
