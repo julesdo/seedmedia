@@ -16,10 +16,25 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useConvexAuth } from "convex/react";
 import { PlateEditorWrapper } from "@/components/articles/PlateEditorWrapper";
 import { Progress } from "@/components/ui/progress";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { extractTextFromPlateValue } from "@/components/articles/PlateEditorWrapper";
 import { CommentsSection } from "@/components/comments/CommentsSection";
-import type { TElement } from "platejs";
+import { Link } from "next-view-transitions";
+
+const PROPOSAL_TYPE_LABELS = {
+  editorial_rules: "Règles éditoriales",
+  product_evolution: "Évolution produit",
+  ethical_charter: "Charte éthique",
+  category_addition: "Catégorie",
+  expert_nomination: "Nomination",
+  other: "Autre",
+} as const;
+
+const STATUS_LABELS = {
+  draft: "Brouillon",
+  open: "Ouverte",
+  closed: "Fermée",
+  approved: "Approuvée",
+  rejected: "Rejetée",
+} as const;
 
 export default function PublicProposalPage() {
   const params = useParams();
@@ -77,7 +92,7 @@ export default function PublicProposalPage() {
   // États de chargement
   if (proposal === undefined) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="space-y-6">
           <Skeleton className="h-12 w-3/4" />
           <Skeleton className="h-6 w-1/2" />
@@ -90,7 +105,7 @@ export default function PublicProposalPage() {
   // Proposition non trouvée
   if (proposal === null) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
         <Alert variant="destructive">
           <SolarIcon icon="danger-triangle-bold" className="h-4 w-4" />
           <AlertDescription>
@@ -113,62 +128,11 @@ export default function PublicProposalPage() {
   // Calculer si la majorité est atteinte (pour les votes POUR)
   const majorityReached = quorumReached && forPercentage >= proposal.majorityRequired;
   
-  // Déterminer le résultat actuel
-  const currentResult = proposal.status === "open" 
-    ? (quorumReached 
-        ? (majorityReached ? "approved" : "rejected")
-        : "pending")
-    : proposal.result || null;
-
   const remainingTime = proposal.voteEndAt ? Math.max(0, proposal.voteEndAt - Date.now()) : null;
   const daysRemaining = remainingTime ? Math.floor(remainingTime / (1000 * 60 * 60 * 24)) : null;
-  const hoursRemaining = remainingTime
-    ? Math.floor((remainingTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
-    : null;
 
-  // Déterminer le gradient et l'icône selon le type de proposition
-  const getProposalStyle = (type: string) => {
-    switch (type) {
-      case "editorial_rules":
-        return {
-          gradient: "from-blue-500/20 to-blue-600/10",
-          icon: "document-text-bold",
-          label: "Règles éditoriales",
-        };
-      case "product_evolution":
-        return {
-          gradient: "from-purple-500/20 to-purple-600/10",
-          icon: "settings-bold",
-          label: "Évolution produit",
-        };
-      case "ethical_charter":
-        return {
-          gradient: "from-green-500/20 to-green-600/10",
-          icon: "shield-check-bold",
-          label: "Charte éthique",
-        };
-      case "category_addition":
-        return {
-          gradient: "from-orange-500/20 to-orange-600/10",
-          icon: "tag-bold",
-          label: "Catégorie",
-        };
-      case "expert_nomination":
-        return {
-          gradient: "from-pink-500/20 to-pink-600/10",
-          icon: "user-id-bold",
-          label: "Nomination",
-        };
-      default:
-        return {
-          gradient: "from-primary/20 to-muted",
-          icon: "document-text-bold",
-          label: "Autre",
-        };
-    }
-  };
-
-  const proposalStyle = getProposalStyle(proposal.proposalType);
+  const isOpen = proposal.status === "open";
+  const isEditor = currentUser?.role === "editeur";
 
   // Préparer la description pour l'affichage
   const descriptionValue = proposal.description 
@@ -178,363 +142,424 @@ export default function PublicProposalPage() {
     : undefined;
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <article className="space-y-8">
-        {/* Header avec meta */}
-        <header className="space-y-4">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1 space-y-4">
+    <div className="container mx-auto px-4 py-4 md:py-6 max-w-6xl">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
+        <article className="space-y-6 min-w-0">
+          {/* Header avec meta */}
+          <header className="space-y-4">
+            {/* Type et statut */}
+            <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                <Badge variant="outline">{proposalStyle.label}</Badge>
-                {proposal.status === "open" && (
-                  <Badge variant="default">Ouverte</Badge>
-                )}
-                {proposal.status === "closed" && (
-                  <Badge variant="secondary">Fermée</Badge>
-                )}
-                {daysRemaining !== null && daysRemaining > 0 && (
-                  <Badge variant="secondary">
-                    {daysRemaining} jour{daysRemaining > 1 ? "s" : ""} restant
-                    {daysRemaining > 1 ? "s" : ""}
+                <Badge variant="secondary" className="text-[11px] font-semibold px-2 py-0.5">
+                  {PROPOSAL_TYPE_LABELS[proposal.proposalType] || "Autre"}
+                </Badge>
+                <Badge
+                  variant={
+                    proposal.status === "open"
+                      ? "default"
+                      : proposal.status === "closed"
+                      ? "secondary"
+                      : proposal.status === "approved"
+                      ? "default"
+                      : "destructive"
+                  }
+                  className="text-[11px] font-semibold px-2 py-0.5"
+                >
+                  {STATUS_LABELS[proposal.status]}
+                </Badge>
+                {daysRemaining !== null && daysRemaining > 0 && isOpen && (
+                  <Badge variant="outline" className="text-[11px] font-semibold px-2 py-0.5">
+                    {daysRemaining} jour{daysRemaining > 1 ? "s" : ""} restant{daysRemaining > 1 ? "s" : ""}
                   </Badge>
                 )}
               </div>
-              <h1 className="text-4xl md:text-5xl font-bold leading-tight">
-                {proposal.title}
-              </h1>
+              
+              {/* Métriques */}
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                  <SolarIcon icon="vote-bold" className="h-3 w-3" />
+                  <span className="font-medium">{totalVotes}</span>
+                </div>
+              </div>
             </div>
-            {/* Bouton fermer pour les éditeurs */}
-            {proposal.status === "open" && currentUser?.role === "editeur" && (
-              <Button
-                variant="outline"
-                onClick={handleCloseProposal}
-                disabled={isClosing}
-                className="shrink-0"
-              >
-                <SolarIcon icon="lock-bold" className="h-4 w-4 mr-2" />
-                {isClosing ? "Fermeture..." : "Fermer la proposition"}
-              </Button>
-            )}
-          </div>
 
-          {/* Métadonnées */}
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            {proposal.proposer && (
-              <Author
-                author={proposal.proposer}
-                variant="default"
-                size="sm"
-                showDate
-                date={proposal.createdAt}
-              />
-            )}
-            {proposal.voteEndAt && (
-              <>
-                <span>•</span>
-                <span>
-                  Clôture{" "}
-                  {formatDistanceToNow(new Date(proposal.voteEndAt), {
-                    addSuffix: true,
-                    locale: fr,
+            {/* Titre */}
+            <h1 className="text-2xl md:text-3xl font-bold leading-tight tracking-tight">
+              {proposal.title}
+            </h1>
+                
+            {/* Meta auteur et date */}
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              {proposal.proposer && (
+                <Author
+                  author={proposal.proposer}
+                  variant="detailed"
+                  showCredibility={false}
+                  size="sm"
+                  linkToProfile={true}
+                />
+              )}
+              
+              <span className="text-muted-foreground">•</span>
+              
+              <span className="text-muted-foreground">
+                {formatDistanceToNow(new Date(proposal.createdAt), {
+                  addSuffix: true,
+                  locale: fr,
+                })}
+              </span>
+
+              {proposal.voteEndAt && (
+                <>
+                  <span className="text-muted-foreground">•</span>
+                  <span className="text-muted-foreground">
+                    Clôture{" "}
+                    {formatDistanceToNow(new Date(proposal.voteEndAt), {
+                      addSuffix: true,
+                      locale: fr,
+                    })}
+                  </span>
+                </>
+              )}
+            </div>
+          </header>
+
+          <Separator className="border-border/60" />
+
+          {/* Description */}
+          {descriptionValue && (
+            <div className="space-y-4">
+              <section className="prose prose-sm dark:prose-invert max-w-none prose-headings:font-semibold prose-headings:text-base prose-headings:tracking-tight prose-p:leading-relaxed prose-p:text-sm prose-a:text-primary prose-a:no-underline hover:prose-a:underline">
+                <PlateEditorWrapper
+                  value={descriptionValue}
+                  readOnly={true}
+                  placeholder=""
+                />
+              </section>
+            </div>
+          )}
+
+          {/* Liste des votes */}
+          {proposal.votes && proposal.votes.length > 0 && (
+            <>
+              <Separator className="border-border/60" />
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 pb-1.5 border-b border-border/60">
+                  <SolarIcon icon="vote-bold" className="h-4 w-4 text-primary" />
+                  <h2 className="text-lg font-semibold">
+                    Votes ({proposal.votes.length})
+                  </h2>
+                </div>
+                <div className="space-y-2">
+                  {proposal.votes.map((vote) => {
+                    const voterAuthor = vote.voter ? {
+                      _id: vote.voter._id,
+                      name: vote.voter.name || "Votant anonyme",
+                      image: vote.voter.image || null,
+                      email: vote.voter.email,
+                      credibilityScore: vote.voter.credibilityScore,
+                    } : null;
+
+                    return (
+                      <div
+                        key={vote._id}
+                        className="flex items-center justify-between py-2 border-b border-border/60 last:border-0"
+                      >
+                        {voterAuthor ? (
+                          <Author
+                            author={voterAuthor}
+                            variant="detailed"
+                            size="sm"
+                            showCredibility
+                            linkToProfile={true}
+                          />
+                        ) : (
+                          <div className="flex items-center gap-3">
+                            <p className="font-medium text-sm">Votant anonyme</p>
+                          </div>
+                        )}
+                        <Badge
+                          variant={
+                            vote.vote === "for"
+                              ? "default"
+                              : vote.vote === "against"
+                              ? "destructive"
+                              : "secondary"
+                          }
+                          className="text-[11px] font-semibold px-2 py-0.5"
+                        >
+                          {vote.vote === "for" && (
+                            <>
+                              <SolarIcon
+                                icon="check-circle-bold"
+                                className="h-3 w-3 mr-1"
+                              />
+                              POUR
+                            </>
+                          )}
+                          {vote.vote === "against" && (
+                            <>
+                              <SolarIcon
+                                icon="close-circle-bold"
+                                className="h-3 w-3 mr-1"
+                              />
+                              CONTRE
+                            </>
+                          )}
+                          {vote.vote === "abstain" && (
+                            <>
+                              <SolarIcon
+                                icon="minus-circle-bold"
+                                className="h-3 w-3 mr-1"
+                              />
+                              ABSTENTION
+                            </>
+                          )}
+                        </Badge>
+                      </div>
+                    );
                   })}
-                </span>
-              </>
-            )}
-          </div>
-        </header>
-
-        {/* Image placeholder avec gradient */}
-        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg bg-muted">
-          <div className={`absolute inset-0 bg-gradient-to-br ${proposalStyle.gradient} flex items-center justify-center`}>
-            <SolarIcon
-              icon={proposalStyle.icon}
-              width={96}
-              height={96}
-              className="text-muted-foreground"
-            />
-          </div>
-        </div>
-
-        <Separator />
-
-        {/* Statistiques de vote */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Résultats du vote</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
-                  <SolarIcon icon="check-circle-bold" className="h-4 w-4" />
-                  <span className="font-medium">POUR</span>
-                  <span className="text-muted-foreground">
-                    ({proposal.votesFor || 0})
-                  </span>
                 </div>
-                <span className="text-muted-foreground">
-                  {Math.round(forPercentage)}%
-                </span>
               </div>
-              <Progress value={forPercentage} className="h-2" />
-            </div>
+            </>
+          )}
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
-                  <SolarIcon icon="close-circle-bold" className="h-4 w-4" />
-                  <span className="font-medium">CONTRE</span>
-                  <span className="text-muted-foreground">
-                    ({proposal.votesAgainst || 0})
-                  </span>
-                </div>
-                <span className="text-muted-foreground">
-                  {Math.round(againstPercentage)}%
-                </span>
-              </div>
-              <Progress value={againstPercentage} className="h-2" />
+          {/* Section commentaires - Mobile */}
+          {proposal._id && (
+            <div className="lg:hidden">
+              <Separator className="mb-6" />
+              <CommentsSection targetType="proposal" targetId={proposal._id} />
             </div>
+          )}
+        </article>
 
-            {proposal.votesAbstain > 0 && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <SolarIcon icon="minus-circle-bold" className="h-4 w-4" />
-                    <span className="font-medium">ABSTENTION</span>
-                    <span className="text-muted-foreground">
-                      ({proposal.votesAbstain || 0})
+        {/* Sidebar sticky avec statistiques, vote et commentaires */}
+        <aside className="hidden lg:block">
+          <div className="sticky top-20 flex flex-col max-h-[calc(100vh-5rem)] overflow-y-auto space-y-4">
+            {/* Statistiques de vote */}
+            <div className="border-b border-border/60 pb-4">
+              <p className="text-xs font-semibold text-muted-foreground mb-3">Résultats du vote</p>
+              <div className="space-y-4">
+                {/* POUR */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400">
+                      <SolarIcon icon="check-circle-bold" className="h-3 w-3" />
+                      <span className="font-medium">POUR</span>
+                      <span className="text-muted-foreground">({proposal.votesFor || 0})</span>
+                    </div>
+                    <span className="text-muted-foreground font-medium">
+                      {Math.round(forPercentage)}%
                     </span>
                   </div>
-                  <span className="text-muted-foreground">
-                    {Math.round(abstainPercentage)}%
-                  </span>
+                  <Progress value={forPercentage} className="h-1.5" />
                 </div>
-                <Progress value={abstainPercentage} className="h-2" />
-              </div>
-            )}
 
-            <Separator />
-
-            {/* Quorum */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-medium">Quorum</span>
-                <span className={quorumReached ? "text-green-600 dark:text-green-400 font-semibold" : "text-muted-foreground"}>
-                  {totalVotes}/{proposal.quorumRequired} {quorumReached ? "✓" : ""}
-                </span>
-              </div>
-              <Progress value={quorumProgress} className="h-2" />
-              {!quorumReached && (
-                <p className="text-xs text-muted-foreground">
-                  Il manque {proposal.quorumRequired - totalVotes} vote{proposal.quorumRequired - totalVotes > 1 ? "s" : ""} pour atteindre le quorum
-                </p>
-              )}
-            </div>
-
-            {/* Majorité */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-medium">Majorité requise</span>
-                <span className={majorityReached ? "text-green-600 dark:text-green-400 font-semibold" : "text-muted-foreground"}>
-                  {proposal.majorityRequired}% {majorityReached ? "✓" : ""}
-                </span>
-              </div>
-              {quorumReached && (
-                <div className="text-xs text-muted-foreground">
-                  {forPercentage >= proposal.majorityRequired ? (
-                    <span className="text-green-600 dark:text-green-400">
-                      Majorité atteinte ({Math.round(forPercentage)}% pour)
+                {/* CONTRE */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-1.5 text-red-600 dark:text-red-400">
+                      <SolarIcon icon="close-circle-bold" className="h-3 w-3" />
+                      <span className="font-medium">CONTRE</span>
+                      <span className="text-muted-foreground">({proposal.votesAgainst || 0})</span>
+                    </div>
+                    <span className="text-muted-foreground font-medium">
+                      {Math.round(againstPercentage)}%
                     </span>
-                  ) : (
-                    <span className="text-red-600 dark:text-red-400">
-                      Majorité non atteinte ({Math.round(forPercentage)}% pour, besoin de {proposal.majorityRequired}%)
+                  </div>
+                  <Progress value={againstPercentage} className="h-1.5" />
+                </div>
+
+                {/* ABSTENTION */}
+                {proposal.votesAbstain > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <SolarIcon icon="minus-circle-bold" className="h-3 w-3" />
+                        <span className="font-medium">ABSTENTION</span>
+                        <span className="text-muted-foreground">({proposal.votesAbstain || 0})</span>
+                      </div>
+                      <span className="text-muted-foreground font-medium">
+                        {Math.round(abstainPercentage)}%
+                      </span>
+                    </div>
+                    <Progress value={abstainPercentage} className="h-1.5" />
+                  </div>
+                )}
+
+                <Separator className="my-3" />
+
+                {/* Quorum */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">Quorum</span>
+                    <span className={quorumReached ? "text-green-600 dark:text-green-400 font-semibold" : "font-medium"}>
+                      {totalVotes}/{proposal.quorumRequired} {quorumReached ? "✓" : ""}
                     </span>
+                  </div>
+                  <Progress value={quorumProgress} className="h-1.5" />
+                  {!quorumReached && (
+                    <p className="text-[10px] text-muted-foreground">
+                      Il manque {proposal.quorumRequired - totalVotes} vote{proposal.quorumRequired - totalVotes > 1 ? "s" : ""} pour atteindre le quorum
+                    </p>
                   )}
                 </div>
-              )}
+
+                {/* Majorité */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">Majorité requise</span>
+                    <span className={majorityReached ? "text-green-600 dark:text-green-400 font-semibold" : "font-medium"}>
+                      {proposal.majorityRequired}% {majorityReached ? "✓" : ""}
+                    </span>
+                  </div>
+                  {quorumReached && (
+                    <p className="text-[10px] text-muted-foreground">
+                      {forPercentage >= proposal.majorityRequired ? (
+                        <span className="text-green-600 dark:text-green-400">
+                          Majorité atteinte ({Math.round(forPercentage)}% pour)
+                        </span>
+                      ) : (
+                        <span className="text-red-600 dark:text-red-400">
+                          Majorité non atteinte ({Math.round(forPercentage)}% pour)
+                        </span>
+                      )}
+                    </p>
+                  )}
+                </div>
+
+                {/* Résultat actuel */}
+                {isOpen && quorumReached && (
+                  <Alert className={majorityReached ? "border-green-500 bg-green-500/10" : "border-red-500 bg-red-500/10"} variant="default">
+                    <SolarIcon 
+                      icon={majorityReached ? "check-circle-bold" : "close-circle-bold"} 
+                      className={`h-3 w-3 ${majorityReached ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`} 
+                    />
+                    <AlertDescription className={`text-[11px] ${majorityReached ? "text-green-700 dark:text-green-300" : "text-red-700 dark:text-red-300"}`}>
+                      {majorityReached 
+                        ? "Proposition approuvée selon les critères."
+                        : "Proposition rejetée selon les critères."}
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </div>
             </div>
 
-            {/* Résultat actuel */}
-            {proposal.status === "open" && quorumReached && (
-              <Alert className={majorityReached ? "border-green-500 bg-green-500/10" : "border-red-500 bg-red-500/10"}>
-                <SolarIcon 
-                  icon={majorityReached ? "check-circle-bold" : "close-circle-bold"} 
-                  className={`h-4 w-4 ${majorityReached ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`} 
-                />
-                <AlertDescription className={majorityReached ? "text-green-700 dark:text-green-300" : "text-red-700 dark:text-red-300"}>
-                  {majorityReached 
-                    ? "La proposition est actuellement approuvée selon les critères de vote."
-                    : "La proposition est actuellement rejetée selon les critères de vote."}
-                </AlertDescription>
-              </Alert>
+            {/* Actions de vote */}
+            {isOpen && (
+              <div className="border-b border-border/60 pb-4">
+                <p className="text-xs font-semibold text-muted-foreground mb-3">Voter</p>
+                {isAuthenticated ? (
+                  userVote ? (
+                    <Alert variant="default">
+                      <SolarIcon icon="info-circle-bold" className="h-3 w-3" />
+                      <AlertDescription className="text-[11px]">
+                        Vous avez voté{" "}
+                        {userVote.vote === "for" && "POUR"}
+                        {userVote.vote === "against" && "CONTRE"}
+                        {userVote.vote === "abstain" && "ABSTENTION"}
+                        {" "}cette proposition.
+                      </AlertDescription>
+                    </Alert>
+                  ) : (
+                    <div className="space-y-2">
+                      <Button
+                        onClick={() => handleVote("for")}
+                        variant="default"
+                        className="w-full text-xs h-8"
+                        size="sm"
+                      >
+                        <SolarIcon icon="check-circle-bold" className="h-3 w-3 mr-2" />
+                        Voter POUR
+                      </Button>
+                      <Button
+                        onClick={() => handleVote("against")}
+                        variant="destructive"
+                        className="w-full text-xs h-8"
+                        size="sm"
+                      >
+                        <SolarIcon icon="close-circle-bold" className="h-3 w-3 mr-2" />
+                        Voter CONTRE
+                      </Button>
+                      <Button
+                        onClick={() => handleVote("abstain")}
+                        variant="outline"
+                        className="w-full text-xs h-8"
+                        size="sm"
+                      >
+                        <SolarIcon icon="minus-circle-bold" className="h-3 w-3 mr-2" />
+                        S'abstenir
+                      </Button>
+                    </div>
+                  )
+                ) : (
+                  <Alert variant="default">
+                    <SolarIcon icon="info-circle-bold" className="h-3 w-3" />
+                    <AlertDescription className="text-[11px]">
+                      <Link href="/signin" className="underline">
+                        Connectez-vous
+                      </Link>{" "}
+                      pour voter.
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </div>
             )}
-          </CardContent>
-        </Card>
 
-        {/* Actions de vote */}
-        {proposal.status === "open" && isAuthenticated && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Voter sur cette proposition</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {userVote ? (
-                <Alert>
-                  <SolarIcon icon="info-circle-bold" className="h-4 w-4" />
-                  <AlertDescription>
-                    Vous avez déjà voté{" "}
-                    {userVote.vote === "for" && "POUR"}
-                    {userVote.vote === "against" && "CONTRE"}
-                    {userVote.vote === "abstain" && "ABSTENTION"}
-                    {" "}cette proposition.
-                  </AlertDescription>
-                </Alert>
-              ) : (
-                <div className="flex gap-3">
-                  <Button
-                    onClick={() => handleVote("for")}
-                    variant="default"
-                    className="flex-1"
-                  >
-                    <SolarIcon icon="check-circle-bold" className="h-4 w-4 mr-2" />
-                    Voter POUR
-                  </Button>
-                  <Button
-                    onClick={() => handleVote("against")}
-                    variant="destructive"
-                    className="flex-1"
-                  >
-                    <SolarIcon icon="close-circle-bold" className="h-4 w-4 mr-2" />
-                    Voter CONTRE
-                  </Button>
-                  <Button
-                    onClick={() => handleVote("abstain")}
-                    variant="outline"
-                    className="flex-1"
-                  >
-                    <SolarIcon icon="minus-circle-bold" className="h-4 w-4 mr-2" />
-                    S'abstenir
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
+            {/* Bouton fermer pour les éditeurs */}
+            {isOpen && isEditor && (
+              <div className="border-b border-border/60 pb-4">
+                <Button
+                  variant="outline"
+                  onClick={handleCloseProposal}
+                  disabled={isClosing}
+                  className="w-full text-xs h-8"
+                  size="sm"
+                >
+                  <SolarIcon icon="lock-bold" className="h-3 w-3 mr-2" />
+                  {isClosing ? "Fermeture..." : "Fermer la proposition"}
+                </Button>
+              </div>
+            )}
 
-        {!isAuthenticated && proposal.status === "open" && (
+            {/* Section commentaires - Desktop */}
+            {proposal._id && (
+              <div className="pt-2 flex-1 min-h-0">
+                <CommentsSection targetType="proposal" targetId={proposal._id} />
+              </div>
+            )}
+          </div>
+        </aside>
+      </div>
+
+      {/* Alerts et bouton fermer - Mobile */}
+      {isOpen && !isAuthenticated && (
+        <div className="lg:hidden mt-6">
           <Alert>
             <SolarIcon icon="info-circle-bold" className="h-4 w-4" />
             <AlertDescription>
-              <a href="/signin" className="underline">
+              <Link href="/signin" className="underline">
                 Connectez-vous
-              </a>{" "}
+              </Link>{" "}
               pour voter sur cette proposition.
             </AlertDescription>
           </Alert>
-        )}
-
-        {/* Description */}
-        {descriptionValue && (
-          <div className="space-y-4">
-            <h2 className="text-2xl font-bold">Description</h2>
-            <div className="prose prose-sm max-w-none">
-              <PlateEditorWrapper
-                value={descriptionValue}
-                readOnly={true}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Liste des votes */}
-        {proposal.votes && proposal.votes.length > 0 && (
-          <div className="space-y-4">
-            <h2 className="text-2xl font-bold">
-              Votes ({proposal.votes.length})
-            </h2>
-            <div className="space-y-2">
-              {proposal.votes.map((vote) => {
-                // Adapter la structure du votant pour le composant Author
-                const voterAuthor = vote.voter ? {
-                  _id: vote.voter._id,
-                  name: vote.voter.name || "Votant anonyme",
-                  image: vote.voter.image || null,
-                  email: vote.voter.email,
-                  credibilityScore: vote.voter.credibilityScore,
-                } : null;
-
-                return (
-                  <div
-                    key={vote._id}
-                    className="flex items-center justify-between p-3 border rounded-lg"
-                  >
-                    {voterAuthor ? (
-                      <Author
-                        author={voterAuthor}
-                        variant="detailed"
-                        size="md"
-                        showCredibility
-                      />
-                    ) : (
-                      <div className="flex items-center gap-3">
-                        <div>
-                          <p className="font-medium text-sm">Votant anonyme</p>
-                        </div>
-                      </div>
-                    )}
-                    <Badge
-                      variant={
-                        vote.vote === "for"
-                          ? "default"
-                          : vote.vote === "against"
-                          ? "destructive"
-                          : "secondary"
-                      }
-                    >
-                      {vote.vote === "for" && (
-                        <>
-                          <SolarIcon
-                            icon="check-circle-bold"
-                            className="h-3 w-3 mr-1"
-                          />
-                          POUR
-                        </>
-                      )}
-                      {vote.vote === "against" && (
-                        <>
-                          <SolarIcon
-                            icon="close-circle-bold"
-                            className="h-3 w-3 mr-1"
-                          />
-                          CONTRE
-                        </>
-                      )}
-                      {vote.vote === "abstain" && (
-                        <>
-                          <SolarIcon
-                            icon="minus-circle-bold"
-                            className="h-3 w-3 mr-1"
-                          />
-                          ABSTENTION
-                        </>
-                      )}
-                    </Badge>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Section commentaires (arguments) */}
-        <div className="mt-12">
-          <CommentsSection
-            targetType="proposal"
-            targetId={proposal._id}
-          />
         </div>
-      </article>
+      )}
+
+      {isOpen && isEditor && (
+        <div className="lg:hidden mt-6">
+          <Button
+            variant="outline"
+            onClick={handleCloseProposal}
+            disabled={isClosing}
+            className="w-full"
+          >
+            <SolarIcon icon="lock-bold" className="h-4 w-4 mr-2" />
+            {isClosing ? "Fermeture..." : "Fermer la proposition"}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
-

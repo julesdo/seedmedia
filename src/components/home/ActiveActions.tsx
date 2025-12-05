@@ -2,7 +2,6 @@
 
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
-import { SolarIcon } from "@/components/icons/SolarIcon";
 import { Link } from "next-view-transitions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
@@ -58,17 +57,15 @@ export function ActiveActions() {
           <div key={action._id}>
             <Link
               href={`/actions/${action.slug}`}
-              className="block py-2.5 group"
+              className="block py-3 group"
             >
-              <div className="space-y-1">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[11px] text-muted-foreground uppercase">
-                    {getActionTypeLabel(action.type)}
-                  </span>
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span className="uppercase">{getActionTypeLabel(action.type)}</span>
                   {action.deadline && (
                     <>
-                      <span className="text-[11px] text-muted-foreground">•</span>
-                      <span className="text-[11px] text-muted-foreground">
+                      <span>•</span>
+                      <span>
                         {formatDistanceToNow(new Date(action.deadline), {
                           addSuffix: true,
                           locale: fr,
@@ -77,12 +74,11 @@ export function ActiveActions() {
                     </>
                   )}
                 </div>
-                <h4 className="font-semibold text-sm line-clamp-2 group-hover:opacity-80 transition-opacity">
+                <h4 className="font-semibold text-sm leading-snug line-clamp-2 group-hover:text-primary transition-colors">
                   {action.title}
                 </h4>
-                <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                  <SolarIcon icon="users-group-two-rounded-bold" className="h-3 w-3" />
-                  <span>{action.participants || 0} participants</span>
+                <div className="text-xs text-muted-foreground">
+                  {action.participants || 0} participants
                 </div>
               </div>
             </Link>

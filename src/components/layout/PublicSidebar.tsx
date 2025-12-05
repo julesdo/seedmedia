@@ -104,7 +104,7 @@ export function PublicSidebar() {
       return {
         key: category._id || category.slug || category.name,
         label: `#${category.name}`,
-        href: `/articles?category=${category.slug ?? category.name}`,
+        href: `/categorie/${category.slug ?? category.name}`,
         colors,
         colorsDark,
         icon: category.icon as string | undefined,
@@ -211,6 +211,28 @@ export function PublicSidebar() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Lien documentation en bas */}
+        <div className="border-t border-border/60 px-4 pt-4">
+          <Link
+            href="/documentation"
+            className={cn(
+              "flex items-center gap-3 rounded-md px-2.5 py-2 text-sm transition-colors",
+              pathname === "/documentation" 
+                ? "text-foreground bg-muted/50" 
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+            )}
+          >
+            <SolarIcon
+              icon="document-text-bold"
+              className={cn(
+                "h-4 w-4 shrink-0 transition-colors",
+                pathname === "/documentation" ? "text-primary" : "text-muted-foreground"
+              )}
+            />
+            <span className="font-medium">Documentation</span>
+          </Link>
         </div>
 
         <WelcomeCard />

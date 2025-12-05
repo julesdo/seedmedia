@@ -79,14 +79,14 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
   // États de pagination unifiés
   const [limit, setLimit] = useState(8);
 
-  // Debounce de la recherche
+  // Debounce de la recherche (plus court pour une recherche plus réactive)
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedSearch(search);
-      if (search.length >= 2) {
+      setDebouncedSearch(search.trim());
+      if (search.trim().length > 0) {
         setLimit(8); // Réinitialiser la pagination
       }
-    }, 300);
+    }, 200);
     return () => clearTimeout(timer);
   }, [search]);
 
@@ -98,10 +98,10 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
     }
   }, [open]);
 
-  // Recherche globale avec pagination unifiée
+  // Recherche globale avec pagination unifiée (recherche dès 1 caractère)
   const searchResults = useQuery(
     api.content.globalSearch,
-    debouncedSearch.length >= 2
+    debouncedSearch.length > 0
       ? {
           query: debouncedSearch,
           limits: {
@@ -114,6 +114,13 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
         }
       : "skip"
   );
+
+  // Récupérer les derniers éléments quand la recherche est vide
+  const latestItems = useQuery(
+    api.content.getLatestItems,
+    debouncedSearch.length === 0 ? { limit: 5 } : "skip"
+  );
+
 
   // Charger plus de résultats
   const loadMore = useCallback(() => {
@@ -138,10 +145,21 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
         ...searchResults.debates.map((item) => ({ ...item, type: "debate" as const })),
         ...searchResults.categories.map((item) => ({ ...item, type: "category" as const })),
       ]
+    : latestItems
+    ? [
+        ...latestItems.articles.map((item) => ({ ...item, type: "article" as const })),
+        ...latestItems.projects.map((item) => ({ ...item, type: "project" as const })),
+        ...latestItems.actions.map((item) => ({ ...item, type: "action" as const })),
+        ...latestItems.debates.map((item) => ({ ...item, type: "debate" as const })),
+      ]
     : [];
 
   // Navigation vers une page
-  const handleSelect = (type: string, slug: string) => {
+  const handleSelect = (type: string, slug: string | undefined) => {
+    if (!slug) {
+      console.error("No slug provided for type:", type);
+      return;
+    }
     onOpenChange(false);
     if (type === "article") {
       router.push(`/articles/${slug}`);
@@ -199,7 +217,7 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
         case "project":
           return item.summary;
         case "action":
-          return item.description;
+          return item.summary || item.description;
         case "debate":
           return item.description;
         case "category":
@@ -249,6 +267,11 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
     const title = getTitle();
     const subtitle = getSubtitle();
     const badge = getBadge();
+
+    if (!item.slug) {
+      console.warn("Item missing slug:", item);
+      return null;
+    }
 
     return (
       <CommandItem
@@ -311,19 +334,37 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
       />
       
       <CommandList className="max-h-[500px]">
-        {!debouncedSearch || debouncedSearch.length < 2 ? (
-          <div className="p-8 text-center">
-            <SolarIcon icon="magnifer-bold" className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-            <p className="text-sm text-muted-foreground">
-              Commencez à taper pour rechercher
-            </p>
+        {debouncedSearch.length === 0 && latestItems === undefined ? (
+          <div className="p-4 space-y-2">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-16 w-full" />
+            ))}
           </div>
+        ) : debouncedSearch.length === 0 && latestItems ? (
+          <>
+            <div className="px-3 py-2 text-xs font-semibold text-muted-foreground border-b border-border/60">
+              Derniers éléments
+            </div>
+            <CommandGroup>
+              {allResults.map((item) => renderResult(item)).filter(Boolean)}
+            </CommandGroup>
+          </>
         ) : searchResults === undefined ? (
           <div className="p-4 space-y-2">
             {[1, 2, 3, 4].map((i) => (
               <Skeleton key={i} className="h-16 w-full" />
             ))}
           </div>
+        ) : searchResults === null ? (
+          <CommandEmpty>
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <SolarIcon icon="danger-triangle-bold" className="h-10 w-10 text-destructive/50 mb-3" />
+              <p className="text-sm font-medium mb-1">Erreur de recherche</p>
+              <p className="text-xs text-muted-foreground">
+                Une erreur s'est produite lors de la recherche
+              </p>
+            </div>
+          </CommandEmpty>
         ) : allResults.length === 0 ? (
           <CommandEmpty>
             <div className="flex flex-col items-center justify-center py-8 text-center">
@@ -337,7 +378,7 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
         ) : (
           <>
             <CommandGroup>
-              {allResults.map((item) => renderResult(item))}
+              {allResults.map((item) => renderResult(item)).filter(Boolean)}
             </CommandGroup>
             <InfiniteScrollTrigger
               onLoadMore={loadMore}

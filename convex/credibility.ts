@@ -569,7 +569,8 @@ export const getTopExperts = query({
         return {
           _id: expert._id,
           email: expert.email,
-          name: expert.email.split("@")[0] || "Expert",
+          name: expert.name || expert.email.split("@")[0] || "Expert",
+          image: expert.image,
           credibilityScore: expert.credibilityScore || 0,
           role: expert.role,
           domain: mainDomain,

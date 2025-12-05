@@ -38,9 +38,16 @@ function PublicProjectsPageContent() {
     parse: (value) => value === "true",
     serialize: (value) => value ? "true" : null,
   });
+  
+  const [selectedCategory, setSelectedCategory] = useQueryState("category", {
+    defaultValue: null,
+  });
 
   // Récupérer tous les projets
   const allProjects = useQuery(api.projects.getProjects, { limit: 100 });
+  
+  // Récupérer les catégories actives pour projets
+  const categories = useQuery(api.categories.getActiveCategories, { appliesTo: "projects" });
 
   // Extraire tous les tags uniques
   const allTags = useMemo(() => {
@@ -68,6 +75,16 @@ function PublicProjectsPageContent() {
       filtered = filtered.filter((project) => project.openSource);
     }
 
+    // Filtre par catégorie
+    if (selectedCategory) {
+      filtered = filtered.filter((project) =>
+        project.categoryIds?.some((catId) => {
+          const category = categories?.find((cat) => cat._id === catId || cat.slug === selectedCategory);
+          return category && (category.slug === selectedCategory || category._id === selectedCategory);
+        })
+      );
+    }
+
     // Tri
     const currentSort = sortBy || "recent";
     switch (currentSort) {
@@ -87,7 +104,7 @@ function PublicProjectsPageContent() {
     }
 
     return filtered;
-  }, [allProjects, selectedStage, openSourceOnly, sortBy]);
+  }, [allProjects, selectedStage, openSourceOnly, selectedCategory, categories, sortBy]);
 
   if (allProjects === undefined) {
     return (
@@ -156,6 +173,25 @@ function PublicProjectsPageContent() {
               </SelectContent>
             </Select>
 
+            <Select value={selectedCategory || "all"} onValueChange={(value) => setSelectedCategory(value === "all" ? null : value)}>
+              <SelectTrigger className="w-[160px] h-9 text-xs border-border/60 bg-muted/30 hover:bg-muted/50">
+                <SelectValue placeholder="Catégorie">
+                  {selectedCategory && categories?.find((cat) => cat.slug === selectedCategory || cat._id === selectedCategory)?.name}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes les catégories</SelectItem>
+                {categories?.map((category) => (
+                  <SelectItem
+                    key={category._id || category.slug}
+                    value={category.slug || category._id || ""}
+                  >
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
             <Button
               variant={openSourceOnly ? "default" : "outline"}
               size="sm"
@@ -166,13 +202,14 @@ function PublicProjectsPageContent() {
               Open Source
             </Button>
 
-            {(selectedStage || openSourceOnly) && (
+            {(selectedStage || openSourceOnly || selectedCategory) && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => {
                   setSelectedStage(null);
                   setOpenSourceOnly(false);
+                  setSelectedCategory(null);
                   setSortBy(null);
                 }}
                 className="h-9 text-xs"
@@ -198,6 +235,7 @@ function PublicProjectsPageContent() {
               onClick={() => {
                 setSelectedStage(null);
                 setOpenSourceOnly(false);
+                setSelectedCategory(null);
                 setSortBy(null);
               }}
             >

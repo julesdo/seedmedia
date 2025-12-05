@@ -132,11 +132,7 @@ export default function DebateDetailPage() {
             {debate.question}
           </h1>
               
-          {/* Description et date */}
-          {debate.description && (
-            <p className="text-sm text-muted-foreground leading-relaxed">{debate.description}</p>
-          )}
-
+          {/* Meta date */}
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <span className="text-muted-foreground">
               {formatDistanceToNow(new Date(debate.createdAt), {
@@ -149,18 +145,34 @@ export default function DebateDetailPage() {
 
         <Separator className="border-border/60" />
 
-        {/* Synthèse éditoriale */}
-        {debate.synthesis && (
+        {/* Description */}
+        {debate.description && (
           <div className="border-l-2 border-primary/40 pl-3 py-2 bg-muted/20 rounded-r">
             <div className="flex items-center gap-1.5 mb-1.5">
               <SolarIcon icon="document-text-bold" className="h-3.5 w-3.5 text-primary" />
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Synthèse {debate.synthesisType === "editorial" ? "éditoriale" : "automatique"}
-              </span>
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Description</span>
             </div>
-            <p className="text-sm leading-relaxed whitespace-pre-wrap">{debate.synthesis}</p>
+            <p className="text-sm leading-relaxed text-foreground">{debate.description}</p>
           </div>
         )}
+
+        {/* Synthèse éditoriale */}
+        {debate.synthesis && (
+          <>
+            <Separator className="border-border/60" />
+            <div className="border-l-2 border-primary/40 pl-3 py-2 bg-muted/20 rounded-r">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <SolarIcon icon="document-text-bold" className="h-3.5 w-3.5 text-primary" />
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Synthèse {debate.synthesisType === "editorial" ? "éditoriale" : "automatique"}
+                </span>
+              </div>
+              <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">{debate.synthesis}</p>
+            </div>
+          </>
+        )}
+
+        <Separator className="border-border/60" />
 
         {/* Arguments */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -384,34 +396,59 @@ export default function DebateDetailPage() {
         {/* Sidebar sticky */}
         {debate._id && (
           <aside className="hidden lg:block">
-            <div className="sticky top-20 space-y-4">
+            <div className="sticky top-20 flex flex-col max-h-[calc(100vh-5rem)] overflow-y-auto space-y-4">
+              {/* Métriques */}
+              <div className="border-b border-border/60 pb-4">
+                <p className="text-xs font-semibold text-muted-foreground mb-3">Statistiques</p>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">Arguments POUR</span>
+                    <span className="font-semibold text-sm">{argumentsFor.length}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">Arguments CONTRE</span>
+                    <span className="font-semibold text-sm">{argumentsAgainst.length}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">Polarisation</span>
+                    <span className="font-semibold text-sm">{Math.round(debate.polarizationScore || 0)}%</span>
+                  </div>
+                </div>
+              </div>
+
               {/* Alerts */}
               {!isAuthenticated && isOpen && (
-                <div className="border-l-2 border-primary/40 pl-3 py-2.5 bg-muted/20 rounded-r">
-                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                    <SolarIcon icon="info-circle-bold" className="h-3.5 w-3.5 shrink-0" />
-                    <span>
-                      <Link href="/signin" className="font-medium text-foreground underline hover:no-underline">
-                        Connectez-vous
-                      </Link>{" "}
-                      pour participer
-                    </span>
+                <div className="border-b border-border/60 pb-4">
+                  <div className="border-l-2 border-primary/40 pl-3 py-2.5 bg-muted/20 rounded-r">
+                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                      <SolarIcon icon="info-circle-bold" className="h-3.5 w-3.5 shrink-0" />
+                      <span>
+                        <Link href="/signin" className="font-medium text-foreground underline hover:no-underline">
+                          Connectez-vous
+                        </Link>{" "}
+                        pour participer
+                      </span>
+                    </div>
                   </div>
                 </div>
               )}
 
               {!isOpen && (
-                <div className="border-l-2 border-primary/40 pl-3 py-2.5 bg-muted/20 rounded-r">
-                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                    <SolarIcon icon="lock-bold" className="h-3.5 w-3.5 shrink-0" />
-                    <span>Débat fermé</span>
+                <div className="border-b border-border/60 pb-4">
+                  <div className="border-l-2 border-primary/40 pl-3 py-2.5 bg-muted/20 rounded-r">
+                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                      <SolarIcon icon="lock-bold" className="h-3.5 w-3.5 shrink-0" />
+                      <span>Débat fermé</span>
+                    </div>
                   </div>
                 </div>
               )}
 
               {/* Bouton fermer le débat (éditeurs uniquement) */}
               {isEditor && isOpen && (
-                <CloseDebateDialog debateId={debate._id} debateSlug={debate.slug} />
+                <div className="pt-2">
+                  <CloseDebateDialog debateId={debate._id} debateSlug={debate.slug} />
+                </div>
               )}
             </div>
           </aside>

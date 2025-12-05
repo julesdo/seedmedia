@@ -16,7 +16,6 @@ import { fr } from "date-fns/locale";
 import { Author } from "@/components/articles/Author";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { CategoriesBar } from "@/components/home/CategoriesBar";
 import { HeroWidget } from "@/components/home/HeroWidget";
 import { PlatformStats } from "@/components/home/PlatformStats";
 import { TrendingTopics } from "@/components/home/TrendingTopics";
@@ -67,9 +66,6 @@ export default function PublicHomePage() {
         </div>
       </section>
 
-      {/* Barre de catégories */}
-      <CategoriesBar />
-
       {/* Contenu principal - Layout média avec sidebar */}
       <section className="container mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-10 max-w-7xl">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -85,7 +81,6 @@ export default function PublicHomePage() {
                 <Button variant="ghost" size="sm" asChild>
                   <Link href="/articles">
                     Voir tout
-                    <SolarIcon icon="arrow-right-bold" className="h-3.5 w-3.5 ml-1.5" />
                   </Link>
                 </Button>
               </div>
@@ -180,7 +175,6 @@ export default function PublicHomePage() {
                   <Button variant="ghost" size="sm" asChild>
                     <Link href="/projets">
                       Tout voir
-                      <SolarIcon icon="arrow-right-bold" className="h-3.5 w-3.5 ml-1.5" />
                     </Link>
                   </Button>
                 </div>
@@ -264,7 +258,7 @@ export default function PublicHomePage() {
                         className="flex items-center gap-2.5 py-2.5 group"
                       >
                         <Avatar className="h-7 w-7">
-                          <AvatarImage src={undefined} />
+                          <AvatarImage src={expert.image || undefined} alt={expert.name || "Expert"} />
                           <AvatarFallback className="text-xs">{expert.name?.[0]?.toUpperCase() || "E"}</AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
@@ -292,8 +286,8 @@ export default function PublicHomePage() {
               <p className="text-xs text-muted-foreground mb-3">
                 Recevez les derniers articles directement dans votre boîte mail
               </p>
-              <Button className="w-full" size="sm" variant="accent">
-                S'abonner
+              <Button className="w-full" size="sm" variant="accent" disabled>
+                Coming soon
               </Button>
             </div>
 
@@ -313,20 +307,15 @@ export default function PublicHomePage() {
                     <div key={proposal._id}>
                       <Link
                         href={`/gouvernance/${proposal.slug}`}
-                        className="block py-2.5 group"
+                        className="block py-3 group"
                       >
-                        <h4 className="font-semibold text-sm line-clamp-2 group-hover:opacity-80 transition-opacity mb-1.5">
+                        <h4 className="font-semibold text-sm leading-snug line-clamp-2 group-hover:text-primary transition-colors mb-1.5">
                           {proposal.title}
                         </h4>
-                        <div className="flex items-center gap-2.5 text-[11px] text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <SolarIcon icon="check-circle-bold" className="h-3 w-3" />
-                            {proposal.votesFor || 0}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <SolarIcon icon="close-circle-bold" className="h-3 w-3" />
-                            {proposal.votesAgainst || 0}
-                          </span>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                          <span>{proposal.votesFor || 0} pour</span>
+                          <span>•</span>
+                          <span>{proposal.votesAgainst || 0} contre</span>
                         </div>
                       </Link>
                       {index < Math.min(openProposals.length, 2) - 1 && <Separator className="border-border/60" />}

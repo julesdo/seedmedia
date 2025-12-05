@@ -42,9 +42,16 @@ function PublicActionsPageContent() {
       return null;
     },
   });
+  
+  const [selectedCategory, setSelectedCategory] = useQueryState("category", {
+    defaultValue: null,
+  });
 
   // Récupérer toutes les actions
   const allActions = useQuery(api.actions.getActions, { limit: 100 });
+  
+  // Récupérer les catégories actives pour actions
+  const categories = useQuery(api.categories.getActiveCategories, { appliesTo: "actions" });
 
   // Extraire tous les tags uniques
   const allTags = useMemo(() => {
@@ -72,6 +79,16 @@ function PublicActionsPageContent() {
       filtered = filtered.filter((action) => action.status === selectedStatus);
     }
 
+    // Filtre par catégorie
+    if (selectedCategory) {
+      filtered = filtered.filter((action) =>
+        action.categoryIds?.some((catId) => {
+          const category = categories?.find((cat) => cat._id === catId || cat.slug === selectedCategory);
+          return category && (category.slug === selectedCategory || category._id === selectedCategory);
+        })
+      );
+    }
+
     // Tri
     const currentSort = sortBy || "recent";
     switch (currentSort) {
@@ -92,7 +109,7 @@ function PublicActionsPageContent() {
     }
 
     return filtered;
-  }, [allActions, selectedType, selectedStatus, sortBy]);
+  }, [allActions, selectedType, selectedStatus, selectedCategory, categories, sortBy]);
 
   if (allActions === undefined) {
     return (
@@ -172,13 +189,33 @@ function PublicActionsPageContent() {
               </SelectContent>
             </Select>
 
-            {(selectedType || selectedStatus) && (
+            <Select value={selectedCategory || "all"} onValueChange={(value) => setSelectedCategory(value === "all" ? null : value)}>
+              <SelectTrigger className="w-[160px] h-9 text-xs border-border/60 bg-muted/30 hover:bg-muted/50">
+                <SelectValue placeholder="Catégorie">
+                  {selectedCategory && categories?.find((cat) => cat.slug === selectedCategory || cat._id === selectedCategory)?.name}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes les catégories</SelectItem>
+                {categories?.map((category) => (
+                  <SelectItem
+                    key={category._id || category.slug}
+                    value={category.slug || category._id || ""}
+                  >
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {(selectedType || selectedStatus || selectedCategory) && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => {
                   setSelectedType(null);
                   setSelectedStatus(null);
+                  setSelectedCategory(null);
                   setSortBy(null);
                 }}
                 className="h-9 text-xs"
@@ -211,6 +248,7 @@ function PublicActionsPageContent() {
               onClick={() => {
                 setSelectedType(null);
                 setSelectedStatus(null);
+                setSelectedCategory(null);
                 setSortBy(null);
               }}
             >

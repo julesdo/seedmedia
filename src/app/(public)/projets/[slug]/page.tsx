@@ -6,7 +6,6 @@ import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Author } from "@/components/articles/Author";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { SolarIcon } from "@/components/icons/SolarIcon";
 import { formatDistanceToNow } from "date-fns";
@@ -17,6 +16,8 @@ import { PlateEditorWrapper } from "@/components/articles/PlateEditorWrapper";
 import { Link } from "next-view-transitions";
 import Image from "next/image";
 import { useEffect, useState, useRef } from "react";
+import { CommentsSection } from "@/components/comments/CommentsSection";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const STAGE_LABELS = {
   idea: "Idée",
@@ -81,212 +82,241 @@ export default function PublicProjectPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <article className="space-y-8">
-        {/* Header avec meta */}
-        <header className="space-y-4">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1 space-y-4">
-              <div className="flex items-center gap-2 flex-wrap">
-                <Badge variant="outline" className="text-sm">
+    <div className="container mx-auto px-4 py-4 md:py-6 max-w-6xl">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
+        <article className="space-y-6 min-w-0">
+          {/* Header avec meta */}
+          <header className="space-y-4">
+            {/* Type et métriques */}
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="text-[11px] font-semibold px-2 py-0.5">
                   {STAGE_LABELS[project.stage]}
                 </Badge>
                 {project.openSource && (
-                  <Badge variant="default" className="text-sm">
+                  <Badge variant="default" className="text-[11px] font-semibold px-2 py-0.5">
                     <SolarIcon icon="code-bold" className="h-3 w-3 mr-1" />
                     Open Source
                   </Badge>
                 )}
                 {project.featured && (
-                  <Badge variant="default" className="text-sm">
+                  <Badge variant="outline" className="text-[11px] font-semibold px-2 py-0.5">
                     <SolarIcon icon="star-bold" className="h-3 w-3 mr-1" />
                     En vedette
                   </Badge>
                 )}
               </div>
-              <h1 className="text-4xl md:text-5xl font-bold leading-tight">
-                {project.title}
-              </h1>
-              <p className="text-xl text-muted-foreground">{project.summary}</p>
-            </div>
-          </div>
-
-          {/* Métadonnées */}
-          <div className="flex items-center gap-4 flex-wrap text-sm text-muted-foreground">
-            {project.author && (
-              <Author
-                author={project.author}
-                variant="default"
-                size="md"
-              />
-            )}
-            {project.organization && (
-              <div className="flex items-center gap-2">
-                <SolarIcon icon="buildings-bold" className="h-4 w-4" />
-                <Link
-                  href={`/organizations/${project.organization.slug}`}
-                  className="hover:text-foreground transition-colors"
-                >
-                  {project.organization.name}
-                </Link>
+              
+              {/* Métriques */}
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                  <SolarIcon icon="eye-bold" className="h-3 w-3" />
+                  <span className="font-medium">{project.views || 0}</span>
+                </div>
               </div>
-            )}
-            <div className="flex items-center gap-1">
-              <SolarIcon icon="calendar-bold" className="h-4 w-4" />
-              <span>
+            </div>
+
+            {/* Titre */}
+            <h1 className="text-2xl md:text-3xl font-bold leading-tight tracking-tight">
+              {project.title}
+            </h1>
+                
+            {/* Meta auteur et date */}
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              {project.author && (
+                <Author
+                  author={project.author}
+                  variant="detailed"
+                  showCredibility={false}
+                  size="sm"
+                  linkToProfile={true}
+                />
+              )}
+              
+              {project.organization && (
+                <>
+                  <span className="text-muted-foreground">•</span>
+                  <Link
+                    href={`/organizations/${project.organization.slug}`}
+                    className="text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1.5"
+                  >
+                    {project.organization.logo && (
+                      <Avatar className="h-4 w-4">
+                        <AvatarImage src={project.organization.logo} alt={project.organization.name} />
+                        <AvatarFallback className="text-[10px]">{project.organization.name[0]?.toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                    )}
+                    {project.organization.name}
+                  </Link>
+                </>
+              )}
+              
+              <span className="text-muted-foreground">•</span>
+              
+              <span className="text-muted-foreground">
                 {formatDistanceToNow(new Date(project.createdAt), {
                   addSuffix: true,
                   locale: fr,
                 })}
               </span>
             </div>
-            <div className="flex items-center gap-1">
-              <SolarIcon icon="eye-bold" className="h-4 w-4" />
-              <span>{project.views || 0} vues</span>
-            </div>
-          </div>
 
-          {/* Tags */}
-          {project.tags && project.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {project.tags.map((tag) => (
-                <Badge key={tag} variant="secondary">
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          )}
-        </header>
+            {/* Tags */}
+            {project.tags && project.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {project.tags.map((tag) => (
+                  <span key={tag} className="text-[11px] text-muted-foreground">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </header>
 
-        {/* Galerie d'images */}
-        {project.images && project.images.length > 0 && (
-          <div className="space-y-4">
-            {project.images.length === 1 ? (
-              <div className="relative h-96 w-full rounded-lg overflow-hidden">
+          {/* Galerie d'images */}
+          {project.images && project.images.length > 0 && (
+            <div className="relative w-full aspect-video overflow-hidden rounded-lg border border-border/60">
+              {project.images.length === 1 ? (
                 <Image
                   src={project.images[0]}
                   alt={project.title}
                   fill
                   className="object-cover"
+                  priority
                 />
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-4">
-                {project.images.slice(0, 4).map((image, index) => (
-                  <div
-                    key={index}
-                    className={`relative ${
-                      index === 0 ? "col-span-2 h-64" : "h-48"
-                    } rounded-lg overflow-hidden`}
-                  >
-                    <Image
-                      src={image}
-                      alt={`${project.title} - Image ${index + 1}`}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+              ) : (
+                <div className="grid grid-cols-2 gap-1 h-full">
+                  {project.images.slice(0, 4).map((image, index) => (
+                    <div
+                      key={index}
+                      className={`relative ${
+                        index === 0 ? "col-span-2" : ""
+                      }`}
+                    >
+                      <Image
+                        src={image}
+                        alt={`${project.title} - Image ${index + 1}`}
+                        fill
+                        className="object-cover"
+                        priority={index === 0}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
-        <Separator />
+          <Separator className="border-border/60" />
 
-        {/* Contenu principal */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Résumé */}
+          {project.summary && (
+            <div className="border-l-2 border-primary/40 pl-3 py-2 bg-muted/20 rounded-r">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <SolarIcon icon="document-text-bold" className="h-3.5 w-3.5 text-primary" />
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Résumé</span>
+              </div>
+              <p className="text-sm leading-relaxed text-foreground">{project.summary}</p>
+            </div>
+          )}
+
           {/* Description */}
-          <div className="lg:col-span-2 space-y-6">
-            <div>
-              <h2 className="text-2xl font-semibold mb-4">Description</h2>
-              <div className="prose max-w-none">
+          {project.description && (
+            <div className="space-y-4">
+              <Separator className="border-border/60" />
+              <section className="prose prose-sm dark:prose-invert max-w-none prose-headings:font-semibold prose-headings:text-base prose-headings:tracking-tight prose-p:leading-relaxed prose-p:text-sm prose-a:text-primary prose-a:no-underline hover:prose-a:underline">
                 <PlateEditorWrapper
                   value={project.description}
-                  onChange={() => {}}
-                  readOnly
+                  readOnly={true}
+                  placeholder=""
                 />
-              </div>
+              </section>
             </div>
+          )}
 
-            {/* Métriques d'impact */}
-            {project.impactMetrics && project.impactMetrics.length > 0 && (
-              <div>
-                <h2 className="text-2xl font-semibold mb-4">Métriques d'impact</h2>
+          {/* Métriques d'impact */}
+          {project.impactMetrics && project.impactMetrics.length > 0 && (
+            <>
+              <Separator className="border-border/60" />
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 pb-1.5 border-b border-border/60">
+                  <SolarIcon icon="chart-bold" className="h-4 w-4 text-primary" />
+                  <h2 className="text-lg font-semibold">Métriques d'impact</h2>
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   {project.impactMetrics.map((metric, index) => (
-                    <Card key={index}>
-                      <CardContent className="p-4">
-                        <div className="text-sm text-muted-foreground mb-1">
-                          {metric.label}
-                        </div>
-                        <div className="text-2xl font-bold">{metric.value}</div>
-                      </CardContent>
-                    </Card>
+                    <div key={index} className="space-y-1">
+                      <p className="text-xs font-semibold text-muted-foreground">{metric.label}</p>
+                      <p className="text-2xl font-bold">{metric.value}</p>
+                    </div>
                   ))}
                 </div>
               </div>
-            )}
+            </>
+          )}
 
-            {/* Localisation */}
-            {project.location && (
-              <div>
-                <h2 className="text-2xl font-semibold mb-4">Localisation</h2>
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="space-y-1">
-                      {project.location.city && (
-                        <div className="flex items-center gap-2">
-                          <SolarIcon icon="map-point-bold" className="h-4 w-4" />
-                          <span>
-                            {project.location.city}
-                            {project.location.region && `, ${project.location.region}`}
-                            {project.location.country && `, ${project.location.country}`}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
+          {/* Localisation */}
+          {project.location && (
+            <>
+              <Separator className="border-border/60" />
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 pb-1.5 border-b border-border/60">
+                  <SolarIcon icon="map-point-bold" className="h-4 w-4 text-primary" />
+                  <h2 className="text-lg font-semibold">Localisation</h2>
+                </div>
+                <div className="flex items-start gap-3">
+                  <SolarIcon icon="map-point-bold" className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                  <p className="text-sm text-foreground">
+                    {project.location.city}
+                    {project.location.region && `, ${project.location.region}`}
+                    {project.location.country && `, ${project.location.country}`}
+                  </p>
+                </div>
               </div>
-            )}
-          </div>
+            </>
+          )}
 
-          {/* Sidebar */}
-          <aside className="space-y-6">
+          {/* Section commentaires - Mobile */}
+          {project._id && (
+            <div className="lg:hidden">
+              <Separator className="mb-6" />
+              <CommentsSection targetType="project" targetId={project._id} />
+            </div>
+          )}
+        </article>
+
+        {/* Sidebar sticky avec métriques, liens et commentaires */}
+        <aside className="hidden lg:block">
+          <div className="sticky top-20 flex flex-col max-h-[calc(100vh-5rem)] overflow-y-auto space-y-4">
             {/* Métriques */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Statistiques</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            <div className="border-b border-border/60 pb-4">
+              <p className="text-xs font-semibold text-muted-foreground mb-3">Statistiques</p>
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Vues</span>
-                  <span className="font-semibold">{project.views || 0}</span>
+                  <span className="text-xs text-muted-foreground">Vues</span>
+                  <span className="font-semibold text-sm">{project.views || 0}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Réactions</span>
-                  <span className="font-semibold">{project.reactions || 0}</span>
+                  <span className="text-xs text-muted-foreground">Réactions</span>
+                  <span className="font-semibold text-sm">{project.reactions || 0}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Commentaires</span>
-                  <span className="font-semibold">{project.comments || 0}</span>
+                  <span className="text-xs text-muted-foreground">Commentaires</span>
+                  <span className="font-semibold text-sm">{project.comments || 0}</span>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
             {/* Liens externes */}
             {project.links && project.links.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Liens</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
+              <div className="border-b border-border/60 pb-4">
+                <p className="text-xs font-semibold text-muted-foreground mb-3">Liens</p>
+                <div className="space-y-2">
                   {project.links.map((link, index) => (
                     <Button
                       key={index}
                       variant="outline"
-                      className="w-full justify-start"
+                      className="w-full justify-start text-xs h-8"
                       asChild
                     >
                       <a href={link.url} target="_blank" rel="noopener noreferrer">
@@ -298,7 +328,7 @@ export default function PublicProjectPage() {
                               ? "play-bold"
                               : "link-bold"
                           }
-                          className="h-4 w-4 mr-2"
+                          className="h-3 w-3 mr-2"
                         />
                         {link.type === "github"
                           ? "GitHub"
@@ -310,13 +340,19 @@ export default function PublicProjectPage() {
                       </a>
                     </Button>
                   ))}
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             )}
-          </aside>
-        </div>
-      </article>
+
+            {/* Section commentaires - Desktop */}
+            {project._id && (
+              <div className="pt-2 flex-1 min-h-0">
+                <CommentsSection targetType="project" targetId={project._id} />
+              </div>
+            )}
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }
-

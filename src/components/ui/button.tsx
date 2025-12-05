@@ -15,7 +15,7 @@ const buttonVariants = cva(
         accent: "button-accent",
         destructive: "button-destructive",
         outline:
-          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 rounded-md",
+          "button-outline border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 rounded-md",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-md",
         ghost:
@@ -108,13 +108,17 @@ function Button({
             },
           })
         }
-        
+
         // Si c'est un composant avec className qui contient SolarIcon
-        if (child.props && child.props.className && typeof child.props.className === "string" && child.props.className.includes("SolarIcon")) {
-          return React.cloneElement(child as React.ReactElement, {
+        if (
+          React.isValidElement(child) &&
+          typeof (child.props as { className?: unknown }).className === "string" &&
+          (child.props as { className: string }).className.includes("SolarIcon")
+        ) {
+          return React.cloneElement(child as React.ReactElement<any, any>, {
             key: child.key || `icon-${index}`,
-            ...child.props,
-            className: cn(child.props.className),
+            ...(child.props as Record<string, any>),
+            className: cn((child.props as { className: string }).className),
             style: { 
               ...child.props.style, 
               color: isAccentVariant ? "#FFFFFF" : isDestructiveVariant ? "#FFFFFF" : "#F4F6FB" 

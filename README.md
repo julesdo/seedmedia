@@ -1,334 +1,430 @@
-# Next.js + Convex + Better Auth Template
+# 🌱 Seed - Plateforme d'information et d'utilité publique
 
-[![Next.js](https://img.shields.io/badge/Next.js-16.0.1-black?style=flat&logo=next.js)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/React-19.2.0-blue?style=flat&logo=react)](https://react.dev/)
+[![Next.js](https://img.shields.io/badge/Next.js-16.0-black?style=flat&logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19.2-blue?style=flat&logo=react)](https://react.dev/)
 [![Convex](https://img.shields.io/badge/Convex-Realtime-orange?style=flat&logo=convex)](https://convex.dev/)
-[![Better Auth](https://img.shields.io/badge/Better%20Auth-Latest-green?style=flat)](https://better-auth.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-green.svg)](https://www.gnu.org/licenses/agpl-3.0.html)
+[![Status: Open Source](https://img.shields.io/badge/Status-Open%20Source-brightgreen)](https://github.com/seedmedia)
 
-A **production-ready**, full-stack authentication template built with Next.js 16, Convex, and Better Auth. This template provides a complete authentication system with multiple auth methods, real-time database, comprehensive documentation, and API reference.
+> **Seed est plus qu'un média de la résilience technologique, c'est une plateforme d'information et d'utilité publique où la communauté publie, organise, vérifie et fait évoluer les contenus grâce à une gouvernance partagée.**
+>
+> **Pas d'algos opaques, pas de ligne éditoriale imposée.**
 
-> **✨ New!** Built-in [Documentation](/documentation) and [API Reference](/api-reference) pages to help you get started quickly!
+---
 
-## 🚀 Features
+## 📖 Table des matières
 
-### Authentication Methods
-- ✅ **Email/Password** - Traditional authentication with secure password handling
-- ✅ **OAuth Providers** - Google, GitHub, and Slack (via genericOAuth)
-- ✅ **Magic Links** - Passwordless authentication via email
-- ✅ **Email OTP** - One-time password verification
-- ✅ **Two-Factor Authentication (2FA)** - TOTP-based 2FA with QR codes and backup codes
-- ✅ **Anonymous Auth** - Guest access for users
+- [À propos de Seed](#-à-propos-de-seed)
+- [Vision et Mission](#-vision-et-mission)
+- [Structure organisationnelle](#-structure-organisationnelle)
+- [Fonctionnalités principales](#-fonctionnalités-principales)
+- [Architecture technique](#-architecture-technique)
+- [Installation et développement](#-installation-et-développement)
+- [Gouvernance](#-gouvernance)
+- [Contribution](#-contribution)
+- [Licence](#-licence)
+- [Support et contact](#-support-et-contact)
 
-### Core Features
-- ✅ **Protected Routes** - Automatic route protection with Next.js 16 proxy pattern
-- ✅ **Email Verification** - Verify user emails with secure tokens
-- ✅ **Password Reset** - Secure password recovery flow
-- ✅ **Modern UI** - Beautiful, responsive design with dark mode support
-- ✅ **Type Safety** - Full TypeScript support with Convex
-- ✅ **Real-time Database** - Powered by Convex for instant updates
-- ✅ **Email Templates** - Pre-built React Email templates for all auth flows
+---
 
-### Developer Experience
-- ✅ **Comprehensive Documentation** - Built-in `/documentation` page with setup guides
-- ✅ **API Reference** - Full API documentation at `/api-reference` with code examples
-- ✅ **Claude AI Ready** - Includes `CLAUDE.md` for AI coding assistants
-- ✅ **TypeScript** - Full type safety throughout the stack
-- ✅ **Tailwind CSS v4** - Modern styling with utility classes
-- ✅ **Radix UI** - Accessible component primitives
+## 🎯 À propos de Seed
 
-## 📖 Quick Links
+Seed est une plateforme open source d'information collaborative qui permet à une communauté de créer, organiser, vérifier et faire évoluer des contenus de manière transparente et démocratique. Contrairement aux médias traditionnels ou aux réseaux sociaux algorithmiques, Seed fonctionne selon des principes de **gouvernance partagée** et de **transparence totale**.
 
-- 📚 **[Documentation](/documentation)** - Complete setup guide, architecture overview, and deployment instructions
-- 🔧 **[API Reference](/api-reference)** - Comprehensive API documentation with copy-paste examples
-- 🤖 **[CLAUDE.md](CLAUDE.md)** - Technical documentation for AI coding assistants
-- 💬 **[GitHub Issues](https://github.com/podalls97/next-convex-betterauth-template/issues)** - Report bugs or request features
-- ⭐ **[Star on GitHub](https://github.com/podalls97/next-convex-betterauth-template)** - Show your support!
+### Principes fondamentaux
 
-## 📋 Prerequisites
+- 🌐 **Open Source** : Le code source est librement accessible et modifiable
+- 🏛️ **Gouvernance démocratique** : Les décisions sont prises collectivement par la communauté
+- 🔍 **Transparence** : Pas d'algorithmes opaques, toutes les règles sont visibles et modifiables
+- 🤝 **Collaboration** : Chaque membre peut contribuer, proposer des améliorations et participer aux débats
+- 📊 **Vérification** : Système de crédibilité et de sources pour garantir la qualité de l'information
+- 🎯 **Utilité publique** : Objectif non lucratif, au service de l'intérêt général
 
-Before you begin, ensure you have the following installed:
-- [Node.js](https://nodejs.org/) (v18 or later)
-- [pnpm](https://pnpm.io/) (recommended) or npm/yarn
-- [Convex CLI](https://docs.convex.dev/get-started/quickstart)
+---
 
-## 🛠️ Setup Instructions
+## 🌟 Vision et Mission
 
-### 1. Clone the Repository
+### Vision
 
-```bash
-git clone https://github.com/podalls97/next-convex-betterauth-template.git
-cd next-convex-betterauth-template
+Créer un écosystème d'information durable, transparent et collaboratif où chaque voix compte et où la qualité prime sur la viralité.
+
+### Mission
+
+**Seed est une plateforme d'information et d'utilité publique où la communauté publie, organise, vérifie et fait évoluer les contenus grâce à une gouvernance partagée.**
+
+Nous croyons que l'information doit être :
+- **Accessible** : Gratuite et ouverte à tous
+- **Vérifiable** : Chaque affirmation peut être sourcée et contestée
+- **Évolutive** : Les contenus s'améliorent grâce à la contribution collective
+- **Transparente** : Aucun algorithme secret, toutes les règles sont publiques
+- **Démocratique** : La gouvernance appartient à la communauté
+
+---
+
+## 🏢 Structure organisationnelle
+
+Seed est géré par une **association loi 1901 française à but non lucratif**. Cette structure garantit :
+
+- ✅ **Indépendance** : Aucun intérêt commercial ou politique
+- ✅ **Transparence** : Comptes publics et décisions démocratiques
+- ✅ **Durabilité** : Structure pérenne au service de la mission
+- ✅ **Légitimité** : Cadre juridique reconnu en France
+
+### Statuts de l'association
+
+L'association Seed est régie par la loi du 1er juillet 1901 et le décret du 16 août 1901. Elle a pour objet :
+
+1. Le développement et la maintenance de la plateforme Seed
+2. La promotion de l'information libre et vérifiable
+3. L'animation de la communauté de contributeurs
+4. La défense des valeurs de transparence et de démocratie dans l'information
+
+---
+
+## 🚀 Fonctionnalités principales
+
+### 📝 Articles
+
+- **Rédaction collaborative** : Éditeur riche avec support Markdown et formatage avancé
+- **Système de sources** : Chaque affirmation peut être sourcée et vérifiée
+- **Catégorisation** : Organisation par catégories et tags
+- **Scores de qualité** : Évaluation automatique basée sur les sources et la structure
+- **Commentaires et débats** : Discussion autour de chaque article
+
+### 🗳️ Gouvernance
+
+- **Propositions** : La communauté peut proposer des modifications aux règles
+- **Votes** : Système de vote transparent pour valider les propositions
+- **Règles configurables** : Toutes les règles de la plateforme sont modifiables par vote
+- **Évolutions** : Historique complet des changements de gouvernance
+- **Transparence totale** : Tous les votes et décisions sont publics
+
+### 💬 Débats
+
+- **Arguments pour et contre** : Structure claire pour les débats
+- **Scoring de polarisation** : Mesure de la qualité du débat
+- **Sources obligatoires** : Chaque argument doit être sourcé
+- **Modération communautaire** : La communauté modère elle-même
+
+### 🎯 Actions
+
+- **Pétitions** : Création et signature de pétitions
+- **Contributions** : Appels à contribution pour améliorer les contenus
+- **Événements** : Organisation d'événements communautaires
+- **Suivi des participants** : Transparence sur l'engagement
+
+### 🏗️ Projets
+
+- **Gestion de projets** : Suivi des projets de la communauté
+- **Stages de développement** : Idée → Prototype → Bêta → Production
+- **Open Source** : Lien avec les projets open source
+- **Collaboration** : Système de contribution aux projets
+
+### 👥 Organisations
+
+- **Profils d'organisations** : Associations, entreprises, collectifs
+- **Découverte** : Recherche et filtrage avancé
+- **Engagement** : Suivi des actions et contributions
+
+### ⭐ Système de crédibilité
+
+- **Points de crédibilité** : Récompense pour les contributions de qualité
+- **Niveaux** : Progression basée sur l'engagement et la qualité
+- **Badges** : Reconnaissance des contributions exceptionnelles
+- **Transparence** : Tous les scores sont publics et justifiés
+
+---
+
+## 🏗️ Architecture technique
+
+### Stack technologique
+
+- **Frontend** : Next.js 16 (App Router), React 19, TypeScript
+- **Backend** : Convex (base de données temps réel)
+- **Authentification** : Better Auth
+- **Styling** : Tailwind CSS v4, shadcn/ui
+- **Éditeur** : Plate.js (éditeur riche)
+- **Internationalisation** : next-intl
+- **Déploiement** : Vercel (frontend), Convex Cloud (backend)
+
+### Structure du projet
+
+```
+seedmedia/
+├── src/
+│   ├── app/                    # Pages Next.js (App Router)
+│   │   ├── (public)/          # Pages publiques
+│   │   ├── (auth)/            # Pages authentifiées
+│   │   └── api/               # API routes
+│   ├── components/            # Composants React réutilisables
+│   ├── lib/                   # Utilitaires et configurations
+│   └── hooks/                 # Hooks React personnalisés
+├── convex/                    # Backend Convex
+│   ├── schema.ts             # Schéma de base de données
+│   ├── articles.ts           # Logique métier articles
+│   ├── governance.ts         # Logique métier gouvernance
+│   └── ...
+├── public/                    # Assets statiques
+└── messages/                  # Fichiers de traduction
 ```
 
-### 2. Install Dependencies
+### Principes d'architecture
+
+- **Type Safety** : TypeScript partout pour la sécurité des types
+- **Composants réutilisables** : Architecture modulaire et DRY
+- **Séparation des responsabilités** : Logique métier dans Convex, UI dans React
+- **Performance** : Optimisations Next.js (SSR, ISR, streaming)
+- **Accessibilité** : Composants accessibles avec Radix UI
+- **Sécurité** : Validation des données, authentification robuste
+
+---
+
+## 💻 Installation et développement
+
+### Prérequis
+
+- [Node.js](https://nodejs.org/) (v18 ou supérieur)
+- [pnpm](https://pnpm.io/) (recommandé) ou npm/yarn
+- [Convex CLI](https://docs.convex.dev/get-started/quickstart)
+- Compte [Convex](https://convex.dev) (gratuit)
+
+### Installation
+
+1. **Cloner le dépôt**
+
+```bash
+git clone https://github.com/seedmedia/seed.git
+cd seed
+```
+
+2. **Installer les dépendances**
 
 ```bash
 pnpm install
 ```
 
-### 3. Set Up Environment Variables
+3. **Configurer les variables d'environnement**
 
-Create a `.env.local` file in the root directory with the following variables:
+Créez un fichier `.env.local` :
 
 ```bash
-# Convex (automatic)
+# Convex
 CONVEX_DEPLOYMENT=automatic
-NEXT_PUBLIC_CONVEX_URL=https://example.convex.cloud
-NEXT_PUBLIC_CONVEX_SITE_URL=https://example.convex.site
+NEXT_PUBLIC_CONVEX_URL=https://your-project.convex.cloud
 
-# Site Configuration
+# Site
 SITE_URL=http://localhost:3000
 
-# Google OAuth (optional)
+# Better Auth
+BETTER_AUTH_SECRET=your-secret-key-here
+
+# OAuth (optionnel)
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
-
-# GitHub OAuth (optional)
 GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
-
-# Better Auth
-BETTER_AUTH_SECRET=
 ```
 
-### 4. Set Up Convex Variables
-
-After creating your `.env.local` file, set the required variables in Convex:
+4. **Initialiser Convex**
 
 ```bash
-# Set up environment variables in Convex (development)
+pnpm convex dev
+```
+
+Suivez les instructions pour créer un projet Convex.
+
+5. **Configurer les variables Convex**
+
+```bash
 pnpm convex env set SITE_URL http://localhost:3000
 pnpm convex env set BETTER_AUTH_SECRET your-secret-key-here
-pnpm convex env set GOOGLE_CLIENT_ID your-google-client-id
-pnpm convex env set GOOGLE_CLIENT_SECRET your-google-client-secret
-pnpm convex env set GITHUB_CLIENT_ID your-github-client-id
-pnpm convex env set GITHUB_CLIENT_SECRET your-github-client-secret
-
-# Set up environment variables in Convex (production)
-pnpm convex env set SITE_URL your-production-domain --prod
-pnpm convex env set BETTER_AUTH_SECRET your-secret-key-here --prod
-pnpm convex env set GOOGLE_CLIENT_ID your-google-client-id --prod
-pnpm convex env set GOOGLE_CLIENT_SECRET your-google-client-secret --prod
-pnpm convex env set GITHUB_CLIENT_ID your-github-client-id --prod
-pnpm convex env set GITHUB_CLIENT_SECRET your-github-client-secret --prod
 ```
 
-### 6. Required API Keys
+6. **Lancer le serveur de développement**
 
-You'll need to set up the following services:
-
-#### 📧 Email Service (Choose one)
-
-**Option 1: Resend (Recommended)**
-- Sign up at [Resend](https://resend.com/)
-- Get your API key from the dashboard
-- Add `RESEND_API_KEY` to your environment variables in Convex
-
-**Option 2: SMTP (Gmail/Outlook)**
-- For Gmail: Enable 2FA and create an App Password
-- For Outlook: Use your regular credentials
-- Add SMTP variables to your environment
-
-#### 🔐 Better Auth Secret
-- Generate a secure random string using: `openssl rand -base64 32`
-- Add to `BETTER_AUTH_SECRET` in both `.env.local` and Convex
-
-#### 🔑 OAuth Providers (Optional)
-
-**Google OAuth**
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select an existing one
-3. Navigate to "APIs & Services" > "Credentials"
-4. Click "Create Credentials" > "OAuth 2.0 Client ID"
-5. Configure consent screen if prompted
-6. Set application type to "Web application"
-7. Add authorized redirect URIs:
-   - Development: `http://localhost:3000/api/auth/callback/google`
-   - Production: `https://yourdomain.com/api/auth/callback/google`
-8. Copy `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`
-
-**GitHub OAuth**
-1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
-2. Click "New OAuth App"
-3. Fill in the details:
-   - Application name: Your app name
-   - Homepage URL: `http://localhost:3000` (dev) or your production URL
-   - Authorization callback URL:
-     - Development: `http://localhost:3000/api/auth/callback/github`
-     - Production: `https://yourdomain.com/api/auth/callback/github`
-4. Copy `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`
-
-**Slack OAuth (via genericOAuth)**
-1. Go to [Slack API](https://api.slack.com/apps)
-2. Click "Create New App" > "From scratch"
-3. Configure OAuth & Permissions
-4. Add redirect URL: `http://localhost:3000/api/auth/callback/slack`
-5. Copy `SLACK_CLIENT_ID` and `SLACK_CLIENT_SECRET`
-6. Update `convex/auth.ts` and `src/lib/auth-client.ts` to include Slack configuration
-
-### 5. Start Development
-
-#### Option 1: Start Everything (Recommended)
 ```bash
-# This will automatically start both Convex dev and Next.js dev
 pnpm dev
 ```
 
-#### Option 2: Start Convex Only
-```bash
-# Start Convex development server only
-pnpm convex dev
+L'application sera accessible sur [http://localhost:3000](http://localhost:3000)
 
-# Or run once and exit
-pnpm convex dev --once
-```
+### Scripts disponibles
 
-**Note**: If you encounter errors after running `pnpm install` after cloning this repo, make sure you have added the required environment variables to your `.env.local` file, then run `pnpm convex env set` to set up the variables in Convex.
+- `pnpm dev` : Lance le serveur de développement (Next.js + Convex)
+- `pnpm build` : Build de production
+- `pnpm start` : Lance le serveur de production
+- `pnpm convex dev` : Lance uniquement le serveur Convex
+- `pnpm convex deploy` : Déploie le backend sur Convex Cloud
+- `pnpm lint` : Vérifie le code avec ESLint
+- `pnpm type-check` : Vérifie les types TypeScript
 
-The `pnpm dev` command will:
-- Start Convex development server
-- Start Next.js development server  
-- Open your browser to `http://localhost:3000`
+### Documentation technique
 
-## 🎯 Quick Start Guide
+Pour plus de détails sur l'architecture et le développement, consultez :
 
-1. **Sign Up**: Create a new account at `/sign-up`
-2. **Verify Email**: Check your email and click the verification link
-3. **Sign In**: Use your credentials at `/sign-in`
-4. **Dashboard**: Access your protected dashboard at `/dashboard`
-5. **Settings**: Configure 2FA and other settings at `/settings`
-
-## 📁 Project Structure
-
-```
-src/
-├── app/
-│   ├── (auth)/              # Protected routes (requires authentication)
-│   │   ├── dashboard/       # Main user dashboard
-│   │   ├── settings/        # User settings (2FA, profile)
-│   │   ├── documentation/   # 📚 Built-in documentation page
-│   │   └── api-reference/   # 🔧 Built-in API reference
-│   ├── (unauth)/            # Public routes
-│   │   ├── sign-in/         # Sign in page
-│   │   ├── sign-up/         # Registration page
-│   │   ├── verify-2fa/      # 2FA verification
-│   │   └── reset-password/  # Password reset
-│   └── api/auth/[...all]/   # Next.js API route (delegates to Convex)
-├── components/
-│   ├── client/              # Client components
-│   └── server/              # Server components
-├── lib/
-│   ├── auth.ts              # Better Auth server configuration
-│   └── auth-client.ts       # Better Auth client hooks
-└── proxy.ts                 # Route protection (Next.js 16 proxy pattern)
-
-convex/
-├── auth.config.ts           # Better Auth domain configuration
-├── auth.ts                  # Better Auth + Convex integration
-├── schema.ts                # Convex database schema
-├── http.ts                  # HTTP routes for Better Auth
-├── email.tsx                # Email templates (React Email)
-└── polyfills.ts             # Required for Better Auth in Convex
-```
-
-## 🔧 Adding New Pages
-
-To add new pages to your dashboard:
-
-1. Create a new directory in `src/app/(auth)/dashboard/`
-2. Add a `page.tsx` file
-3. Use the provided components:
-
-```tsx
-"use client";
-
-import { useQuery } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
-import { AppContainer } from "@/components/server";
-
-export default function MyPage() {
-  const user = useQuery(api.auth.getCurrentUser);
-
-  return (
-    <AppContainer>
-      <h1>Hello {user?.name}!</h1>
-      {/* Your page content */}
-    </AppContainer>
-  );
-}
-```
-
-## 🚀 Deployment
-
-### Deploy to Vercel
-
-1. Push your code to GitHub
-2. Connect your repository to [Vercel](https://vercel.com)
-3. Configure build settings:
-   - **Build Command**: `npx convex deploy --cmd 'pnpm run build'`
-   - **Install Command**: `pnpm install`
-4. Add environment variables in Vercel dashboard:
-   - All variables from your `.env.local` file
-   - **Additional variables for production**:
-     - `CONVEX_SITE_URL=your-domain` (your production domain)
-     - `CONVEX_DEPLOYMENT=key from convex dashboard` (available in Convex dashboard under Settings > Deployment URL and Deploy Key)
-5. Deploy!
-
-### Deploy Convex
-
-```bash
-pnpm convex deploy
-```
-
-## 📚 Learn More
-
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Convex Documentation](https://docs.convex.dev)
-- [Better Auth Documentation](https://www.better-auth.com/docs)
-- [Resend Documentation](https://resend.com/docs)
-
-## 🤖 For AI Agents & Developers
-
-If you're working with AI coding assistants or need to modify authentication providers:
-
-### Adding/Removing Auth Providers
-When adding or removing authentication providers (Google, GitHub, etc.):
-
-1. **Update Environment Variables**: Add or remove the corresponding `CLIENT_ID` and `CLIENT_SECRET` variables in both `.env.local` and Convex
-2. **Check Convex Configuration**: Review and update `convex/auth.config.ts` to include/exclude the provider
-3. **Update Mutations**: Ensure all related Convex mutations and functions are updated to handle the new/removed provider
-4. **Test Authentication Flow**: Verify the complete authentication flow works with the changes
-
-### Quick Provider Management
-- **To add a provider**: Configure the provider in `convex/auth.config.ts`, add environment variables, and update any related mutations
-- **To remove a provider**: Remove from auth config, clean up environment variables, and update mutations to handle the removal
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-If you encounter any issues:
-
-1. Check the [Issues](https://github.com/podalls97/next-convex-betterauth-template/issues) page
-2. Create a new issue with detailed information
-3. Join our community discussions
+- [CLAUDE.md](CLAUDE.md) : Documentation pour assistants IA
+- [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) : Guide de déploiement
+- [README_ADMIN.md](README_ADMIN.md) : Documentation administrateur
 
 ---
 
-**Happy coding! :D**
+## 🗳️ Gouvernance
+
+Seed fonctionne selon un modèle de **gouvernance partagée** où toutes les règles sont :
+
+1. **Publiques** : Accessibles à tous
+2. **Modifiables** : Proposables par la communauté
+3. **Votées** : Validées démocratiquement
+4. **Traçables** : Historique complet des changements
+
+### Types de propositions
+
+- **Règles éditoriales** : Modifier les règles de publication
+- **Évolutions produit** : Proposer de nouvelles fonctionnalités
+- **Règles configurables** : Modifier les paramètres de la plateforme
+- **Autres** : Propositions libres
+
+### Processus de vote
+
+1. **Proposition** : Un membre crée une proposition
+2. **Discussion** : La communauté débat
+3. **Vote** : Vote ouvert à tous les membres actifs
+4. **Application** : Si approuvée, la proposition est appliquée automatiquement
+
+### Transparence
+
+- Tous les votes sont publics
+- Tous les résultats sont traçables
+- Aucune décision n'est prise en secret
+- La communauté peut contester toute décision
+
+---
+
+## 🤝 Contribution
+
+Seed est un projet open source et nous accueillons toutes les contributions !
+
+### Comment contribuer
+
+1. **Fork** le dépôt
+2. **Créez une branche** pour votre fonctionnalité (`git checkout -b feature/amazing-feature`)
+3. **Commitez** vos changements (`git commit -m 'Add amazing feature'`)
+4. **Pushez** vers la branche (`git push origin feature/amazing-feature`)
+5. **Ouvrez une Pull Request**
+
+### Types de contributions
+
+- 🐛 **Rapports de bugs** : Signalez les problèmes
+- 💡 **Suggestions** : Proposez de nouvelles fonctionnalités
+- 📝 **Documentation** : Améliorez la documentation
+- 🎨 **Design** : Améliorez l'interface utilisateur
+- 🔧 **Code** : Ajoutez des fonctionnalités ou corrigez des bugs
+- 🌍 **Traduction** : Aidez à traduire la plateforme
+
+### Standards de code
+
+- Respectez les conventions TypeScript
+- Suivez les règles ESLint
+- Écrivez des tests quand c'est possible
+- Documentez votre code
+- Respectez les principes de design de Seed
+
+### Code de conduite
+
+Seed suit un code de conduite basé sur le respect, la bienveillance et la collaboration. Tous les contributeurs doivent :
+
+- Être respectueux et inclusifs
+- Accepter les critiques constructives
+- Collaborer de manière transparente
+- Respecter les décisions de la communauté
+
+---
+
+## 📄 Licence
+
+Seed est distribué sous la **GNU Affero General Public License v3.0 (AGPL-3.0)**.
+
+### Pourquoi l'AGPL-3.0 ?
+
+L'AGPL-3.0 est la licence la plus appropriée pour Seed car elle :
+
+✅ **Garantit la liberté** : Le code source reste libre et accessible  
+✅ **Empêche la privatisation** : Interdit l'utilisation commerciale sans partager le code  
+✅ **Protège contre la copie malveillante** : Toute modification doit être partagée  
+✅ **Assure la transparence** : Même les services en ligne doivent partager leur code  
+✅ **Respecte les valeurs** : Alignée avec la mission non lucrative de Seed  
+
+### Ce que vous pouvez faire
+
+- ✅ Utiliser Seed pour votre propre plateforme
+- ✅ Modifier le code source
+- ✅ Distribuer des copies
+- ✅ Utiliser commercialement (si vous partagez vos modifications)
+
+### Ce que vous devez faire
+
+- ✅ Conserver la notice de copyright
+- ✅ Inclure la licence AGPL-3.0
+- ✅ Partager vos modifications (même pour les services en ligne)
+- ✅ Documenter vos changements
+
+### Ce que vous ne pouvez pas faire
+
+- ❌ Utiliser Seed sans partager vos modifications
+- ❌ Créer une copie fermée ou propriétaire
+- ❌ Retirer la licence ou le copyright
+- ❌ Utiliser le nom "Seed" pour un service concurrent sans autorisation
+
+### Exceptions
+
+Pour des cas spécifiques (intégrations, partenariats), contactez l'association Seed pour discuter d'une licence alternative.
+
+**Pour plus de détails, consultez le fichier [LICENSE](LICENSE)**
+
+---
+
+## 🆘 Support et contact
+
+### Ressources
+
+- 📚 **Documentation** : [docs.seed.media](https://docs.seed.media) (à venir)
+- 💬 **Discussions** : [GitHub Discussions](https://github.com/seedmedia/seed/discussions)
+- 🐛 **Rapports de bugs** : [GitHub Issues](https://github.com/seedmedia/seed/issues)
+- 📧 **Email** : contact@seed.media
+
+### Communauté
+
+- 🌐 **Site web** : [seed.media](https://seed.media)
+- 🐙 **GitHub** : [@seedmedia](https://github.com/seedmedia)
+- 💼 **LinkedIn** : [Seed Media](https://linkedin.com/company/seed-media)
+
+### Association Seed
+
+Pour toute question concernant l'association, la gouvernance ou les partenariats :
+
+- 📧 **Email** : association@seed.media
+- 📍 **Adresse** : (à venir)
+
+---
+
+## 🙏 Remerciements
+
+Seed existe grâce à la communauté de contributeurs, bénévoles et utilisateurs qui croient en une information libre, transparente et démocratique.
+
+**Merci de faire partie de cette aventure ! 🌱**
+
+---
+
+<div align="center">
+
+**Fait avec ❤️ par la communauté Seed**
+
+[🌐 Site web](https://seed.media) • [📖 Documentation](https://docs.seed.media) • [🐙 GitHub](https://github.com/seedmedia) • [📄 Licence](LICENSE)
+
+</div>
+
 
 git add .
-git commit -m "maj 1.62 dialog prod"
+git commit -m "maj 2.0 alfa prod"
 git push -u origin main

@@ -12,8 +12,10 @@ export function PublicFooter() {
           <div className="space-y-4">
             <h3 className="font-semibold text-sm">Mission Seed</h3>
             <p className="text-sm text-muted-foreground">
-              Le média social de la résilience technologique. 
-              Analyses. Débats. Gouvernance ouverte. Solutions fiables.
+              Plus qu'un média de la résilience technologique, Seed est une plateforme d'information et d'utilité publique où la communauté publie, organise, vérifie et fait évoluer les contenus grâce à une gouvernance partagée.
+            </p>
+            <p className="text-xs text-muted-foreground/80">
+              Pas d'algos opaques, pas de ligne éditoriale imposée.
             </p>
           </div>
 
@@ -48,6 +50,11 @@ export function PublicFooter() {
           <div className="space-y-4">
             <h3 className="font-semibold text-sm">Ressources</h3>
             <ul className="space-y-2 text-sm">
+              <li>
+                <Link href="/documentation" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Documentation
+                </Link>
+              </li>
               <li>
                 <Link href="/transparence" className="text-muted-foreground hover:text-foreground transition-colors">
                   Transparence

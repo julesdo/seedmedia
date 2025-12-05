@@ -8,11 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SolarIcon } from "@/components/icons/SolarIcon";
-import Link from "next/link";
+import { Link } from "next-view-transitions";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useState, useMemo } from "react";
 import { Separator } from "@/components/ui/separator";
+import { Progress } from "@/components/ui/progress";
 
 export default function DebatsPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -63,6 +64,7 @@ export default function DebatsPage() {
 
   return (
     <div className="container mx-auto px-4 py-4 md:py-6 max-w-6xl">
+      {/* Header */}
       <header className="mb-6 space-y-2">
         <div className="flex items-center justify-between gap-4">
           <div>
@@ -83,10 +85,10 @@ export default function DebatsPage() {
         </div>
       </header>
 
-      <Separator className="mb-4 border-border/60" />
+      <Separator className="mb-6 border-border/60" />
 
       {/* Filtres et recherche */}
-      <div className="mb-4 flex flex-wrap items-center gap-2">
+      <div className="mb-6 flex flex-wrap items-center gap-2">
         {/* Barre de recherche */}
         <div className="relative flex-1 min-w-[200px]">
           <SolarIcon
@@ -98,13 +100,13 @@ export default function DebatsPage() {
             placeholder="Rechercher un débat..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-8 h-8 text-xs"
+            className="pl-8 h-9 text-xs border-border/60 bg-muted/30 hover:bg-muted/50"
           />
         </div>
 
         {/* Filtres */}
         <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
-          <SelectTrigger className="w-[140px] h-8 text-xs border-border/60 bg-muted/30 hover:bg-muted/50">
+          <SelectTrigger className="w-[140px] h-9 text-xs border-border/60 bg-muted/30 hover:bg-muted/50">
             <SelectValue placeholder="Trier par" />
           </SelectTrigger>
           <SelectContent>
@@ -122,7 +124,7 @@ export default function DebatsPage() {
             else setHasArticle(value === "with");
           }}
         >
-          <SelectTrigger className="w-[120px] h-8 text-xs border-border/60 bg-muted/30 hover:bg-muted/50">
+          <SelectTrigger className="w-[120px] h-9 text-xs border-border/60 bg-muted/30 hover:bg-muted/50">
             <SelectValue placeholder="Article" />
           </SelectTrigger>
           <SelectContent>
@@ -136,7 +138,7 @@ export default function DebatsPage() {
           value={polarizationFilter}
           onValueChange={(value: any) => setPolarizationFilter(value)}
         >
-          <SelectTrigger className="w-[120px] h-8 text-xs border-border/60 bg-muted/30 hover:bg-muted/50">
+          <SelectTrigger className="w-[120px] h-9 text-xs border-border/60 bg-muted/30 hover:bg-muted/50">
             <SelectValue placeholder="Polarisation" />
           </SelectTrigger>
           <SelectContent>
@@ -163,7 +165,7 @@ export default function DebatsPage() {
           </p>
         </div>
       ) : (
-        <div className="space-y-2.5">
+        <div className="space-y-4">
           {filteredDebates.map((debat) => {
             const totalArguments = debat.argumentsForCount + debat.argumentsAgainstCount;
             const polarizationScore = debat.polarizationScore || 0;
@@ -172,119 +174,114 @@ export default function DebatsPage() {
             const againstPercentage = 100 - forPercentage;
             const isHighlyPolarized = polarizationPercent >= 70;
             const isActive = totalArguments >= 10;
-            const isRecent = Date.now() - debat.createdAt < 7 * 24 * 60 * 60 * 1000; // Moins de 7 jours
+            const isRecent = Date.now() - debat.createdAt < 7 * 24 * 60 * 60 * 1000;
 
             return (
               <Link key={debat._id} href={`/debats/${debat.slug}`}>
-                <div className={`
-                  border-l-2 pl-3 py-2.5 bg-muted/20 rounded-r hover:bg-muted/30 transition-all group
-                  ${isHighlyPolarized ? 'border-orange-500/40' : 'border-primary/40'}
-                  ${isActive ? 'ring-1 ring-primary/20' : ''}
-                `}>
-                  <div className="flex items-start justify-between gap-3 mb-1.5">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <h3 className="text-sm font-semibold group-hover:text-primary transition-colors line-clamp-2">
-                          {debat.question}
-                        </h3>
-                        {isActive && (
-                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">
-                            <SolarIcon icon="fire-bold" className="h-2.5 w-2.5 mr-0.5" />
-                            Actif
-                          </Badge>
-                        )}
-                        {isRecent && !isActive && (
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 shrink-0">
-                            <SolarIcon icon="sparkle-bold" className="h-2.5 w-2.5 mr-0.5" />
-                            Nouveau
-                          </Badge>
+                <article className="group border border-border/60 rounded-lg p-4 md:p-5 hover:border-primary/40 hover:bg-muted/20 transition-all">
+                  <div className="space-y-3">
+                    {/* Header avec badges */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0 space-y-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="text-base md:text-lg font-bold leading-tight group-hover:text-primary transition-colors line-clamp-2">
+                            {debat.question}
+                          </h3>
+                          {isActive && (
+                            <Badge variant="secondary" className="text-[10px] px-2 py-0.5 shrink-0">
+                              <SolarIcon icon="fire-bold" className="h-3 w-3 mr-1" />
+                              Actif
+                            </Badge>
+                          )}
+                          {isRecent && !isActive && (
+                            <Badge variant="outline" className="text-[10px] px-2 py-0.5 shrink-0">
+                              <SolarIcon icon="sparkle-bold" className="h-3 w-3 mr-1" />
+                              Nouveau
+                            </Badge>
+                          )}
+                        </div>
+                        {debat.description && (
+                          <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                            {debat.description}
+                          </p>
                         )}
                       </div>
-                      {debat.description && (
-                        <p className="text-xs text-muted-foreground line-clamp-1 leading-relaxed">
-                          {debat.description}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex flex-col gap-1 items-end shrink-0">
-                      <Badge
-                        variant={
-                          polarizationPercent >= 70
-                            ? "destructive"
-                            : polarizationPercent >= 30
-                            ? "default"
-                            : "secondary"
-                        }
-                        className="text-[11px] px-1.5 py-0"
-                      >
-                        <SolarIcon icon="pulse-bold" className="h-3 w-3 mr-0.5" />
-                        {polarizationPercent}%
-                      </Badge>
-                      {debat.article && (
-                        <Badge variant="outline" className="text-[11px] px-1.5 py-0">
-                          <SolarIcon icon="document-bold" className="h-3 w-3 mr-0.5" />
-                          Article
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Barre de progression bicolore */}
-                  {totalArguments > 0 ? (
-                    <div className="mb-1.5">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden flex">
-                          <div
-                            className="bg-green-500/80 transition-all"
-                            style={{ width: `${forPercentage}%` }}
-                            title={`${debat.argumentsForCount} arguments POUR`}
-                          />
-                          <div
-                            className="bg-red-500/80 transition-all"
-                            style={{ width: `${againstPercentage}%` }}
-                            title={`${debat.argumentsAgainstCount} arguments CONTRE`}
-                          />
-                        </div>
-                        <div className="flex items-center gap-1.5 text-[11px] font-medium">
-                          <span className="text-green-600 dark:text-green-400">{debat.argumentsForCount}</span>
-                          <span className="text-muted-foreground">/</span>
-                          <span className="text-red-600 dark:text-red-400">{debat.argumentsAgainstCount}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="mb-1.5">
-                      <div className="flex-1 h-2 bg-muted rounded-full" />
-                    </div>
-                  )}
-
-                  {/* Métriques compactes */}
-                  <div className="flex items-center gap-3 flex-wrap text-xs text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <SolarIcon icon="chat-round-bold" className="h-3 w-3" />
-                      <span className="font-medium">{totalArguments} argument{totalArguments > 1 ? "s" : ""}</span>
-                    </div>
-                    {debat.article && (
-                      <>
-                        <span>•</span>
-                        <Link
-                          href={`/articles/${debat.article.slug}`}
-                          className="hover:text-foreground transition-colors flex items-center gap-1 truncate max-w-[180px]"
-                          onClick={(e) => e.stopPropagation()}
+                      <div className="flex flex-col gap-1.5 items-end shrink-0">
+                        <Badge
+                          variant={
+                            polarizationPercent >= 70
+                              ? "destructive"
+                              : polarizationPercent >= 30
+                              ? "default"
+                              : "secondary"
+                          }
+                          className="text-[11px] px-2 py-0.5"
                         >
-                          <SolarIcon icon="document-bold" className="h-3 w-3 shrink-0" />
-                          <span className="truncate text-[11px]">{debat.article.title}</span>
-                        </Link>
-                      </>
+                          <SolarIcon icon="pulse-bold" className="h-3 w-3 mr-1" />
+                          {polarizationPercent}%
+                        </Badge>
+                        {debat.article && (
+                          <Badge variant="outline" className="text-[11px] px-2 py-0.5">
+                            <SolarIcon icon="document-bold" className="h-3 w-3 mr-1" />
+                            Article
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Barre de progression POUR/CONTRE */}
+                    {totalArguments > 0 && (
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2 text-xs">
+                          <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden flex">
+                            <div
+                              className="bg-green-500/80 transition-all"
+                              style={{ width: `${forPercentage}%` }}
+                              title={`${debat.argumentsForCount} arguments POUR`}
+                            />
+                            <div
+                              className="bg-red-500/80 transition-all"
+                              style={{ width: `${againstPercentage}%` }}
+                              title={`${debat.argumentsAgainstCount} arguments CONTRE`}
+                            />
+                          </div>
+                          <div className="flex items-center gap-1.5 text-xs font-medium shrink-0">
+                            <span className="text-green-600 dark:text-green-400">{debat.argumentsForCount}</span>
+                            <span className="text-muted-foreground">/</span>
+                            <span className="text-red-600 dark:text-red-400">{debat.argumentsAgainstCount}</span>
+                          </div>
+                        </div>
+                      </div>
                     )}
-                    <span className="ml-auto text-[11px]">
-                      {formatDistanceToNow(new Date(debat.createdAt), {
-                        addSuffix: true,
-                        locale: fr,
-                      })}
-                    </span>
+
+                    {/* Métriques et liens */}
+                    <div className="flex items-center gap-3 flex-wrap text-xs text-muted-foreground pt-1 border-t border-border/60">
+                      <div className="flex items-center gap-1.5">
+                        <SolarIcon icon="chat-round-bold" className="h-3.5 w-3.5" />
+                        <span className="font-medium">{totalArguments} argument{totalArguments > 1 ? "s" : ""}</span>
+                      </div>
+                      {debat.article && (
+                        <>
+                          <span>•</span>
+                          <Link
+                            href={`/articles/${debat.article.slug}`}
+                            className="hover:text-foreground transition-colors flex items-center gap-1.5 truncate max-w-[180px]"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <SolarIcon icon="document-bold" className="h-3.5 w-3.5 shrink-0" />
+                            <span className="truncate">{debat.article.title}</span>
+                          </Link>
+                        </>
+                      )}
+                      <span className="ml-auto text-xs">
+                        {formatDistanceToNow(new Date(debat.createdAt), {
+                          addSuffix: true,
+                          locale: fr,
+                        })}
+                      </span>
+                    </div>
                   </div>
-                </div>
+                </article>
               </Link>
             );
           })}

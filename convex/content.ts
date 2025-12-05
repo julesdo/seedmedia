@@ -837,7 +837,7 @@ export const globalSearch = query({
     
     const searchQuery = args.query.toLowerCase().trim();
 
-    if (!searchQuery || searchQuery.length < 2) {
+    if (!searchQuery || searchQuery.length === 0) {
       return {
         articles: [],
         projects: [],
@@ -855,9 +855,15 @@ export const globalSearch = query({
 
     const matchingArticles = allArticles
       .filter((article) => {
-        const titleMatch = article.title.toLowerCase().includes(searchQuery);
-        const summaryMatch = article.summary?.toLowerCase().includes(searchQuery);
-        const tagMatch = article.tags?.some((tag) => tag.toLowerCase().includes(searchQuery));
+        const title = article.title?.toLowerCase() || "";
+        const summary = article.summary?.toLowerCase() || "";
+        const tags = article.tags || [];
+        
+        // Recherche plus flexible : recherche dans tous les champs
+        const titleMatch = title.includes(searchQuery);
+        const summaryMatch = summary.includes(searchQuery);
+        const tagMatch = tags.some((tag) => tag?.toLowerCase().includes(searchQuery));
+        
         return titleMatch || summaryMatch || tagMatch;
       })
       .slice(0, limits.articles || defaultLimit);
@@ -908,9 +914,14 @@ export const globalSearch = query({
     const allProjects = await ctx.db.query("projects").collect();
     const matchingProjects = allProjects
       .filter((project) => {
-        const titleMatch = project.title.toLowerCase().includes(searchQuery);
-        const summaryMatch = project.summary?.toLowerCase().includes(searchQuery);
-        const tagMatch = project.tags?.some((tag) => tag.toLowerCase().includes(searchQuery));
+        const title = project.title?.toLowerCase() || "";
+        const summary = project.summary?.toLowerCase() || "";
+        const tags = project.tags || [];
+        
+        const titleMatch = title.includes(searchQuery);
+        const summaryMatch = summary.includes(searchQuery);
+        const tagMatch = tags.some((tag) => tag?.toLowerCase().includes(searchQuery));
+        
         return titleMatch || summaryMatch || tagMatch;
       })
       .slice(0, limits.projects || defaultLimit)
@@ -929,15 +940,21 @@ export const globalSearch = query({
     const allActions = await ctx.db.query("actions").collect();
     const matchingActions = allActions
       .filter((action) => {
-        const titleMatch = action.title.toLowerCase().includes(searchQuery);
-        const descriptionMatch = action.description?.toLowerCase().includes(searchQuery);
-        const tagMatch = action.tags?.some((tag) => tag.toLowerCase().includes(searchQuery));
+        const title = action.title?.toLowerCase() || "";
+        const description = action.description?.toLowerCase() || "";
+        const tags = action.tags || [];
+        
+        const titleMatch = title.includes(searchQuery);
+        const descriptionMatch = description.includes(searchQuery);
+        const tagMatch = tags.some((tag) => tag?.toLowerCase().includes(searchQuery));
+        
         return titleMatch || descriptionMatch || tagMatch;
       })
       .slice(0, limits.actions || defaultLimit)
       .map((action) => ({
         _id: action._id,
         title: action.title,
+        summary: action.summary,
         description: action.description,
         slug: action.slug,
         type: action.type,
@@ -954,8 +971,12 @@ export const globalSearch = query({
       .collect();
     const matchingDebates = allDebates
       .filter((debat) => {
-        const questionMatch = debat.question.toLowerCase().includes(searchQuery);
-        const descriptionMatch = debat.description?.toLowerCase().includes(searchQuery);
+        const question = debat.question?.toLowerCase() || "";
+        const description = debat.description?.toLowerCase() || "";
+        
+        const questionMatch = question.includes(searchQuery);
+        const descriptionMatch = description.includes(searchQuery);
+        
         return questionMatch || descriptionMatch;
       })
       .slice(0, limits.debates || defaultLimit)
@@ -974,8 +995,12 @@ export const globalSearch = query({
     const allCategories = await ctx.db.query("categories").collect();
     const matchingCategories = allCategories
       .filter((category) => {
-        const nameMatch = category.name.toLowerCase().includes(searchQuery);
-        const descriptionMatch = category.description?.toLowerCase().includes(searchQuery);
+        const name = category.name?.toLowerCase() || "";
+        const description = category.description?.toLowerCase() || "";
+        
+        const nameMatch = name.includes(searchQuery);
+        const descriptionMatch = description.includes(searchQuery);
+        
         return nameMatch || descriptionMatch;
       })
       .slice(0, limits.categories || defaultLimit)
@@ -993,6 +1018,112 @@ export const globalSearch = query({
       actions: matchingActions,
       debates: matchingDebates,
       categories: matchingCategories,
+    };
+  },
+});
+
+/**
+ * Récupère les derniers éléments (articles, projets, actions, débats) pour l'affichage par défaut
+ */
+export const getLatestItems = query({
+  args: {
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit || 5;
+
+    // Derniers articles publiés
+    const allArticles = await ctx.db
+      .query("articles")
+      .withIndex("status", (q) => q.eq("status", "published"))
+      .collect();
+    
+    const latestArticles = allArticles
+      .sort((a, b) => (b.publishedAt || b.createdAt) - (a.publishedAt || a.createdAt))
+      .slice(0, limit);
+
+    const articlesWithData = await Promise.all(
+      latestArticles.map(async (article) => {
+        const author = await ctx.db.get(article.authorId);
+        return {
+          _id: article._id,
+          title: article.title,
+          summary: article.summary,
+          slug: article.slug,
+          coverImage: article.coverImage,
+          qualityScore: article.qualityScore,
+          views: article.views,
+          publishedAt: article.publishedAt,
+          author: author
+            ? {
+                _id: author._id,
+                name: author.name || author.email?.split("@")[0] || "Auteur",
+                image: author.image || null,
+              }
+            : null,
+        };
+      })
+    );
+
+    // Derniers projets
+    const allProjects = await ctx.db.query("projects").collect();
+    const latestProjects = allProjects
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .slice(0, limit)
+      .map((project) => ({
+        _id: project._id,
+        title: project.title,
+        summary: project.summary,
+        slug: project.slug,
+        images: project.images || [],
+        views: project.views || 0,
+        stage: project.stage,
+        createdAt: project.createdAt,
+      }));
+
+    // Dernières actions
+    const allActions = await ctx.db.query("actions").collect();
+    const latestActions = allActions
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .slice(0, limit)
+      .map((action) => ({
+        _id: action._id,
+        title: action.title,
+        summary: action.summary,
+        description: action.description,
+        slug: action.slug,
+        type: action.type,
+        status: action.status,
+        participants: action.participants || 0,
+        deadline: action.deadline,
+        createdAt: action.createdAt,
+      }));
+
+    // Derniers débats
+    const allDebates = await ctx.db
+      .query("debates")
+      .withIndex("status", (q) => q.eq("status", "open"))
+      .collect();
+    const latestDebates = allDebates
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .slice(0, limit)
+      .map((debat) => ({
+        _id: debat._id,
+        question: debat.question,
+        description: debat.description,
+        slug: debat.slug,
+        argumentsForCount: debat.argumentsForCount || 0,
+        argumentsAgainstCount: debat.argumentsAgainstCount || 0,
+        polarizationScore: debat.polarizationScore || 0,
+        createdAt: debat.createdAt,
+      }));
+
+    return {
+      articles: articlesWithData,
+      projects: latestProjects,
+      actions: latestActions,
+      debates: latestDebates,
+      categories: [],
     };
   },
 });

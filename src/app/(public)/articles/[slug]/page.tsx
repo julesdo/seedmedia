@@ -346,7 +346,7 @@ export default function PublicArticlePage() {
         {/* Sidebar sticky avec contribution et votes */}
         {article._id && (
           <aside className="hidden lg:block">
-            <div className="sticky top-20 flex flex-col max-h-[calc(100vh-5rem)] space-y-4">
+            <div className="sticky top-20 flex flex-col max-h-[calc(100vh-5rem)] overflow-y-auto space-y-4">
               {/* Votes */}
               <ArticleVotes articleId={article._id} />
 

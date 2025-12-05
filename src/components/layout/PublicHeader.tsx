@@ -78,7 +78,6 @@ export function PublicHeader() {
                   </Avatar>
                   <div className="hidden flex-col items-start sm:flex">
                     <span className="text-xs font-medium leading-none">{user.name}</span>
-                    <CredibilityBadge compact showLabel={false} className="mt-0.5" />
                   </div>
                 </Button>
               </DropdownMenuTrigger>
