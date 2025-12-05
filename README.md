@@ -330,5 +330,5 @@ If you encounter any issues:
 **Happy coding! :D**
 
 git add .
-git commit -m "maj 1.61 prod"
+git commit -m "maj 1.62 dialog prod"
 git push -u origin main
