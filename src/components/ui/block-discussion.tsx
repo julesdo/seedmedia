@@ -59,9 +59,19 @@ export const BlockDiscussion: RenderNodeWrapper<AnyPluginConfig> = (props) => {
 
   const commentNodes = [...commentsApi.nodes({ at: blockPath })];
 
-  const suggestionNodes = [
-    ...editor.getApi(SuggestionPlugin).suggestion.nodes({ at: blockPath }),
-  ].filter(([node]) => !node[getTransientSuggestionKey()]);
+  // Vérifier si le plugin de suggestion est disponible
+  let suggestionNodes: NodeEntry<TElement>[] = [];
+  try {
+    const suggestionApi = editor.getApi(SuggestionPlugin);
+    if (suggestionApi?.suggestion) {
+      suggestionNodes = [
+        ...suggestionApi.suggestion.nodes({ at: blockPath }),
+      ].filter(([node]) => !node[getTransientSuggestionKey()]);
+    }
+  } catch {
+    // Le plugin de suggestion n'est pas disponible (mode lecture seule)
+    suggestionNodes = [];
+  }
 
   if (
     commentNodes.length === 0 &&
@@ -140,12 +150,21 @@ const BlockCommentContent = ({
     let activeNode: NodeEntry | undefined;
 
     if (activeSuggestion) {
-      activeNode = suggestionNodes.find(
-        ([node]) =>
-          TextApi.isText(node) &&
-          editor.getApi(SuggestionPlugin).suggestion.nodeId(node) ===
-            activeSuggestion.suggestionId
-      );
+      // Vérifier si le plugin de suggestion est disponible
+      try {
+        const suggestionApi = editor.getApi(SuggestionPlugin);
+        if (suggestionApi?.suggestion) {
+          activeNode = suggestionNodes.find(
+            ([node]) =>
+              TextApi.isText(node) &&
+              suggestionApi.suggestion.nodeId(node) ===
+                activeSuggestion.suggestionId
+          );
+        }
+      } catch {
+        // Le plugin de suggestion n'est pas disponible
+        activeNode = undefined;
+      }
     }
 
     if (activeCommentId) {

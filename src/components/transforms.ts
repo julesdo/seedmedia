@@ -115,9 +115,21 @@ export const insertBlock = (
     }
 
     if (!isSameBlockType) {
-      editor.getApi(SuggestionPlugin).suggestion.withoutSuggestions(() => {
+      // Vérifier si le plugin de suggestion est disponible
+      try {
+        const suggestionApi = editor.getApi(SuggestionPlugin);
+        if (suggestionApi?.suggestion) {
+          suggestionApi.suggestion.withoutSuggestions(() => {
+            editor.tf.removeNodes({ previousEmptyBlock: true });
+          });
+        } else {
+          // Si le plugin n'est pas disponible, exécuter directement
+          editor.tf.removeNodes({ previousEmptyBlock: true });
+        }
+      } catch {
+        // Si le plugin n'est pas disponible, exécuter directement
         editor.tf.removeNodes({ previousEmptyBlock: true });
-      });
+      }
     }
   });
 };

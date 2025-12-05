@@ -57,7 +57,12 @@ export const suggestionPlugin = toTPlatePlugin<SuggestionConfig>(
         const isBlockSuggestion = leaf.dataset.blockSuggestion === 'true';
 
         if (leaf.classList.contains(`slate-${type}`) || isBlockSuggestion) {
-          const suggestionEntry = api.suggestion!.node({
+          if (!api.suggestion) {
+            unsetActiveSuggestion();
+            break;
+          }
+
+          const suggestionEntry = api.suggestion.node({
             isText: !isBlockSuggestion,
           });
 
@@ -67,7 +72,7 @@ export const suggestionPlugin = toTPlatePlugin<SuggestionConfig>(
             break;
           }
 
-          const id = api.suggestion!.nodeId(suggestionEntry[0]);
+          const id = api.suggestion.nodeId(suggestionEntry[0]);
           setOption('activeId', id ?? null);
 
           isSet = true;

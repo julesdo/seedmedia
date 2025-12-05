@@ -89,13 +89,20 @@ export function BlockSuggestionCard({
 
   const userInfo = usePluginOption(discussionPlugin, 'user', suggestion.userId);
 
+  // Vérifier si l'API de suggestion est disponible
+  if (!api?.suggestion) {
+    return null;
+  }
+
   const accept = (suggestion: ResolvedSuggestion) => {
+    if (!api.suggestion) return;
     api.suggestion.withoutSuggestions(() => {
       acceptSuggestion(editor, suggestion);
     });
   };
 
   const reject = (suggestion: ResolvedSuggestion) => {
+    if (!api.suggestion) return;
     api.suggestion.withoutSuggestions(() => {
       rejectSuggestion(editor, suggestion);
     });
@@ -267,6 +274,11 @@ export const useResolveSuggestion = (
 
   const { api, editor, getOption, setOption } =
     useEditorPlugin(suggestionPlugin);
+
+  // Vérifier si l'API de suggestion est disponible
+  if (!api?.suggestion) {
+    return [];
+  }
 
   suggestionNodes.forEach(([node]) => {
     const id = api.suggestion.nodeId(node);

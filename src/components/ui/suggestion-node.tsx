@@ -46,6 +46,11 @@ export function SuggestionLeaf(props: PlateLeafProps<TSuggestionText>) {
   const { api, setOption } = useEditorPlugin(suggestionPlugin);
   const leaf = props.leaf;
 
+  // Vérifier si l'API de suggestion est disponible
+  if (!api?.suggestion) {
+    return <PlateLeaf {...props} />;
+  }
+
   const leafId: string = api.suggestion.nodeId(leaf) ?? '';
   const activeSuggestionId = usePluginOption(suggestionPlugin, 'activeId');
   const hoverSuggestionId = usePluginOption(suggestionPlugin, 'hoverId');

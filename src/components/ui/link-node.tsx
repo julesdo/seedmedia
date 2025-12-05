@@ -12,11 +12,19 @@ import { PlateElement } from 'platejs/react';
 import { cn } from '@/lib/utils';
 
 export function LinkElement(props: PlateElementProps<TLinkElement>) {
-  const suggestionData = props.editor
-    .getApi(SuggestionPlugin)
-    .suggestion.suggestionData(props.element) as
-    | TInlineSuggestionData
-    | undefined;
+  // Vérifier si le plugin de suggestion est disponible
+  let suggestionData: TInlineSuggestionData | undefined;
+  try {
+    const suggestionApi = props.editor.getApi(SuggestionPlugin);
+    if (suggestionApi?.suggestion) {
+      suggestionData = suggestionApi.suggestion.suggestionData(props.element) as
+        | TInlineSuggestionData
+        | undefined;
+    }
+  } catch {
+    // Le plugin de suggestion n'est pas disponible (mode lecture seule)
+    suggestionData = undefined;
+  }
 
   return (
     <PlateElement
