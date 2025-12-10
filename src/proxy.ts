@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 const signInRoutes = ["/sign-in", "/sign-up", "/verify-2fa", "/callback", "/oauth-callback"];
 
 // Routes publiques accessibles même si connecté
-const publicRoutes = ["/articles", "/dossiers", "/debats", "/gouvernance"];
+const publicRoutes = ["/articles", "/dossiers", "/debats", "/gouvernance", "/actions", "/projets"];
 
 // Just check cookie, recommended approach
 export default async function proxy(request: NextRequest) {

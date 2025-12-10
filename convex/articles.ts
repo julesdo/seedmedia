@@ -507,6 +507,7 @@ export const createArticle = mutation({
     counterArguments: v.optional(v.array(v.string())),
     conclusion: v.optional(v.string()),
     sourcesCount: v.optional(v.number()),
+    sources: v.optional(v.array(v.string())), // URLs ou références de sources
   },
   handler: async (ctx, args) => {
     // Garantir que l'utilisateur existe (création automatique si nécessaire)

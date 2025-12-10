@@ -21,6 +21,7 @@ import { PlatformStats } from "@/components/home/PlatformStats";
 import { TrendingTopics } from "@/components/home/TrendingTopics";
 import { ActiveActions } from "@/components/home/ActiveActions";
 import { ArticleCard } from "@/components/articles/ArticleCard";
+import { SeedManifest } from "@/components/home/SeedManifest";
 
 export default function PublicHomePage() {
   // Récupérer les articles
@@ -237,6 +238,9 @@ export default function PublicHomePage() {
 
           {/* Sidebar */}
           <aside className="lg:col-span-4 space-y-6">
+            {/* Manifeste Seed - Présentation de la plateforme */}
+            <SeedManifest />
+
             {/* Trending Topics */}
             <TrendingTopics />
 

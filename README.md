@@ -426,5 +426,5 @@ Seed existe grâce à la communauté de contributeurs, bénévoles et utilisateu
 
 
 git add .
-git commit -m "maj 2.0 alfa prod"
+git commit -m "maj 2.1 alfa prod"
 git push -u origin main
