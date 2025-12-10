@@ -22,6 +22,8 @@ import { TrendingTopics } from "@/components/home/TrendingTopics";
 import { ActiveActions } from "@/components/home/ActiveActions";
 import { ArticleCard } from "@/components/articles/ArticleCard";
 import { SeedManifest } from "@/components/home/SeedManifest";
+import { StructuredData } from "@/components/seo/StructuredData";
+import { generateOrganizationStructuredData, generateWebsiteStructuredData } from "@/lib/seo-utils";
 
 export default function PublicHomePage() {
   // Récupérer les articles
@@ -44,10 +46,16 @@ export default function PublicHomePage() {
     return allArticles.slice(1, 13);
   }, [allArticles]);
 
+  const organizationData = generateOrganizationStructuredData();
+  const websiteData = generateWebsiteStructuredData();
+
   return (
-    <div className="min-h-screen bg-background">
-      {/* Hero Section */}
-      <section className="w-full">
+    <>
+      <StructuredData data={organizationData} id="organization-structured-data" />
+      <StructuredData data={websiteData} id="website-structured-data" />
+      <div className="min-h-screen bg-background">
+        {/* Hero Section */}
+        <section className="w-full">
         <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Hero Article */}
@@ -335,6 +343,7 @@ export default function PublicHomePage() {
           </aside>
         </div>
       </section>
-    </div>
+      </div>
+    </>
   );
 }

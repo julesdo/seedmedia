@@ -18,6 +18,9 @@ import { useConvexAuth } from "convex/react";
 import { CommentsSection } from "@/components/comments/CommentsSection";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PlateEditorWrapper } from "@/components/articles/PlateEditorWrapper";
+import { SEOHead } from "@/components/seo/SEOHead";
+import { StructuredData } from "@/components/seo/StructuredData";
+import { generateActionStructuredData, type ActionData } from "@/lib/seo-utils";
 
 const ACTION_TYPE_LABELS = {
   petition: "Pétition",
@@ -92,10 +95,56 @@ export default function PublicActionPage() {
   const isActive = action.status === "active";
   const canParticipate = isActive && hasParticipated !== undefined;
 
+  // Préparer les données pour le SEO
+  const actionData: ActionData = {
+    title: action.title,
+    description: action.summary || action.description || undefined,
+    slug: action.slug,
+    coverImage: action.coverImage || null,
+    createdAt: action.createdAt,
+    updatedAt: action.updatedAt || undefined,
+    author: action.author
+      ? {
+          name: action.author.name || undefined,
+          email: action.author.email || undefined,
+          image: action.author.image || null,
+        }
+      : null,
+    type: action.type || undefined,
+    target: action.target || undefined,
+    status: action.status || undefined,
+  };
+
+  const structuredData = generateActionStructuredData(
+    actionData,
+    action.location && action.type === "event"
+      ? {
+          city: action.location.city,
+          region: action.location.region,
+          country: action.location.country,
+        }
+      : undefined,
+    action.deadline && action.type === "event" ? new Date(action.deadline).toISOString() : undefined,
+    action.deadline && action.type === "event" ? new Date(action.deadline).toISOString() : undefined
+  );
+
   return (
-    <div className="container mx-auto px-4 py-4 md:py-6 max-w-6xl">
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
-        <article className="space-y-6 min-w-0">
+    <>
+      <SEOHead
+        title={action.title}
+        description={action.summary || action.description || action.title}
+        image={action.coverImage || undefined}
+        url={`/actions/${action.slug}`}
+        type="website"
+        publishedTime={action.createdAt ? new Date(action.createdAt).toISOString() : undefined}
+        modifiedTime={action.updatedAt ? new Date(action.updatedAt).toISOString() : undefined}
+        author={action.author ? (action.author.name || action.author.email || undefined) : undefined}
+        canonical={`/actions/${action.slug}`}
+      />
+      <StructuredData data={structuredData} />
+      <div className="container mx-auto px-4 py-4 md:py-6 max-w-6xl">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
+          <article className="space-y-6 min-w-0">
           {/* Header avec meta */}
           <header className="space-y-4">
             {/* Type et métriques */}
@@ -332,5 +381,6 @@ export default function PublicActionPage() {
         </aside>
       </div>
     </div>
+    </>
   );
 }

@@ -21,6 +21,9 @@ import { ArticleSources } from "@/components/articles/ArticleSources";
 import { CommentsSection } from "@/components/comments/CommentsSection";
 import Image from "next/image";
 import { useEffect, useRef } from "react";
+import { SEOHead } from "@/components/seo/SEOHead";
+import { StructuredData } from "@/components/seo/StructuredData";
+import { generateArticleStructuredData, type ArticleData } from "@/lib/seo-utils";
 
 export default function PublicArticlePage() {
   const params = useParams();
@@ -124,10 +127,46 @@ export default function PublicArticlePage() {
     other: "Autre",
   };
 
+  // Préparer les données pour le SEO
+  const articleData: ArticleData = {
+    title: article.title,
+    description: article.summary || undefined,
+    content: article.content || undefined,
+    slug: article.slug,
+    coverImage: article.coverImage || null,
+    publishedAt: article.publishedAt || null,
+    updatedAt: article.updatedAt || null,
+    author: author
+      ? {
+          name: author.name || undefined,
+          email: author.email || undefined,
+          image: author.image || null,
+        }
+      : null,
+    tags: article.tags || undefined,
+    category: article.categories?.[0]?.name || undefined,
+  };
+
+  const structuredData = generateArticleStructuredData(articleData);
+
   return (
-    <div className="container mx-auto px-4 py-4 md:py-6 max-w-6xl">
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
-        <article className="space-y-6 min-w-0">
+    <>
+      <SEOHead
+        title={article.title}
+        description={article.summary || article.title}
+        image={article.coverImage || undefined}
+        url={`/articles/${article.slug}`}
+        type="article"
+        publishedTime={article.publishedAt ? new Date(article.publishedAt).toISOString() : undefined}
+        modifiedTime={article.updatedAt ? new Date(article.updatedAt).toISOString() : undefined}
+        author={author ? (author.name || author.email || undefined) : undefined}
+        tags={article.tags || undefined}
+        canonical={`/articles/${article.slug}`}
+      />
+      <StructuredData data={structuredData} />
+      <div className="container mx-auto px-4 py-4 md:py-6 max-w-6xl">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
+          <article className="space-y-6 min-w-0">
         {/* Header avec meta */}
         <header className="space-y-4">
           {/* Type et métriques */}
@@ -369,6 +408,7 @@ export default function PublicArticlePage() {
         )}
       </div>
     </div>
+    </>
   );
 }
 

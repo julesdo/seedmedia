@@ -18,6 +18,9 @@ import Image from "next/image";
 import { useEffect, useState, useRef } from "react";
 import { CommentsSection } from "@/components/comments/CommentsSection";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { SEOHead } from "@/components/seo/SEOHead";
+import { StructuredData } from "@/components/seo/StructuredData";
+import { generateProjectStructuredData, type ProjectData } from "@/lib/seo-utils";
 
 const STAGE_LABELS = {
   idea: "Idée",
@@ -81,10 +84,53 @@ export default function PublicProjectPage() {
     );
   }
 
+  // Préparer les données pour le SEO
+  const projectData: ProjectData = {
+    title: project.title,
+    description: project.summary || project.description || undefined,
+    slug: project.slug,
+    coverImage: project.images?.[0] || null,
+    createdAt: project.createdAt,
+    updatedAt: project.updatedAt || undefined,
+    author: project.author
+      ? {
+          name: project.author.name || undefined,
+          email: project.author.email || undefined,
+          image: project.author.image || null,
+        }
+      : null,
+    stage: project.stage || undefined,
+    openSource: project.openSource || undefined,
+  };
+
+  const structuredData = generateProjectStructuredData(
+    projectData,
+    project.location
+      ? {
+          city: project.location.city,
+          region: project.location.region,
+          country: project.location.country,
+        }
+      : undefined
+  );
+
   return (
-    <div className="container mx-auto px-4 py-4 md:py-6 max-w-6xl">
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
-        <article className="space-y-6 min-w-0">
+    <>
+      <SEOHead
+        title={project.title}
+        description={project.summary || project.description || project.title}
+        image={project.images?.[0] || undefined}
+        url={`/projets/${project.slug}`}
+        type="website"
+        publishedTime={project.createdAt ? new Date(project.createdAt).toISOString() : undefined}
+        modifiedTime={project.updatedAt ? new Date(project.updatedAt).toISOString() : undefined}
+        author={project.author ? (project.author.name || project.author.email || undefined) : undefined}
+        canonical={`/projets/${project.slug}`}
+      />
+      <StructuredData data={structuredData} />
+      <div className="container mx-auto px-4 py-4 md:py-6 max-w-6xl">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
+          <article className="space-y-6 min-w-0">
           {/* Header avec meta */}
           <header className="space-y-4">
             {/* Type et métriques */}
@@ -354,5 +400,6 @@ export default function PublicProjectPage() {
         </aside>
       </div>
     </div>
+    </>
   );
 }

@@ -16,8 +16,68 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 })
 
 export const metadata: Metadata = {
-  title: "Seed by Laiyr",
-  description: "Média + directory communautaire dédié aux technologies résilientes et à l'IA éthique",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://seed.media"),
+  title: {
+    default: "Seed - Le média social de la résilience technologique",
+    template: "%s | Seed",
+  },
+  description: "Plateforme d'information et d'utilité publique où la communauté publie, organise, vérifie et fait évoluer les contenus sur les technologies résilientes et l'IA éthique. Gouvernance partagée, pas d'algos opaques.",
+  keywords: [
+    "technologies résilientes",
+    "IA éthique",
+    "média communautaire",
+    "gouvernance partagée",
+    "vérification collaborative",
+    "information publique",
+    "développement durable",
+    "innovation responsable",
+  ],
+  authors: [{ name: "Seed Community" }],
+  creator: "Seed by Laiyr",
+  publisher: "Seed by Laiyr",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  openGraph: {
+    type: "website",
+    locale: "fr_FR",
+    url: "/",
+    siteName: "Seed",
+    title: "Seed - Le média social de la résilience technologique",
+    description: "Plateforme d'information et d'utilité publique où la communauté publie, organise, vérifie et fait évoluer les contenus sur les technologies résilientes et l'IA éthique.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Seed - Le média social de la résilience technologique",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Seed - Le média social de la résilience technologique",
+    description: "Plateforme d'information et d'utilité publique où la communauté publie, organise, vérifie et fait évoluer les contenus.",
+    images: ["/og-image.png"],
+    creator: "@seedmedia",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  alternates: {
+    canonical: "/",
+  },
+  category: "Technology",
 };
 
 export default function RootLayout({
