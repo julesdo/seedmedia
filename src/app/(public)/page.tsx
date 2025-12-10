@@ -21,7 +21,8 @@ import { PlatformStats } from "@/components/home/PlatformStats";
 import { TrendingTopics } from "@/components/home/TrendingTopics";
 import { ActiveActions } from "@/components/home/ActiveActions";
 import { ArticleCard } from "@/components/articles/ArticleCard";
-import { SeedManifest } from "@/components/home/SeedManifest";
+import { SeedPitch } from "@/components/home/SeedPitch";
+import { HomeDebats } from "@/components/home/HomeDebats";
 import { StructuredData } from "@/components/seo/StructuredData";
 import { generateOrganizationStructuredData, generateWebsiteStructuredData } from "@/lib/seo-utils";
 
@@ -67,9 +68,9 @@ export default function PublicHomePage() {
               )}
             </div>
 
-            {/* Widget */}
-            <div className="h-[400px] md:h-[500px]">
-              <HeroWidget />
+            {/* Présentation Seed */}
+            <div className="h-[400px] md:h-[500px] flex items-center">
+              <SeedPitch />
             </div>
           </div>
         </div>
@@ -246,11 +247,11 @@ export default function PublicHomePage() {
 
           {/* Sidebar */}
           <aside className="lg:col-span-4 space-y-6">
-            {/* Manifeste Seed - Présentation de la plateforme */}
-            <SeedManifest />
-
             {/* Trending Topics */}
             <TrendingTopics />
+
+            {/* Débats en cours */}
+            <HomeDebats />
 
             {/* Statistiques de la plateforme */}
             <PlatformStats />
