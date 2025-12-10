@@ -21,6 +21,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { StructuredData } from "@/components/seo/StructuredData";
 import { generateProjectStructuredData, type ProjectData } from "@/lib/seo-utils";
+import { useImageUrl } from "@/lib/imageUtils";
 
 const STAGE_LABELS = {
   idea: "Idée",
@@ -84,12 +85,21 @@ export default function PublicProjectPage() {
     );
   }
 
+  // Convertir l'image de couverture en URL absolue si c'est un storageId
+  const coverImageUrl = useImageUrl(project.images?.[0] || null);
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://seed.media";
+  const absoluteCoverImage = coverImageUrl
+    ? coverImageUrl.startsWith("http")
+      ? coverImageUrl
+      : `${baseUrl}${coverImageUrl}`
+    : undefined;
+
   // Préparer les données pour le SEO
   const projectData: ProjectData = {
     title: project.title,
     description: project.summary || project.description || undefined,
     slug: project.slug,
-    coverImage: project.images?.[0] || null,
+    coverImage: absoluteCoverImage || null,
     createdAt: project.createdAt,
     updatedAt: project.updatedAt || undefined,
     author: project.author
@@ -119,7 +129,7 @@ export default function PublicProjectPage() {
       <SEOHead
         title={project.title}
         description={project.summary || project.description || project.title}
-        image={project.images?.[0] || undefined}
+        image={absoluteCoverImage}
         url={`/projets/${project.slug}`}
         type="website"
         publishedTime={project.createdAt ? new Date(project.createdAt).toISOString() : undefined}

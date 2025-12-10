@@ -24,6 +24,7 @@ import { useEffect, useRef } from "react";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { StructuredData } from "@/components/seo/StructuredData";
 import { generateArticleStructuredData, type ArticleData } from "@/lib/seo-utils";
+import { useImageUrl } from "@/lib/imageUtils";
 
 export default function PublicArticlePage() {
   const params = useParams();
@@ -127,13 +128,22 @@ export default function PublicArticlePage() {
     other: "Autre",
   };
 
+  // Convertir l'image de couverture en URL absolue si c'est un storageId
+  const coverImageUrl = useImageUrl(article.coverImage || null);
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://seed.media";
+  const absoluteCoverImage = coverImageUrl
+    ? coverImageUrl.startsWith("http")
+      ? coverImageUrl
+      : `${baseUrl}${coverImageUrl}`
+    : undefined;
+
   // Préparer les données pour le SEO
   const articleData: ArticleData = {
     title: article.title,
     description: article.summary || undefined,
     content: article.content || undefined,
     slug: article.slug,
-    coverImage: article.coverImage || null,
+    coverImage: absoluteCoverImage || null,
     publishedAt: article.publishedAt || null,
     updatedAt: article.updatedAt || null,
     author: author
@@ -154,7 +164,7 @@ export default function PublicArticlePage() {
       <SEOHead
         title={article.title}
         description={article.summary || article.title}
-        image={article.coverImage || undefined}
+        image={absoluteCoverImage}
         url={`/articles/${article.slug}`}
         type="article"
         publishedTime={article.publishedAt ? new Date(article.publishedAt).toISOString() : undefined}

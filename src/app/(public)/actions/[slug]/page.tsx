@@ -21,6 +21,7 @@ import { PlateEditorWrapper } from "@/components/articles/PlateEditorWrapper";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { StructuredData } from "@/components/seo/StructuredData";
 import { generateActionStructuredData, type ActionData } from "@/lib/seo-utils";
+import { useImageUrl } from "@/lib/imageUtils";
 
 const ACTION_TYPE_LABELS = {
   petition: "Pétition",
@@ -95,12 +96,21 @@ export default function PublicActionPage() {
   const isActive = action.status === "active";
   const canParticipate = isActive && hasParticipated !== undefined;
 
+  // Convertir l'image de couverture en URL absolue si c'est un storageId
+  const coverImageUrl = useImageUrl(action.coverImage || null);
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://seed.media";
+  const absoluteCoverImage = coverImageUrl
+    ? coverImageUrl.startsWith("http")
+      ? coverImageUrl
+      : `${baseUrl}${coverImageUrl}`
+    : undefined;
+
   // Préparer les données pour le SEO
   const actionData: ActionData = {
     title: action.title,
     description: action.summary || action.description || undefined,
     slug: action.slug,
-    coverImage: action.coverImage || null,
+    coverImage: absoluteCoverImage || null,
     createdAt: action.createdAt,
     updatedAt: action.updatedAt || undefined,
     author: action.author
@@ -133,7 +143,7 @@ export default function PublicActionPage() {
       <SEOHead
         title={action.title}
         description={action.summary || action.description || action.title}
-        image={action.coverImage || undefined}
+        image={absoluteCoverImage}
         url={`/actions/${action.slug}`}
         type="website"
         publishedTime={action.createdAt ? new Date(action.createdAt).toISOString() : undefined}
