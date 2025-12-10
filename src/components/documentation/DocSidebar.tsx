@@ -71,6 +71,11 @@ const DOC_SECTIONS = [
         icon: "code-bold",
       },
       {
+        label: "Guide de l'éditeur",
+        href: "/documentation/development/editor",
+        icon: "code-2-bold",
+      },
+      {
         label: "Architecture",
         href: "/documentation/development/architecture",
         icon: "layers-bold",

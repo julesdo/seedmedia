@@ -63,6 +63,28 @@ export default function DevelopmentPage() {
           </CardContent>
         </Card>
 
+        <Card className="group hover:border-primary/50 transition-all hover:shadow-lg">
+          <CardHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                <SolarIcon icon="code-bold" className="h-5 w-5 text-primary" />
+              </div>
+              <CardTitle className="text-xl">Guide de l'éditeur</CardTitle>
+            </div>
+            <CardDescription>
+              Découvrez toutes les fonctionnalités de l'éditeur Seed : code blocks, diagrammes Mermaid, molécules 3D, graphiques Vega, et bien plus encore.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild variant="accent" className="w-full">
+              <Link href="/documentation/development/editor">
+                Explorer l'éditeur
+                <SolarIcon icon="alt-arrow-right-bold" className="h-4 w-4 ml-2" />
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>Contribuer</CardTitle>

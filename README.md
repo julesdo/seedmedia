@@ -426,5 +426,5 @@ Seed existe grâce à la communauté de contributeurs, bénévoles et utilisateu
 
 
 git add .
-git commit -m "maj 2.21 SEO"
+git commit -m "maj 2.3 editor doc"
 git push -u origin main
