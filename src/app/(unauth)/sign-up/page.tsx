@@ -2,19 +2,26 @@
 
 import SignUp from "@/app/(unauth)/sign-up/SignUp";
 import Link from "next/link";
+import { useTranslations } from 'next-intl';
+import { NewsCarouselBackground } from "@/components/auth/NewsCarouselBackground";
 
 export default function SignUpPage() {
+  const t = useTranslations('auth.signUp');
   return (
-    <div className="min-h-screen w-full flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen w-full relative flex items-center justify-center p-4 md:p-6">
+      {/* Carousel de news en arrière-plan */}
+      <NewsCarouselBackground />
+      
+      {/* Contenu principal */}
+      <div className="relative z-10 w-full max-w-md">
         <SignUp />
-        <p className="text-center mt-4 text-sm text-neutral-600 dark:text-neutral-400">
-          Already have an account?{" "}
+        <p className="text-center mt-4 text-sm text-white/90 drop-shadow-lg">
+          {t('alreadyHaveAccount')}{" "}
           <Link
             href="/sign-in"
-            className="text-orange-400 hover:text-orange-500 dark:text-orange-300 dark:hover:text-orange-200 underline"
+            className="text-orange-400 hover:text-orange-300 underline font-medium"
           >
-            Sign in
+            {t('signIn')}
           </Link>
         </p>
       </div>

@@ -1748,7 +1748,7 @@ export function createFinancialReportTemplate(): Template {
       {
         id: id(tid, "title"),
         type: "h1",
-        content: "Financial Report - Q4 2024",
+        content: "Financial Report - Q4 2026",
         attributes: {},
       } as TextNode,
 
@@ -1757,7 +1757,7 @@ export function createFinancialReportTemplate(): Template {
         type: "blockquote",
         children: [
           { content: "📊 Reporting Period: ", bold: true },
-          { content: "Q4 2024", italic: true },
+          { content: "Q4 2026", italic: true },
           { content: " | ", bold: false },
           { content: "📅 Report Date: ", bold: true },
           { content: "[Current Date]", italic: true },
@@ -1817,13 +1817,13 @@ export function createFinancialReportTemplate(): Template {
                       {
                         id: id(tid, "th-q3"),
                         type: "th",
-                        content: "Q3 2024",
+                        content: "Q3 2026",
                         attributes: {},
                       } as TextNode,
                       {
                         id: id(tid, "th-q4"),
                         type: "th",
-                        content: "Q4 2024",
+                        content: "Q4 2026",
                         attributes: {},
                       } as TextNode,
                       {

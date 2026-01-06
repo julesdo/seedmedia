@@ -167,6 +167,7 @@ async function updateCredibilityScoreHelper(
   // Vérifier si le niveau doit être mis à jour (basé sur le score de crédibilité)
   if (pointsGained !== 0) {
     try {
+      // @ts-expect-error - Type instantiation is excessively deep due to complex return type
       await ctx.runMutation(internal.missions.checkLevelUp, {
         userId,
       });

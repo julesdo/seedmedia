@@ -8,7 +8,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans), "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: var(--font-mono), "JetBrains Mono", "Fira Code", "Consolas", "Monaco", "Courier New", monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-serif: Georgia, "Times New Roman", serif;
   --font-mono: JetBrains Mono, monospace;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -110,7 +112,9 @@
   --header: #FFFFFF;
   --sidebar-ring: #005DE7;
   --destructive-foreground: oklch(0.9851 0 0);
-  --font-sans: var(--font-sans), "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: var(--font-mono), "JetBrains Mono", "Fira Code", "Consolas", "Monaco", "Courier New", monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-serif: Georgia, "Times New Roman", serif;
 
   /* Seed specific variables */
   --seed-surface: #FFFFFF;
@@ -143,8 +147,9 @@
 }
 
 .dark {
-  /* Seed Dark Mode Colors */
+  /* Seed Dark Mode Colors avec dégradé */
   --background: #0C111D;
+  --background-gradient: linear-gradient(135deg, #0C111D 0%, #0F1621 25%, #131A21 50%, #0F1621 75%, #0C111D 100%);
   --foreground: #E6EDF3;
   --card: #11151F;
   --card-foreground: #E6EDF3;
@@ -180,7 +185,9 @@
   --sidebar-ring: #005DE7;
   --destructive-foreground: oklch(0.1797 0.0043 308.1928);
   --radius: 0.875rem; /* 14px */
-  --font-sans: var(--font-sans), "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: var(--font-mono), "JetBrains Mono", "Fira Code", "Consolas", "Monaco", "Courier New", monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-serif: Georgia, "Times New Roman", serif;
 
   /* Seed specific variables */
   --seed-surface: #131A21;
@@ -225,9 +232,31 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
     letter-spacing: var(--tracking-normal);
-    font-family: var(--font-sans);
+    font-family: var(--font-mono);
+    background: var(--background);
+  }
+
+  /* Titres avec police mono */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  /* Dégradé sombre pour dark mode */
+  .dark body {
+    background: linear-gradient(135deg, #0C111D 0%, #0F1621 20%, #131A21 40%, #0F1722 60%, #0C111D 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+
+  /* Dégradé subtil pour light mode */
+  :root:not(.dark) body {
+    background: linear-gradient(135deg, #F4F6FB 0%, #F7F9FB 20%, #FFFFFF 40%, #F7F9FB 60%, #F4F6FB 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
   }
 
   /* ============================================
@@ -2286,6 +2315,19 @@
     animation-name: fade-in;
   }
 
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  .animate-shimmer {
+    animation: shimmer 3s ease-in-out infinite;
+  }
+
   @keyframes fade-out {
     from {
       opacity: 1;
@@ -2306,6 +2348,43 @@
       opacity: 1;
       transform: translateY(0);
     }
+  }
+
+  /* Effet pattern diagonal sur les titres - style futuriste */
+  .title-pattern {
+    position: relative;
+    display: inline-block;
+  }
+
+  .title-pattern::before {
+    content: "";
+    position: absolute;
+    top: -15%;
+    left: -8%;
+    width: 130%;
+    height: 130%;
+    background: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 3px,
+      rgba(36, 107, 253, 0.04) 3px,
+      rgba(36, 107, 253, 0.04) 6px
+    );
+    pointer-events: none;
+    z-index: -1;
+    opacity: 0.8;
+    mix-blend-mode: overlay;
+  }
+
+  .dark .title-pattern::before {
+    background: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 3px,
+      rgba(36, 107, 253, 0.12) 3px,
+      rgba(36, 107, 253, 0.12) 6px
+    );
+    mix-blend-mode: screen;
   }
 
   /* Système de layout pour tous les blocs dans l'éditeur */
@@ -2457,6 +2536,12 @@
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.1) 100%);
   }
 
+  /* Désactiver scale et bordure au hover pour tous les tabs */
+  [data-slot="tabs-trigger"]:hover {
+    transform: none !important;
+    scale: 1 !important;
+  }
+
   /* Tabs trigger actif - Style accent comme les boutons */
   [data-slot="tabs-trigger"][data-state="active"] {
     position: relative;
@@ -2486,7 +2571,8 @@
 
   [data-slot="tabs-trigger"][data-state="active"]:hover {
     background: linear-gradient(135deg, #3A7CFF 0%, #246BFD 100%) !important;
-    transform: scale(1.015) translateY(-1px);
+    transform: none !important;
+    border-width: inherit !important;
     box-shadow: 
       inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
       0 3px 8px rgba(36, 107, 253, 0.25) !important;
@@ -2504,6 +2590,11 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+  }
+
+  /* Cacher les éléments de navigation mobile quand on est sur une page reel */
+  body.hide-mobile-nav [data-hide-on-reel] {
+    display: none !important;
   }
 
   [data-slot="tabs-trigger"][data-state="active"] svg,

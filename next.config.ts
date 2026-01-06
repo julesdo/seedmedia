@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
-// Temporairement désactivé pour éviter les conflits
-// const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
+import createNextIntlPlugin from 'next-intl/plugin';
+
+const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -44,7 +45,13 @@ const nextConfig: NextConfig = {
         hostname: "judicious-mandrill-471.convex.cloud",
         port: "",
         pathname: "/**", // Allows any path under this hostname
-      }
+      },
+      {
+        protocol: "https", // Or 'http' if that's what your URLs use
+        hostname: "images.pexels.com",
+        port: "",
+        pathname: "/**", // Allows any path under this hostname
+      },
       // You can add other hostnames here if needed
       // Example:
       // {
@@ -57,5 +64,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
-// Temporairement désactivé : export default withNextIntl(nextConfig);
+export default withNextIntl(nextConfig);

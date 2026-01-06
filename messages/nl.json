@@ -1,0 +1,494 @@
+{
+  "common": {
+    "search": "Zoeken",
+    "notifications": "Meldingen",
+    "profile": "Profiel",
+    "settings": "Instellingen",
+    "logout": "Uitloggen",
+    "loading": "Laden...",
+    "error": "Fout",
+    "save": "Opslaan",
+    "cancel": "Annuleren",
+    "delete": "Verwijderen",
+    "edit": "Bewerken",
+    "create": "Aanmaken",
+    "view": "Bekijken",
+    "close": "Sluiten",
+    "back": "Terug",
+    "share": "Delen",
+    "follow": "Volgen",
+    "unfollow": "Niet meer volgen",
+    "following": "Volgt",
+    "unfollowed": "Volgt niet meer",
+    "confirm": "Bevestigen",
+    "all": "Alle"
+  },
+  "navigation": {
+    "home": "Home",
+    "decisions": "Beslissingen",
+    "trending": "Trends",
+    "map": "Kaart",
+    "bots": "Bots",
+    "profile": "Profiel",
+    "settings": "Instellingen",
+    "level": "Niveau",
+    "user": "Gebruiker",
+    "rules": "Regels",
+    "help": "Help",
+    "about": "Over",
+    "copyright": "© 2026 Seed"
+  },
+  "decisions": {
+    "title": "Beslissingen",
+    "description": "Volg politieke, economische en diplomatieke beslissingen",
+    "announced": "Aangekondigd",
+    "tracking": "In tracking",
+    "resolved": "Opgelost",
+    "anticipations": "anticipaties",
+    "anticipation": "anticipatie",
+    "noResults": "Geen resultaten",
+    "seeMore": "Meer zien",
+    "types": {
+      "law": "Wet",
+      "sanction": "Sanctie",
+      "tax": "Belasting",
+      "agreement": "Overeenkomst",
+      "policy": "Beleid",
+      "regulation": "Regelgeving",
+      "crisis": "Crisis",
+      "disaster": "Ramp",
+      "conflict": "Conflict",
+      "discovery": "Ontdekking",
+      "election": "Verkiezing",
+      "economic_event": "Economische gebeurtenis",
+      "other": "Andere"
+    },
+    "detail": {
+      "notFound": "Beslissing niet gevonden",
+      "notFoundDescription": "Deze beslissing bestaat niet of is verwijderd.",
+      "backToDecisions": "Terug naar beslissingen",
+      "source": "Bron",
+      "relatedNews": "Gerelateerd nieuws",
+      "resolution": "Oplossing",
+      "result": "Resultaat:",
+      "confidence": "Vertrouwen:",
+      "indicatorVariations": "Indicatorvariaties:"
+    },
+    "save": {
+      "save": "Opslaan",
+      "saved": "Opgeslagen",
+      "savedToast": "Gebeurtenis opgeslagen",
+      "unsavedToast": "Gebeurtenis verwijderd uit opgeslagen"
+    }
+  },
+  "quiz": {
+    "works": "Werkt",
+    "partial": "Gedeeltelijk",
+    "fails": "Mislukt",
+    "confirm": "Bevestigen",
+    "viewDetails": "Details bekijken",
+    "hideDetails": "Details verbergen",
+    "yourAnswer": "Uw antwoord",
+    "alreadyAnticipated": "Al geanticipeerd",
+    "saving": "Opslaan..."
+  },
+  "search": {
+    "placeholder": "Zoek beslissingen...",
+    "noResults": "Geen resultaten",
+    "noResultsDescription": "Geen beslissing komt overeen met \"{query}\"",
+    "startTyping": "Begin met typen om beslissingen te zoeken",
+    "useFilters": "Gebruik filters om uw zoekopdracht te verfijnen",
+    "resetFilters": "Filters resetten",
+    "types": {
+      "all": "Alle",
+      "law": "Wet",
+      "sanction": "Sanctie",
+      "tax": "Belasting",
+      "agreement": "Overeenkomst",
+      "policy": "Beleid",
+      "regulation": "Regelgeving"
+    },
+    "statuses": {
+      "all": "Alle",
+      "announced": "Aangekondigd",
+      "tracking": "In tracking",
+      "resolved": "Opgelost"
+    },
+    "filters": "Filters"
+  },
+  "profile": {
+    "follow": "Volgen",
+    "unfollow": "Niet meer volgen",
+    "following": "Volgt",
+    "unfollowed": "Volgt niet meer",
+    "followDescription": "U volgt nu {name}",
+    "unfollowDescription": "U volgt {name} niet meer",
+    "memberSince": "Lid sinds",
+    "stats": {
+      "inProgress": "In behandeling",
+      "correct": "Correct",
+      "accuracy": "Nauwkeurigheid",
+      "seeds": "Seeds",
+      "followers": "Volgers",
+      "following": "Volgt"
+    },
+    "tabs": {
+      "inProgress": "In behandeling",
+      "correct": "Correct",
+      "saved": "Opgeslagen"
+    },
+    "empty": {
+      "inProgress": "Geen anticipaties in behandeling",
+      "inProgressDescription": "Deze gebruiker heeft nog geen anticipaties in behandeling",
+      "correct": "Geen correcte anticipaties",
+      "correctDescription": "Deze gebruiker heeft nog geen correcte anticipaties",
+      "saved": "Geen opgeslagen beslissingen",
+      "savedDescription": "Deze gebruiker heeft nog geen beslissingen opgeslagen"
+    },
+    "status": {
+      "pending": "In afwachting",
+      "correct": "Correct",
+      "incorrect": "Incorrect",
+      "saved": "Opgeslagen"
+    }
+  },
+  "anticipations": {
+    "title": "Anticipaties",
+    "description": "Uw anticipaties over beslissingen",
+    "notAuthenticated": {
+      "title": "Inloggen",
+      "description": "Log in om uw anticipaties te zien",
+      "signIn": "Inloggen",
+      "signUp": "Registreren"
+    },
+    "empty": {
+      "title": "Geen anticipaties",
+      "description": "Begin met het anticiperen op de effecten van beslissingen om Seeds te verdienen.",
+      "viewDecisions": "Bekijk beslissingen"
+    },
+    "stats": {
+      "inProgress": "in behandeling",
+      "resolved": "opgelost",
+      "resolvedPlural": "opgelost"
+    },
+    "sections": {
+      "inProgress": "In behandeling",
+      "resolved": "Opgelost"
+    },
+    "issues": {
+      "works": "Het werkt",
+      "partial": "Gedeeltelijk",
+      "fails": "Het werkt niet"
+    },
+    "card": {
+      "seedsEngaged": "Geëngageerde Seeds",
+      "result": "Resultaat:",
+      "correct": "Correct",
+      "incorrect": "Incorrect"
+    },
+    "button": {
+      "anticipate": "Anticiperen",
+      "alreadyAnticipated": "Al geanticipeerd"
+    },
+    "modal": {
+      "title": "Deze beslissing anticiperen",
+      "works": "Het werkt",
+      "partial": "Het werkt gedeeltelijk",
+      "fails": "Het werkt niet",
+      "seedsInfo": "{count} Seeds worden automatisch geëngageerd",
+      "cancel": "Annuleren",
+      "success": {
+        "title": "Anticipatie aangemaakt",
+        "description": "Uw anticipatie is succesvol geregistreerd."
+      }
+    }
+  },
+  "rules": {
+    "title": "Berekeningsregels",
+    "description": "Alle Seed-berekeningsregels zijn openbaar en transparant. Deze regels bepalen hoe we beslissingsresultaten berekenen en hoe we Seeds distribueren.",
+    "note": "Opmerking:",
+    "noteDescription": "Deze regels zijn gedefinieerd door het Seed-team en zijn alleen-lezen. Ze kunnen alleen door het team worden gewijzigd om de nauwkeurigheid en eerlijkheid van het systeem te verbeteren.",
+    "categories": {
+      "threshold": "Variatie-drempels",
+      "weight": "Gewicht per Periode",
+      "scoring": "Scoring en Vertrouwen",
+      "seeds": "Seeds-distributie"
+    },
+    "transparency": {
+      "title": "Totale Transparantie",
+      "description": "Seed is toegewijd aan het handhaven van totale transparantie over zijn berekeningsregels. Alle beslissingen worden automatisch opgelost volgens deze regels, zonder menselijke tussenkomst. De details van elke resolutie zijn zichtbaar in de opgeloste Decision Cards."
+    }
+  },
+  "trending": {
+    "title": "Trends",
+    "description": "De meest gevolgde en besproken gebeurtenissen op dit moment",
+    "badge": "Hot",
+    "empty": {
+      "title": "Geen trends",
+      "description": "Er zijn momenteel geen trend-beslissingen."
+    }
+  },
+  "saved": {
+    "title": "Opgeslagen",
+    "description": "De beslissingen die u heeft opgeslagen",
+    "notAuthenticated": {
+      "title": "Inloggen",
+      "description": "Log in om beslissingen op te slaan",
+      "signIn": "Inloggen"
+    },
+    "empty": {
+      "title": "Geen opgeslagen beslissingen",
+      "description": "Beslissingen die u opslaat, verschijnen hier",
+      "explore": "Beslissingen verkennen"
+    }
+  },
+  "auth": {
+    "signIn": {
+      "title": "Inloggen",
+      "description": "Voer uw email hieronder in om in te loggen op uw account",
+      "email": "Email",
+      "password": "Wachtwoord",
+      "forgotPassword": "Wachtwoord vergeten?",
+      "verificationCode": "Verificatiecode",
+      "enterVerificationCode": "Voer verificatiecode in",
+      "signInWithPassword": "Inloggen met wachtwoord",
+      "signInAnonymously": "Anoniem inloggen",
+      "sendMagicLink": "Magische link verzenden",
+      "sendVerificationCode": "Verificatiecode verzenden",
+      "verifyCode": "Code verifiëren",
+      "signInWithMagicLink": "In plaats daarvan inloggen met magische link of OTP",
+      "signInWithPasswordInstead": "In plaats daarvan inloggen met wachtwoord",
+      "orContinueWith": "of doorgaan met",
+      "signInWithGithub": "Inloggen met Github",
+      "signInWithGoogle": "Inloggen met Google",
+      "signInWithSlack": "Inloggen met Slack",
+      "activeAccounts": "Actieve accounts",
+      "switchingAccount": "Account wisselen...",
+      "loading": "Laden...",
+      "dontHaveAccount": "Heeft u geen account?",
+      "signUp": "Registreren",
+      "checkEmail": "Controleer uw email voor de link om uw wachtwoord opnieuw in te stellen!",
+      "checkEmailMagicLink": "Controleer uw email voor de magische link!",
+      "resetPasswordFailed": "Fout bij het verzenden van de link om uw wachtwoord opnieuw in te stellen. Probeer het opnieuw.",
+      "poweredBy": "Aangedreven door"
+    },
+    "signUp": {
+      "title": "Registreren",
+      "description": "Voer uw gegevens in om een account aan te maken",
+      "firstName": "Voornaam",
+      "lastName": "Achternaam",
+      "email": "Email",
+      "password": "Wachtwoord",
+      "confirmPassword": "Wachtwoord bevestigen",
+      "profileImage": "Profielfoto (optioneel)",
+      "createAccount": "Account aanmaken",
+      "orContinueWith": "of doorgaan met",
+      "signUpWithGithub": "Registreren met Github",
+      "signUpWithGoogle": "Registreren met Google",
+      "signUpWithSlack": "Registreren met Slack",
+      "alreadyHaveAccount": "Heeft u al een account?",
+      "signIn": "Inloggen",
+      "accountCreated": "Account succesvol aangemaakt! Controleer uw email.",
+      "securedBy": "Beveiligd door"
+    }
+  },
+  "notifications": {
+    "title": "Meldingen",
+    "description": "Uw meldingen en waarschuwingen",
+    "notAuthenticated": {
+      "title": "Inloggen",
+      "description": "Log in om uw meldingen te zien",
+      "signIn": "Inloggen"
+    },
+    "empty": {
+      "title": "Geen meldingen",
+      "description": "U wordt op de hoogte gesteld wanneer uw anticipaties zijn opgelost"
+    }
+  },
+  "map": {
+    "title": "Wereldkaart",
+    "legend": {
+      "progress": "Voortgang",
+      "neutral": "Neutraal",
+      "crisis": "Crisis",
+      "cold": "Koud",
+      "hot": "Heet"
+    }
+  },
+  "errors": {
+    "generic": "Er is een fout opgetreden",
+    "followError": "Kan volgstatus niet wijzigen",
+    "loadError": "Fout bij laden"
+  },
+  "success": {
+    "linkCopied": "Link gekopieerd",
+    "linkCopiedDescription": "Profiel-URL is naar het klembord gekopieerd"
+  },
+  "breakingNews": {
+    "badge": "BREAKING",
+    "readMore": "Lees meer"
+  },
+  "widgets": {
+    "trendingRegions": "Trendregio's",
+    "eventTypes": "Gebeurtenistypen",
+    "recentResolutions": "Recente oplossingen",
+    "wordCloud": "Trefwoorden"
+  },
+  "studio": {
+    "dashboard": "Dashboard",
+    "articles": "Artikelen",
+    "projects": "Projecten",
+    "actions": "Acties",
+    "debates": "Debatten",
+    "governance": "Governance",
+    "credibility": "Geloofwaardigheid",
+    "missions": "Missies",
+    "organizations": "Organisaties",
+    "stats": "Statistieken"
+  },
+  "bots": {
+    "title": "Onze Bots",
+    "description": "Ontdek de geautomatiseerde bots die Seed voeden met objectieve en feitelijke gegevens",
+    "noBots": "Geen bots beschikbaar op dit moment",
+    "back": "Terug naar bots",
+    "categories": {
+      "detection": "Detectie",
+      "generation": "Generatie",
+      "resolution": "Oplossing",
+      "tracking": "Volgen",
+      "aggregation": "Aggregatie",
+      "other": "Andere"
+    },
+    "status": {
+      "active": "Actief",
+      "paused": "Gepauzeerd",
+      "maintenance": "Onderhoud"
+    },
+    "stats": {
+      "decisionsCreated": "Beslissingen gemaakt",
+      "decisionsResolved": "Beslissingen opgelost",
+      "newsAggregated": "Nieuws geaggregeerd",
+      "indicatorsTracked": "Indicatoren gevolgd",
+      "decisions": "beslissingen",
+      "resolved": "opgelost"
+    },
+    "descriptions": {
+      "decisionsCreated": "Decision Cards automatisch gegenereerd",
+      "decisionsResolved": "Automatische oplossingen uitgevoerd",
+      "newsAggregated": "Persartikelen verzameld",
+      "indicatorsTracked": "Economische indicatoren gevolgd"
+    },
+    "detail": {
+      "temporalMetrics": "Temporele metriek",
+      "activityLogs": "Activiteitslogboeken",
+      "technicalInfo": "Technische informatie",
+      "function": "Functie:",
+      "category": "Categorie:",
+      "lastActivity": "Laatste activiteit:",
+      "createdAt": "Gemaakt op:",
+      "never": "Nooit"
+    },
+    "logs": {
+      "title": "Activiteitslogboeken",
+      "filterByLevel": "Filteren op niveau",
+      "allLevels": "Alle niveaus",
+      "levels": {
+        "info": "Info",
+        "success": "Succes",
+        "warning": "Waarschuwing",
+        "error": "Fout"
+      },
+      "details": "Details",
+      "loadMore": "Meer logboeken laden",
+      "noLogs": "Geen logboeken beschikbaar"
+    },
+    "metrics": {
+      "decisionsCreated": "Beslissingen gemaakt",
+      "decisionsResolved": "Beslissingen opgelost",
+      "newsAggregated": "Nieuws geaggregeerd",
+      "indicatorsTracked": "Indicatoren gevolgd",
+      "executionTime": "Uitvoeringstijd (ms)",
+      "errorCount": "Fouten",
+      "noData": "Geen gegevens beschikbaar"
+    }
+  },
+  "settings": {
+    "title": "Instellingen",
+    "account": {
+      "title": "Account",
+      "description": "Beheer uw accountinformatie",
+      "email": "E-mail",
+      "emailDescription": "Uw e-mailadres (niet bewerkbaar)",
+      "username": "Gebruikersnaam",
+      "usernameDescription": "Uw unieke gebruikersnaam (gebruikt in de URL van uw profiel)",
+      "name": "Weergavenaam",
+      "nameDescription": "De naam die op uw profiel verschijnt",
+      "bio": "Biografie",
+      "bioDescription": "Vertel ons over uzelf (max. 500 tekens)",
+      "save": "Opslaan",
+      "cancel": "Annuleren",
+      "edit": "Bewerken",
+      "updated": "Profil bijgewerkt",
+      "usernameUpdated": "Uw gebruikersnaam is succesvol bijgewerkt",
+      "nameUpdated": "Uw naam is succesvol bijgewerkt",
+      "bioUpdated": "Uw biografie is succesvol bijgewerkt",
+      "usernameTaken": "Deze gebruikersnaam is al in gebruik. Kies een andere.",
+      "usernameTooShort": "De gebruikersnaam moet minimaal 3 tekens bevatten",
+      "usernameTooLong": "De gebruikersnaam mag niet langer zijn dan 30 tekens",
+      "usernameInvalid": "De gebruikersnaam mag alleen letters, cijfers en underscores bevatten",
+      "characters": "tekens",
+      "charactersDescription": "tekens (alleen letters, cijfers en _)",
+      "minimumCharacters": "Minimaal {count} tekens",
+      "checking": "Controleren...",
+      "usernameAvailable": "Deze gebruikersnaam is beschikbaar",
+      "usernameTakenMessage": "Deze gebruikersnaam is al in gebruik",
+      "suggestions": "Suggesties:",
+      "notDefined": "Niet gedefinieerd",
+      "noBio": "Geen biografie",
+      "error": "Fout",
+      "updateUsernameError": "Kan gebruikersnaam niet bijwerken",
+      "updateNameError": "Kan naam niet bijwerken",
+      "updateBioError": "Kan biografie niet bijwerken"
+    },
+    "preferences": {
+      "title": "Voorkeuren",
+      "description": "Personaliseer uw ervaring",
+      "language": "Taal",
+      "languageDescription": "Kies uw voorkeurstaal",
+      "publicProfile": "Openbaar profiel",
+      "publicProfileDescription": "Maak uw profiel zichtbaar voor alle gebruikers",
+      "breakingNews": "Breaking news banner",
+      "breakingNewsDescription": "Toon de scrollende banner voor belangrijke gebeurtenissen",
+      "notifications": "Meldingen",
+      "notificationsDescription": "Meldingen in- of uitschakelen",
+      "profileUpdated": "Profil bijgewerkt",
+      "profilePublic": "Uw profiel is nu openbaar",
+      "profilePrivate": "Uw profiel is nu privé",
+      "preferenceUpdated": "Voorkeur bijgewerkt",
+      "breakingNewsShown": "De breaking news banner wordt nu weergegeven",
+      "breakingNewsHidden": "De breaking news banner is nu verborgen"
+    },
+    "stats": {
+      "title": "Statistieken",
+      "description": "Uw prestaties op Seed",
+      "level": "Niveau",
+      "seeds": "Seeds",
+      "credibility": "Geloofwaardigheid"
+    },
+    "notAuthenticated": {
+      "title": "Inloggen",
+      "description": "Log in om toegang te krijgen tot de instellingen",
+      "signIn": "Inloggen"
+    },
+    "about": {
+      "title": "Over",
+      "description": "Seed toont wat er gebeurt na machtsbeslissingen.",
+      "version": "Versie 1.0.0",
+      "rules": "Regels",
+      "help": "Hulp",
+      "privacy": "Privacy",
+      "terms": "Voorwaarden"
+    }
+  }
+}
+

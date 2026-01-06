@@ -89,9 +89,16 @@ export const betterAuthComponent = createClient(components.betterAuth, {
             updatedAt: Date.now(),
           };
           
-          // Synchroniser le nom si disponible dans Better Auth
-          // On met à jour si Better Auth a un nom et que l'utilisateur n'en a pas ou a juste l'email
-          if (newUser.name && appUser.email && typeof appUser.email === "string" && (!appUser.name || appUser.name === appUser.email.split("@")[0])) {
+          // Synchroniser le nom UNIQUEMENT si l'utilisateur n'a pas de nom personnalisé
+          // On vérifie si le nom actuel est celui par défaut (email sans @domain) ou vide
+          const emailPrefix = appUser.email && typeof appUser.email === "string" 
+            ? appUser.email.split("@")[0] 
+            : "";
+          const isDefaultName = !appUser.name || appUser.name === emailPrefix;
+          
+          // Ne mettre à jour le nom que si c'est un nom par défaut ou vide
+          // Cela permet à l'utilisateur de garder son nom personnalisé même si Better Auth change
+          if (newUser.name && isDefaultName) {
             updates.name = newUser.name;
           }
           
@@ -147,11 +154,16 @@ export const getCurrentUser = query({
     }
 
     // Merge app user data with Better Auth user data
-    // Better Auth data takes precedence for fields like email, name, image
-    // But we keep appUser._id which is the valid Convex ID
+    // Prioriser le nom de appUser s'il existe et est différent de celui de Better Auth
+    // Cela permet à l'utilisateur de modifier son nom dans l'app même si Better Auth en a un
+    const displayName = appUser.name && appUser.name !== betterAuthUser.name 
+      ? appUser.name 
+      : (betterAuthUser.name || appUser.name);
+
     return {
       ...appUser,
       ...betterAuthUser,
+      name: displayName, // Utiliser le nom prioritaire
       _id: appUser._id, // Ensure we use the Convex _id, not Better Auth id
     };
   },

@@ -1,0 +1,4 @@
+---
+alwaysApply: true
+---
+going forward please remember to run all commands with ;  if ($LASTEXITCODE -ne 0) { exit 1 } on the end. There is a problem with you. I want any command you try to run in shell to end with this wrapper. Please remember and add it for each command going forward.

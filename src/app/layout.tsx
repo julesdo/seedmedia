@@ -1,19 +1,24 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { JetBrains_Mono } from "next/font/google";
 import { ViewTransitions } from "next-view-transitions";
 import "./globals.css";
 import { ThemeProvider } from "@/components/next-theme/theme-provider";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { UserProvider } from "@/contexts/UserContext";
 // Temporairement désactivé - à réactiver plus tard
 // import { AutoTranslateProvider } from "@/components/translation/AutoTranslateProvider";
 import { ConvexClientProvider } from "./ConvexClientProvider";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { Toaster } from "@/components/ui/sonner";
+import { getLocale, getMessages } from 'next-intl/server';
+import { DynamicIntlProvider } from '@/components/providers/DynamicIntlProvider';
 
-const plusJakartaSans = Plus_Jakarta_Sans({
-  variable: "--font-sans",
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-mono",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
-})
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://seed.media"),
@@ -80,16 +85,20 @@ export const metadata: Metadata = {
   category: "Technology",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Charger la locale et les messages pour next-intl
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
     <ViewTransitions>
-      <html lang="fr" suppressHydrationWarning>
+      <html lang={locale} suppressHydrationWarning>
         <body
-          className={`${plusJakartaSans.variable} antialiased font-sans`}
+          className={`${jetbrainsMono.variable} antialiased font-mono`}
         >
         {/* SVG Gradients pour les icônes */}
         <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
@@ -119,11 +128,16 @@ export default function RootLayout({
           >
             <NuqsAdapter>
               <ConvexClientProvider>
-                <LanguageProvider>
-                  <main>
-                    {children}
-                  </main>
-                </LanguageProvider>
+                <UserProvider>
+                  <DynamicIntlProvider initialLocale={locale} initialMessages={messages}>
+                    <LanguageProvider>
+                      <main>
+                        {children}
+                      </main>
+                      <Toaster />
+                    </LanguageProvider>
+                  </DynamicIntlProvider>
+                </UserProvider>
               </ConvexClientProvider>
             </NuqsAdapter>
           </ThemeProvider>

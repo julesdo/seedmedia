@@ -7,7 +7,6 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
-  CardFooter,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +15,9 @@ import { Loader2 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { useSearchParams } from "next/navigation";
 import { useTransitionRouter } from "next-view-transitions";
-import { Link } from "next-view-transitions";
+import { useTranslations } from 'next-intl';
+import { SolarIcon } from "@/components/icons/SolarIcon";
+import Link from "next/link";
 
 interface StoredAccount {
   id: string;
@@ -31,6 +32,7 @@ const STORAGE_KEY = "seed_active_accounts";
 const CURRENT_ACCOUNT_KEY = "seed_current_account_id";
 
 export default function SignIn() {
+  const t = useTranslations('auth.signIn');
   const router = useTransitionRouter();
   const searchParams = useSearchParams();
   const isAddingAccount = searchParams.get("add_account") === "true";
@@ -40,15 +42,8 @@ export default function SignIn() {
   const autoReconnect = searchParams.get("auto_reconnect") === "true"; // Reconnexion automatique après switch
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [otp, setOtp] = useState("");
-  const [magicLinkLoading, setMagicLinkLoading] = useState(false);
-  const [otpLoading, setOtpLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [forgotLoading, setForgotLoading] = useState(false);
-  const [signInMethod, setSignInMethod] = useState<"password" | "passwordless">(
-    "passwordless",
-  );
-  const [otpSent, setOtpSent] = useState(false);
-  const [anonymousLoading, setAnonymousLoading] = useState(false);
   const [storedAccounts, setStoredAccounts] = useState<StoredAccount[]>([]);
   const [isAutoReconnecting, setIsAutoReconnecting] = useState(false);
   
@@ -67,10 +62,10 @@ export default function SignIn() {
       },
       {
         onRequest: () => {
-          setOtpLoading(true);
+          setLoading(true);
         },
         onSuccess: async (ctx) => {
-          setOtpLoading(false);
+          setLoading(false);
           
           // Si on est en mode silencieux (switch de compte), envoyer un message au parent
           if (isSilent && typeof window !== "undefined" && window.opener) {
@@ -116,7 +111,7 @@ export default function SignIn() {
           }
         },
         onError: (ctx) => {
-          setOtpLoading(false);
+          setLoading(false);
           alert(ctx.error.message);
         },
       },
@@ -137,10 +132,10 @@ export default function SignIn() {
       },
       {
         onRequest: () => {
-          setOtpLoading(true);
+          setLoading(true);
         },
         onSuccess: async (ctx) => {
-          setOtpLoading(false);
+          setLoading(false);
           
           // Si on est en mode silencieux (switch de compte), envoyer un message au parent
           if (isSilent && typeof window !== "undefined" && window.opener) {
@@ -186,7 +181,7 @@ export default function SignIn() {
           }
         },
         onError: (ctx) => {
-          setOtpLoading(false);
+          setLoading(false);
           alert(ctx.error.message);
         },
       },
@@ -361,10 +356,10 @@ export default function SignIn() {
       },
       {
         onRequest: () => {
-          setOtpLoading(true);
+          setLoading(true);
         },
         onSuccess: async (ctx) => {
-          setOtpLoading(false);
+          setLoading(false);
           
           // Si on est en mode silencieux (switch de compte), envoyer un message au parent
           if (isSilent && typeof window !== "undefined" && window.opener) {
@@ -427,7 +422,7 @@ export default function SignIn() {
           }
         },
         onError: (ctx) => {
-          setOtpLoading(false);
+          setLoading(false);
           alert(ctx.error.message);
         },
       },
@@ -443,52 +438,12 @@ export default function SignIn() {
         email,
         redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/reset-password`,
       });
-      alert("Check your email for the reset password link!");
+      alert(t('checkEmail'));
     } catch {
-      alert("Failed to send reset password link. Please try again.");
+      alert(t('resetPasswordFailed'));
     } finally {
       setForgotLoading(false);
     }
-  };
-
-  const handleAnonymousSignIn = async () => {
-    await authClient.signIn.anonymous(
-      {},
-      {
-        onRequest: () => {
-          setAnonymousLoading(true);
-        },
-        onSuccess: () => {
-          setAnonymousLoading(false);
-          router.push("/");
-        },
-        onError: (ctx) => {
-          setAnonymousLoading(false);
-          alert(ctx.error.message);
-        },
-      },
-    );
-  };
-
-  const handleMagicLinkSignIn = async () => {
-    await authClient.signIn.magicLink(
-      {
-        email,
-      },
-      {
-        onRequest: () => {
-          setMagicLinkLoading(true);
-        },
-        onSuccess: () => {
-          setMagicLinkLoading(false);
-          alert("Check your email for the magic link!");
-        },
-        onError: (ctx) => {
-          setMagicLinkLoading(false);
-          alert(ctx.error.message);
-        },
-      },
-    );
   };
 
   const handleSelectAccount = async (account: StoredAccount) => {
@@ -521,130 +476,52 @@ export default function SignIn() {
   };
 
 
-  const handleSlackSignIn = async () => {
-    await authClient.signIn.oauth2(
-      {
-        providerId: "slack",
-      },
-      {
-        onRequest: () => {
-          setOtpLoading(true);
-        },
-        onSuccess: () => {
-          setOtpLoading(false);
-        },
-        onError: (ctx) => {
-          setOtpLoading(false);
-          alert(ctx.error.message);
-        },
-      },
-    );
-  };
-
-  const handleOtpSignIn = async () => {
-    if (!otpSent) {
-      await authClient.emailOtp.sendVerificationOtp(
-        {
-          email,
-          type: "sign-in",
-        },
-        {
-          onRequest: () => {
-            setOtpLoading(true);
-          },
-          onSuccess: () => {
-            setOtpLoading(false);
-            setOtpSent(true);
-          },
-          onError: (ctx) => {
-            setOtpLoading(false);
-            alert(ctx.error.message);
-          },
-        },
-      );
-    } else {
-      await authClient.signIn.emailOtp(
-        {
-          email,
-          otp,
-        },
-        {
-          onRequest: () => {
-            setOtpLoading(true);
-          },
-          onSuccess: async () => {
-            setOtpLoading(false);
-            // Si on est en mode "ajouter un compte" dans une popup
-            if (isAddingAccount && typeof window !== "undefined" && window.opener) {
-              const session = await authClient.getSession();
-              if (session?.data?.user) {
-                const user = session.data.user;
-                window.opener.postMessage(
-                  {
-                    type: "ACCOUNT_ADDED",
-                    account: {
-                      email: user.email,
-                      name: user.name,
-                      image: user.image,
-                      provider: "email",
-                    },
-                  },
-                  window.location.origin
-                );
-                window.close();
-                return;
-              }
-            }
-            router.push("/studio");
-          },
-          onError: (ctx) => {
-            setOtpLoading(false);
-            alert(ctx.error.message);
-          },
-        },
-      );
-    }
-  };
 
   // Si on est en mode auto_reconnect, afficher un écran de chargement transparent
   if (isAutoReconnecting) {
     return (
-      <Card className="max-w-md">
+      <Card className="max-w-md w-full bg-background/95 backdrop-blur-xl border-border/50 shadow-2xl">
         <CardContent className="flex flex-col items-center justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-          <p className="text-sm text-muted-foreground">Changement de compte en cours...</p>
+          <p className="text-sm text-muted-foreground">{t('switchingAccount')}</p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="max-w-md">
-      <CardHeader>
-        <CardTitle className="text-lg md:text-xl">Sign In</CardTitle>
-        <CardDescription className="text-xs md:text-sm">
-          Enter your email below to login to your account
+    <Card className="max-w-md w-full bg-background/95 backdrop-blur-xl border-border/50 shadow-2xl">
+      <CardHeader className="pb-4">
+        {/* Logo */}
+        <Link href="/" className="mb-6 flex justify-center">
+          <div className="flex items-center gap-2">
+            <div className="size-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
+              <SolarIcon icon="leaf-bold" className="size-5 text-white" />
+            </div>
+            <span className="text-xl font-bold text-foreground">Seed</span>
+          </div>
+        </Link>
+        <CardTitle className="text-xl md:text-2xl font-bold">{t('title')}</CardTitle>
+        <CardDescription className="text-sm md:text-base mt-2">
+          {t('description')}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (signInMethod === "password") {
-              handleSignIn();
-            } else if (otpSent) {
-              handleOtpSignIn();
-            }
+            handleSignIn();
           }}
           className="grid gap-4"
         >
           <div className="grid gap-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email" className="text-sm font-medium">{t('email')}</Label>
             <Input
               id="email"
               type="email"
               placeholder="m@example.com"
               required
+              className="h-11 text-base"
               onChange={(e) => {
                 setEmail(e.target.value);
               }}
@@ -652,132 +529,49 @@ export default function SignIn() {
             />
           </div>
 
-          {signInMethod === "password" && (
-            <div className="grid gap-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
-                <Button
-                  variant="link"
-                  size="sm"
-                  type="button"
-                  onClick={handleResetPassword}
-                  className="cursor-pointer"
-                  disabled={forgotLoading || !email}
-                >
-                  {forgotLoading ? (
-                    <Loader2 size={14} className="animate-spin mr-1" />
-                  ) : null}
-                  Forgot your password?
-                </Button>
-              </div>
-              <Input
-                id="password"
-                type="password"
-                placeholder="password"
-                autoComplete="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-          )}
-
-          {signInMethod === "passwordless" && otpSent && (
-            <div className="grid gap-2">
-              <Label htmlFor="otp">Verification Code</Label>
-              <Input
-                id="otp"
-                type="text"
-                placeholder="Enter verification code"
-                required
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                pattern="[0-9]*"
-                inputMode="numeric"
-                maxLength={6}
-              />
-            </div>
-          )}
-
-          <div className="flex flex-col gap-2">
-            {signInMethod === "password" && (
-              <Button type="submit" className="w-full" disabled={otpLoading}>
-                Sign in with Password
+          <div className="grid gap-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password" className="text-sm font-medium">{t('password')}</Label>
+              <Button
+                variant="link"
+                size="sm"
+                type="button"
+                onClick={handleResetPassword}
+                className="cursor-pointer h-auto p-0 text-xs"
+                disabled={forgotLoading || !email}
+              >
+                {forgotLoading ? (
+                  <Loader2 size={14} className="animate-spin mr-1" />
+                ) : null}
+                {t('forgotPassword')}
               </Button>
-            )}
-            <Button
-              type="button"
-              className="w-full"
-              disabled={anonymousLoading}
-              onClick={handleAnonymousSignIn}
-            >
-              Sign in anonymously
-            </Button>
-            {signInMethod === "passwordless" && !otpSent && (
-              <div className="flex flex-col gap-2">
-                <Button
-                  type="button"
-                  className="w-full"
-                  disabled={magicLinkLoading || otpLoading}
-                  onClick={handleMagicLinkSignIn}
-                >
-                  {magicLinkLoading ? (
-                    <Loader2 size={16} className="animate-spin" />
-                  ) : (
-                    "Send Magic Link"
-                  )}
-                </Button>
-                <Button
-                  type="button"
-                  className="w-full"
-                  variant="outline"
-                  disabled={magicLinkLoading || otpLoading}
-                  onClick={handleOtpSignIn}
-                >
-                  {otpLoading ? (
-                    <Loader2 size={16} className="animate-spin" />
-                  ) : (
-                    "Send Verification Code"
-                  )}
-                </Button>
-              </div>
-            )}
-            {signInMethod === "passwordless" && otpSent && (
-              <Button type="submit" className="w-full" disabled={otpLoading}>
-                {otpLoading ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : (
-                  "Verify Code"
-                )}
-              </Button>
-            )}
-
-            <Button
-              type="button"
-              variant="ghost"
-              className="text-sm"
-              onClick={() => {
-                setSignInMethod(
-                  signInMethod === "password" ? "passwordless" : "password",
-                );
-                setPassword("");
-                setOtp("");
-                setOtpSent(false);
-              }}
-            >
-              {signInMethod === "password"
-                ? "Sign in with magic link or OTP instead"
-                : "Sign in with a password instead"}
-            </Button>
+            </div>
+            <Input
+              id="password"
+              type="password"
+              placeholder={t('password')}
+              autoComplete="password"
+              required
+              className="h-11 text-base"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
           </div>
+
+          <Button type="submit" className="w-full h-11 text-base font-semibold" disabled={loading}>
+            {loading ? (
+              <Loader2 size={16} className="animate-spin mr-2" />
+            ) : null}
+            {t('signInWithPassword')}
+          </Button>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t border-neutral-800" />
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="bg-card px-2 text-neutral-500">
-                or continue with
+              <span className="bg-background/95 backdrop-blur-sm px-2 text-muted-foreground">
+                {t('orContinueWith')}
               </span>
             </div>
           </div>
@@ -785,8 +579,8 @@ export default function SignIn() {
           <Button
             type="button"
             variant="outline"
-            className="w-full gap-2"
-            disabled={otpLoading}
+            className="w-full gap-2 h-11"
+            disabled={loading}
             onClick={handleGithubSignIn}
           >
             <svg
@@ -800,14 +594,14 @@ export default function SignIn() {
                 d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5c.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34c-.46-1.16-1.11-1.47-1.11-1.47c-.91-.62.07-.6.07-.6c1 .07 1.53 1.03 1.53 1.03c.87 1.52 2.34 1.07 2.91.83c.09-.65.35-1.09.63-1.34c-2.22-.25-4.55-1.11-4.55-4.92c0-1.11.38-2 1.03-2.71c-.1-.25-.45-1.29.1-2.64c0 0 .84-.27 2.75 1.02c.79-.22 1.65-.33 2.5-.33s1.71.11 2.5.33c1.91-1.29 2.75-1.02 2.75-1.02c.55 1.35.2 2.39.1 2.64c.65.71 1.03 1.6 1.03 2.71c0 3.82-2.34 4.66-4.57 4.91c.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2"
               />
             </svg>
-            Sign in with Github
+            {t('signInWithGithub')}
           </Button>
 
           <Button
             type="button"
             variant="outline"
-            className="w-full gap-2"
-            disabled={otpLoading}
+            className="w-full gap-2 h-11"
+            disabled={loading}
             onClick={handleGoogleSignIn}
           >
             <svg
@@ -833,16 +627,7 @@ export default function SignIn() {
                 d="M130.55 50.479c24.514 0 41.05 10.589 50.479 19.438l36.844-35.974C195.245 12.91 165.798 0 130.55 0C79.49 0 35.393 29.301 13.925 71.947l42.211 32.783c10.59-31.477 39.891-54.251 74.414-54.251"
               />
             </svg>
-            Sign in with Google
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full gap-2"
-            disabled={otpLoading}
-            onClick={handleSlackSignIn}
-          >
-            Sign in with Slack
+            {t('signInWithGoogle')}
           </Button>
         </form>
         
@@ -850,7 +635,7 @@ export default function SignIn() {
         {storedAccounts.length > 0 && (
           <div className="mt-6 pt-6 border-t">
             <Label className="text-xs text-muted-foreground mb-3 block">
-              Comptes actifs
+              {t('activeAccounts')}
             </Label>
             <div className="space-y-2">
               {storedAccounts.map((account) => (
@@ -889,20 +674,6 @@ export default function SignIn() {
           </div>
         )}
       </CardContent>
-      <CardFooter>
-        <div className="flex justify-center w-full border-t py-4">
-          <p className="text-center text-xs text-neutral-500">
-            Powered by{" "}
-            <Link
-              href="https://better-auth.com"
-              className="underline"
-              target="_blank"
-            >
-              <span className="dark:text-orange-200/90">better-auth</span>
-            </Link>
-          </p>
-        </div>
-      </CardFooter>
     </Card>
   );
 }

@@ -426,5 +426,5 @@ Seed existe grâce à la communauté de contributeurs, bénévoles et utilisateu
 
 
 git add .
-git commit -m "maj 2.3 editor doc"
+git commit -m "maj 2.4 prez card"
 git push -u origin main

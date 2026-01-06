@@ -8,6 +8,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { SolarIcon } from "@/components/icons/SolarIcon";
 import React from "react";
+import { useUser } from "@/contexts/UserContext";
 import {
   Sidebar,
   SidebarContent,
@@ -131,7 +132,7 @@ const navSections: NavSection[] = [
 
 function AppSidebar() {
   const pathname = usePathname();
-  const user = useQuery(api.users.getCurrentUser);
+  const { user } = useUser();
   const accounts = useQuery(api.accounts.getUserAccounts);
   const invitations = useQuery(api.invitations.getUserInvitations);
   const ensureUserExists = useMutation(api.users.ensureUserExists);

@@ -4,42 +4,30 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
-import { Loader2, X } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
-import Image from "next/image";
 import { useTransitionRouter } from "next-view-transitions";
+import { useTranslations } from 'next-intl';
+import { SolarIcon } from "@/components/icons/SolarIcon";
+import Link from "next/link";
 
 export default function SignUp() {
+  const t = useTranslations('auth.signUp');
   const router = useTransitionRouter();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
-  const [image, setImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [ssoLoading, setSsoLoading] = useState(false);
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImage(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
 
   const handleSignUp = async () => {
     const { data, error } = await authClient.signUp.email(
@@ -47,7 +35,6 @@ export default function SignUp() {
         email,
         password,
         name: `${firstName} ${lastName}`,
-        image: image ? await convertImageToBase64(image) : "",
       },
       {
         onRequest: () => {
@@ -55,7 +42,7 @@ export default function SignUp() {
         },
         onSuccess: () => {
           setLoading(false);
-          toast.success("Compte créé avec succès ! Vérifiez votre email.");
+          toast.success(t('accountCreated'));
         },
         onError: async (ctx) => {
           setLoading(false);
@@ -114,44 +101,34 @@ export default function SignUp() {
     );
   };
 
-  const handleSlackSignUp = async () => {
-    // signIn.oauth2 fonctionne aussi pour l'inscription avec OAuth générique
-    await authClient.signIn.oauth2(
-      {
-        providerId: "slack",
-      },
-      {
-        onRequest: () => {
-          setSsoLoading(true);
-        },
-        onSuccess: () => {
-          setSsoLoading(false);
-        },
-        onError: (ctx) => {
-          setSsoLoading(false);
-          toast.error(ctx.error.message);
-        },
-      },
-    );
-  };
 
   return (
-    <Card className="max-w-md">
-      <CardHeader>
-        <CardTitle className="text-lg md:text-xl">Sign Up</CardTitle>
-        <CardDescription className="text-xs md:text-sm">
-          Enter your information to create an account
+    <Card className="max-w-md w-full bg-background/95 backdrop-blur-xl border-border/50 shadow-2xl">
+      <CardHeader className="pb-4">
+        {/* Logo */}
+        <Link href="/" className="mb-6 flex justify-center">
+          <div className="flex items-center gap-2">
+            <div className="size-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
+              <SolarIcon icon="leaf-bold" className="size-5 text-white" />
+            </div>
+            <span className="text-xl font-bold text-foreground">Seed</span>
+          </div>
+        </Link>
+        <CardTitle className="text-xl md:text-2xl font-bold">{t('title')}</CardTitle>
+        <CardDescription className="text-sm md:text-base mt-2">
+          {t('description')}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="grid gap-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-2">
-              <Label htmlFor="first-name">First name</Label>
+              <Label htmlFor="first-name" className="text-sm font-medium">{t('firstName')}</Label>
               <Input
                 id="first-name"
-                placeholder="Max"
+                placeholder={t('firstName')}
                 required
+                className="h-11 text-base"
                 onChange={(e) => {
                   setFirstName(e.target.value);
                 }}
@@ -159,11 +136,12 @@ export default function SignUp() {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="last-name">Last name</Label>
+              <Label htmlFor="last-name" className="text-sm font-medium">{t('lastName')}</Label>
               <Input
                 id="last-name"
-                placeholder="Robinson"
+                placeholder={t('lastName')}
                 required
+                className="h-11 text-base"
                 onChange={(e) => {
                   setLastName(e.target.value);
                 }}
@@ -172,12 +150,13 @@ export default function SignUp() {
             </div>
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email" className="text-sm font-medium">{t('email')}</Label>
             <Input
               id="email"
               type="email"
               placeholder="m@example.com"
               required
+              className="h-11 text-base"
               onChange={(e) => {
                 setEmail(e.target.value);
               }}
@@ -185,79 +164,49 @@ export default function SignUp() {
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password" className="text-sm font-medium">{t('password')}</Label>
             <Input
               id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="new-password"
-              placeholder="Password"
+              placeholder={t('password')}
+              className="h-11 text-base"
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="password">Confirm Password</Label>
+            <Label htmlFor="password" className="text-sm font-medium">{t('confirmPassword')}</Label>
             <Input
               id="password_confirmation"
               type="password"
               value={passwordConfirmation}
               onChange={(e) => setPasswordConfirmation(e.target.value)}
               autoComplete="new-password"
-              placeholder="Confirm Password"
+              placeholder={t('confirmPassword')}
+              className="h-11 text-base"
             />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="image">Profile Image (optional)</Label>
-            <div className="flex items-end gap-4">
-              {imagePreview && (
-                <div className="relative w-16 h-16 rounded-sm overflow-hidden">
-                  <Image
-                    src={imagePreview}
-                    alt="Profile preview"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              )}
-              <div className="flex items-center gap-2 w-full">
-                <Input
-                  id="image"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="w-full"
-                />
-                {imagePreview && (
-                  <X
-                    className="cursor-pointer"
-                    onClick={() => {
-                      setImage(null);
-                      setImagePreview(null);
-                    }}
-                  />
-                )}
-              </div>
-            </div>
           </div>
           <Button
             type="button"
-            className="w-full"
+            className="w-full h-11 text-base font-semibold"
             disabled={loading}
             onClick={handleSignUp}
           >
             {loading ? (
               <Loader2 size={16} className="animate-spin" />
             ) : (
-              "Create an account"
+              t('createAccount')
             )}
           </Button>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-neutral-800" />
+              <span className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="bg-card px-2 text-neutral-500">
-                or continue with
+              <span className="bg-background/95 backdrop-blur-sm px-2 text-muted-foreground">
+                {t('orContinueWith')}
               </span>
             </div>
           </div>
@@ -265,7 +214,7 @@ export default function SignUp() {
           <Button
             type="button"
             variant="outline"
-            className="w-full gap-2"
+            className="w-full gap-2 h-11"
             disabled={ssoLoading}
             onClick={handleGithubSignUp}
           >
@@ -280,13 +229,13 @@ export default function SignUp() {
                 d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5c.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34c-.46-1.16-1.11-1.47-1.11-1.47c-.91-.62.07-.6.07-.6c1 .07 1.53 1.03 1.53 1.03c.87 1.52 2.34 1.07 2.91.83c.09-.65.35-1.09.63-1.34c-2.22-.25-4.55-1.11-4.55-4.92c0-1.11.38-2 1.03-2.71c-.1-.25-.45-1.29.1-2.64c0 0 .84-.27 2.75 1.02c.79-.22 1.65-.33 2.5-.33s1.71.11 2.5.33c1.91-1.29 2.75-1.02 2.75-1.02c.55 1.35.2 2.39.1 2.64c.65.71 1.03 1.6 1.03 2.71c0 3.82-2.34 4.66-4.57 4.91c.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2"
               />
             </svg>
-            Sign up with Github
+            {t('signUpWithGithub')}
           </Button>
 
           <Button
             type="button"
             variant="outline"
-            className="w-full gap-2"
+            className="w-full gap-2 h-11"
             disabled={ssoLoading}
             onClick={handleGoogleSignUp}
           >
@@ -313,36 +262,11 @@ export default function SignUp() {
                 d="M130.55 50.479c24.514 0 41.05 10.589 50.479 19.438l36.844-35.974C195.245 12.91 165.798 0 130.55 0C79.49 0 35.393 29.301 13.925 71.947l42.211 32.783c10.59-31.477 39.891-54.251 74.414-54.251"
               />
             </svg>
-            Sign up with Google
+            {t('signUpWithGoogle')}
           </Button>
 
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full gap-2"
-            disabled={ssoLoading}
-            onClick={handleSlackSignUp}
-          >
-            Sign up with Slack
-          </Button>
         </div>
       </CardContent>
-      <CardFooter>
-        <div className="flex justify-center w-full border-t py-4">
-          <p className="text-center text-xs text-neutral-500">
-            Secured by <span className="text-orange-400">better-auth.</span>
-          </p>
-        </div>
-      </CardFooter>
     </Card>
   );
-}
-
-async function convertImageToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
 }

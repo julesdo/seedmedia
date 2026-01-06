@@ -1,5 +1,11 @@
 import { getSessionCookie } from "better-auth/cookies";
 import { NextRequest, NextResponse } from "next/server";
+// Avec localePrefix: 'never', on n'a pas besoin du middleware next-intl
+// La locale est gérée uniquement via getRequestConfig dans i18n/request.ts
+// import createMiddleware from 'next-intl/middleware';
+// import { routing } from './i18n/routing';
+
+// const intlMiddleware = createMiddleware(routing);
 
 const signInRoutes = ["/sign-in", "/sign-up", "/verify-2fa", "/callback", "/oauth-callback"];
 
@@ -8,6 +14,9 @@ const publicRoutes = ["/articles", "/dossiers", "/debats", "/gouvernance", "/act
 
 // Just check cookie, recommended approach
 export default async function proxy(request: NextRequest) {
+  // Pas besoin du middleware next-intl avec localePrefix: 'never'
+  // La locale est détectée côté serveur via getRequestConfig
+
   const sessionCookie = getSessionCookie(request);
   // Uncomment to fetch the session (not recommended)
   // const session = await getSession(request);

@@ -123,3 +123,36 @@ export const getOrganizationFollowers = query({
   },
 });
 
+/**
+ * Récupère le nombre de followers d'un utilisateur
+ */
+export const getUserFollowersCount = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const follows = await ctx.db
+      .query("follows")
+      .withIndex("targetType_targetId", (q) =>
+        q.eq("targetType", "user").eq("targetId", args.userId)
+      )
+      .collect();
+
+    return follows.length;
+  },
+});
+
+/**
+ * Récupère le nombre d'utilisateurs suivis par un utilisateur
+ */
+export const getUserFollowingCount = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const follows = await ctx.db
+      .query("follows")
+      .withIndex("userId", (q) => q.eq("userId", args.userId))
+      .filter((q) => q.eq(q.field("targetType"), "user"))
+      .collect();
+
+    return follows.length;
+  },
+});
+

@@ -1,5 +1,5 @@
 import { DocSidebar } from "@/components/documentation/DocSidebar";
-import { PublicHeader } from "@/components/layout/PublicHeader";
+import { SimplifiedHeader } from "@/components/navigation/SimplifiedHeader";
 
 export default function DocumentationLayout({
   children,
@@ -10,7 +10,7 @@ export default function DocumentationLayout({
     <div className="min-h-screen bg-background">
       <DocSidebar />
       <div className="flex min-h-screen flex-col lg:pl-[280px]">
-        <PublicHeader />
+        <SimplifiedHeader />
         <main className="flex-1">{children}</main>
       </div>
     </div>

@@ -1,7 +1,8 @@
 "use client";
 
 import React from "react";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { useLocale } from 'next-intl';
+import { useLocaleContext } from '@/contexts/LocaleContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,8 +33,15 @@ export function LanguageSelectorCompact({
   variant?: "glass" | "ghost" | "outline";
   size?: "sm" | "default";
 }) {
-  const { language, setLanguage } = useLanguage();
-  const currentLang = LANGUAGES.find((l) => l.code === language) || LANGUAGES[0];
+  const locale = useLocale();
+  const { changeLocale } = useLocaleContext();
+  const currentLang = LANGUAGES.find((l) => l.code === locale) || LANGUAGES[0];
+
+  const handleLocaleChange = async (newLocale: string) => {
+    if (newLocale !== locale) {
+      await changeLocale(newLocale);
+    }
+  };
 
   return (
     <DropdownMenu>
@@ -43,37 +51,30 @@ export function LanguageSelectorCompact({
           <SolarIcon icon="alt-arrow-down-bold" className="h-3.5 w-3.5 icon-gradient-light" />
         </Button>
       </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40">
-                {LANGUAGES.map((lang) => {
-                  const isFrench = lang.code === "fr";
-                  const isDisabled = !isFrench;
-                  
-                  return (
-                    <DropdownMenuItem
-                      key={lang.code}
-                      onClick={() => {
-                        if (!isDisabled) {
-                          setLanguage(lang.code as any);
-                        }
-                      }}
-                      disabled={isDisabled}
-                      className={cn(
-                        isDisabled ? "cursor-not-allowed opacity-50" : "cursor-pointer",
-                        language === lang.code && "bg-accent/10 text-accent"
-                      )}
-                    >
-                      <div className="flex items-center gap-2 w-full">
-                        <span>{lang.flag}</span>
-                        <span className="flex-1">{lang.label}</span>
-                        {language === lang.code && (
-                          <SolarIcon icon="check-circle-bold" className="h-4 w-4 text-accent" />
-                        )}
-                      </div>
-                    </DropdownMenuItem>
-                  );
-                })}
-              </DropdownMenuContent>
+      <DropdownMenuContent align="end" className="w-40">
+        {LANGUAGES.map((lang) => {
+          const isActive = locale === lang.code;
+          
+          return (
+            <DropdownMenuItem
+              key={lang.code}
+              onClick={() => handleLocaleChange(lang.code)}
+              className={cn(
+                "cursor-pointer",
+                isActive && "bg-accent/10 text-accent"
+              )}
+            >
+              <div className="flex items-center gap-2 w-full">
+                <span>{lang.flag}</span>
+                <span className="flex-1">{lang.label}</span>
+                {isActive && (
+                  <SolarIcon icon="check-circle-bold" className="h-4 w-4 text-accent" />
+                )}
+              </div>
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
     </DropdownMenu>
   );
 }
-

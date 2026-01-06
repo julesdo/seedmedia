@@ -68,30 +68,27 @@ export function SolarIcon({ icon, className, ...props }: SolarIconProps) {
     }
   }, [icon, className]);
 
+  // Vérifier si une taille est spécifiée dans className
+  const hasSizeClass = className?.includes('size-') || 
+                       className?.includes('w-') || 
+                       className?.includes('h-') || 
+                       className?.includes('w-full') || 
+                       className?.includes('h-full');
+
   return (
     <span 
       ref={containerRef} 
       className={cn("inline-flex items-center justify-center", className)}
-      style={{
-        width: className?.includes('w-full') || className?.includes('w-') ? undefined : '1em',
-        height: className?.includes('h-full') || className?.includes('h-') ? undefined : '1em',
+      style={hasSizeClass ? undefined : {
+        width: '1em',
+        height: '1em',
       }}
     >
       <Icon 
         icon={`solar:${icon}`} 
         inline={true}
         mode="svg"
-        className={cn(
-          "w-full h-full",
-          // Si h-full ou w-full est dans className, l'icône doit s'adapter
-          className?.includes('h-full') || className?.includes('w-full') 
-            ? "w-full h-full" 
-            : undefined
-        )}
-        style={{
-          width: className?.includes('w-full') ? '100%' : undefined,
-          height: className?.includes('h-full') ? '100%' : undefined,
-        }}
+        className="w-full h-full"
         {...props} 
       />
     </span>

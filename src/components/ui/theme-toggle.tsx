@@ -3,8 +3,8 @@
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { SolarIcon } from "@/components/icons/SolarIcon";
-import { Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface ThemeToggleProps {
   variant?: "default" | "ghost" | "outline";
@@ -33,7 +33,7 @@ export function ThemeToggle({
         className={className}
         disabled
       >
-        <Sun className="h-4 w-4" />
+        <SolarIcon icon="sun-bold" className="size-4" />
       </Button>
     );
   }
@@ -47,11 +47,17 @@ export function ThemeToggle({
       variant={variant}
       size={size}
       onClick={toggleTheme}
-      className={className}
+      className={cn("relative", className)}
       aria-label="Changer le thème"
     >
-      <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-      <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+      <SolarIcon 
+        icon="sun-bold" 
+        className="size-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 absolute" 
+      />
+      <SolarIcon 
+        icon="moon-bold" 
+        className="size-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 absolute" 
+      />
       <span className="sr-only">Changer le thème</span>
     </Button>
   );

@@ -11,6 +11,8 @@ export default defineSchema({
     image: v.optional(v.string()), // URL de l'image de profil (synchronisé avec Better Auth)
     // Niveau et progression
     level: v.number(), // Niveau actuel (défaut 1)
+    seedsBalance: v.optional(v.number()), // Balance de Seeds (défaut 100)
+    seedsToNextLevel: v.optional(v.number()), // Seeds nécessaires pour le niveau suivant
     region: v.optional(v.string()), // Région sélectionnée (ex: "Nouvelle-Aquitaine") - Affichage uniquement
     reachRadius: v.number(), // Rayon d'audience en km (calculé selon niveau) - ⚠️ Affichage uniquement, NE PAS utiliser pour filtrer
     // Localisation
@@ -27,6 +29,7 @@ export default defineSchema({
     bio: v.optional(v.string()),
     username: v.optional(v.string()), // Nom d'utilisateur unique (ex: @johndoe)
     coverImage: v.optional(v.string()), // URL de l'image de couverture
+    isPublic: v.optional(v.boolean()), // Profil public ou privé (défaut: false)
     tags: v.array(v.string()), // Sujets suivis
     links: v.array(
       v.object({
@@ -53,11 +56,13 @@ export default defineSchema({
     expertiseDomains: v.array(v.string()), // Domaines d'expertise (validés)
     // Préférences
     preferredLanguage: v.optional(v.string()), // Langue préférée (ex: "fr", "en", "es")
+    showBreakingNews: v.optional(v.boolean()), // Afficher le bandeau de breaking news (défaut: true)
     // Timestamps
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("email", ["email"])
+    .index("username", ["username"])
     .index("level", ["level"])
     .index("region", ["region"])
     .index("credibilityScore", ["credibilityScore"])
@@ -673,12 +678,14 @@ export default defineSchema({
     targetType: v.union(
       v.literal("article"),
       v.literal("project"),
-      v.literal("action")
+      v.literal("action"),
+      v.literal("decision")
     ),
     targetId: v.union(
       v.id("articles"),
       v.id("projects"),
-      v.id("actions")
+      v.id("actions"),
+      v.id("decisions")
     ),
     // Timestamps
     createdAt: v.number(),
@@ -1266,4 +1273,622 @@ export default defineSchema({
   })
     .index("cacheKey", ["cacheKey"])
     .index("sourceLanguage_targetLanguage", ["sourceLanguage", "targetLanguage"]),
+
+  // ============================================
+  // DECISIONS (Decision Cards - Nouveau système)
+  // ============================================
+  decisions: defineTable({
+    // Identité
+    title: v.string(), // Titre court expliquant l'événement majeur (généré par IA)
+    description: v.string(), // Description courte de l'événement majeur (généré par IA)
+    slug: v.string(), // Unique
+
+    // Décideur
+    decider: v.string(), // Pays, institution, dirigeant
+    deciderType: v.union(
+      v.literal("country"),
+      v.literal("institution"),
+      v.literal("leader"),
+      v.literal("organization")
+    ),
+
+    // Date
+    date: v.number(), // Timestamp de la décision
+
+    // Type d'événement majeur
+    type: v.union(
+      v.literal("law"), // Loi
+      v.literal("sanction"), // Sanction
+      v.literal("tax"), // Taxe
+      v.literal("agreement"), // Accord
+      v.literal("policy"), // Politique
+      v.literal("regulation"), // Réglementation
+      v.literal("crisis"), // Crise (économique, diplomatique, etc.)
+      v.literal("disaster"), // Catastrophe naturelle ou humaine
+      v.literal("conflict"), // Conflit armé, guerre
+      v.literal("discovery"), // Découverte scientifique majeure
+      v.literal("election"), // Élection majeure
+      v.literal("economic_event"), // Événement économique (krach, inflation, etc.)
+      v.literal("other") // Autre
+    ),
+
+    // Texte officiel
+    officialText: v.string(), // Texte de la décision
+    sourceUrl: v.string(), // URL de la source officielle
+    sourceName: v.optional(v.string()), // Nom de la source
+
+    // Domaines impactés
+    impactedDomains: v.array(v.string()), // ["économie", "énergie", "diplomatie", etc.]
+
+    // Indicateurs associés
+    indicatorIds: v.array(v.id("indicators")), // Indicateurs à suivre
+
+    // Question et réponses (générées par bot, objectives)
+    question: v.string(), // Question objective générée automatiquement
+    answer1: v.string(), // "ça marche" (générée par bot)
+    answer2: v.string(), // "ça marche partiellement" (générée par bot)
+    answer3: v.string(), // "ça ne marche pas" (générée par bot)
+
+    // Image libre de droits
+    imageUrl: v.optional(v.string()), // URL de l'image
+    imageSource: v.optional(v.string()), // Source (Unsplash, Pexels, etc.)
+
+    // Création
+    createdBy: v.union(
+      v.literal("bot"), // Créée automatiquement par bot
+      v.literal("manual") // Créée manuellement (admin uniquement)
+    ),
+
+    // Statut
+    status: v.union(
+      v.literal("announced"), // Annoncée (pas encore de suivi)
+      v.literal("tracking"), // En cours de suivi
+      v.literal("resolved") // Résolue
+    ),
+
+    // Métriques
+    anticipationsCount: v.number(), // Nombre d'anticipations
+    sourcesCount: v.number(), // Nombre de sources ajoutées
+
+    // Gamification & Badges (générés par IA)
+    sentiment: v.union(
+      v.literal("positive"), // Événement positif (progrès, découverte, accord)
+      v.literal("negative"), // Événement négatif (crise, conflit, catastrophe)
+      v.literal("neutral") // Événement neutre
+    ),
+    heat: v.number(), // Score de "chaleur" 0-100 (0 = froid/ancien, 100 = brûlant/urgent)
+    emoji: v.string(), // Emoji représentant l'événement (généré par IA)
+    badgeColor: v.string(), // Couleur du badge (hex) : bleu → vert → rouge selon heat
+
+    // Timestamps
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    resolvedAt: v.optional(v.number()),
+  })
+    .index("slug", ["slug"])
+    .index("date", ["date"])
+    .index("status", ["status"])
+    .index("decider", ["decider"])
+    .index("type", ["type"])
+    .index("impactedDomains", ["impactedDomains"]),
+
+  // ============================================
+  // DECISION TRANSLATIONS (Traductions Decision Cards)
+  // ============================================
+  decisionTranslations: defineTable({
+    decisionId: v.id("decisions"),
+    language: v.string(), // Code langue (ex: "en", "es", "de")
+
+    // Traductions
+    title: v.string(),
+    question: v.string(),
+    answer1: v.string(),
+    answer2: v.string(),
+    answer3: v.string(),
+    officialText: v.optional(v.string()),
+
+    // Timestamps
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("decisionId", ["decisionId"])
+    .index("language", ["language"])
+    .index("decisionId_language", ["decisionId", "language"]),
+
+  // ============================================
+  // ANTICIPATIONS (Anticipations des utilisateurs)
+  // ============================================
+  anticipations: defineTable({
+    decisionId: v.id("decisions"),
+    userId: v.id("users"),
+
+    // Issue anticipée
+    issue: v.union(
+      v.literal("works"), // "ça marche"
+      v.literal("partial"), // "ça marche partiellement"
+      v.literal("fails") // "ça ne marche pas"
+    ),
+
+    // Seeds engagés
+    seedsEngaged: v.number(), // Nombre de Seeds engagés
+
+    // Résolution
+    resolved: v.boolean(), // Résolu ou non
+    resolvedAt: v.optional(v.number()),
+    result: v.optional(
+      v.union(
+        v.literal("won"), // Gagné
+        v.literal("lost"), // Perdu
+        v.literal("partial") // Partiel
+      )
+    ),
+    seedsEarned: v.optional(v.number()), // Seeds gagnés (peut être négatif)
+
+    // Timestamps
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("decisionId", ["decisionId"])
+    .index("userId", ["userId"])
+    .index("resolved", ["resolved"])
+    .index("decisionId_userId", ["decisionId", "userId"]),
+
+  // ============================================
+  // INDICATORS (Indicateurs mesurables)
+  // ============================================
+  indicators: defineTable({
+    // Identité
+    name: v.string(), // "Inflation", "Prix du pétrole", "Exportations", etc.
+    slug: v.string(), // Unique
+    description: v.optional(v.string()),
+
+    // Type
+    type: v.union(
+      v.literal("number"), // Nombre absolu
+      v.literal("percentage"), // Pourcentage
+      v.literal("index"), // Indice
+      v.literal("currency") // Monnaie
+    ),
+
+    // Unité
+    unit: v.string(), // "€", "%", "tonnes", etc.
+
+    // Source de données
+    dataSource: v.union(
+      v.literal("api"), // API externe
+      v.literal("dataset"), // Dataset public
+      v.literal("manual") // Saisie manuelle
+    ),
+    sourceUrl: v.optional(v.string()), // URL de la source
+    sourceApi: v.optional(v.string()), // Nom de l'API (ex: "INSEE", "Eurostat")
+
+    // Configuration
+    updateFrequency: v.union(
+      v.literal("daily"), // Quotidien
+      v.literal("weekly"), // Hebdomadaire
+      v.literal("monthly"), // Mensuel
+      v.literal("quarterly"), // Trimestriel
+      v.literal("yearly") // Annuel
+    ),
+
+    // Timestamps
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("slug", ["slug"])
+    .index("name", ["name"]),
+
+  // ============================================
+  // INDICATOR DATA (Données temporelles des indicateurs)
+  // ============================================
+  indicatorData: defineTable({
+    indicatorId: v.id("indicators"),
+    decisionId: v.id("decisions"),
+
+    // Date de la mesure
+    date: v.number(), // Timestamp
+
+    // Valeur
+    value: v.number(), // Valeur mesurée
+
+    // Source
+    source: v.string(), // Source de la donnée
+    sourceUrl: v.optional(v.string()), // URL de la source
+
+    // Type de mesure
+    measureType: v.union(
+      v.literal("baseline"), // Valeur avant décision
+      v.literal("30d"), // 30 jours après
+      v.literal("90d"), // 90 jours après
+      v.literal("180d"), // 180 jours après
+      v.literal("365d") // 365 jours après
+    ),
+
+    // Timestamps
+    createdAt: v.number(),
+  })
+    .index("indicatorId", ["indicatorId"])
+    .index("decisionId", ["decisionId"])
+    .index("date", ["date"])
+    .index("measureType", ["measureType"])
+    .index("indicatorId_decisionId_date", ["indicatorId", "decisionId", "date"]),
+
+  // ============================================
+  // RESOLUTIONS (Résolutions automatiques)
+  // ============================================
+  resolutions: defineTable({
+    decisionId: v.id("decisions"),
+
+    // Issue résolue
+    issue: v.union(
+      v.literal("works"), // "ça marche"
+      v.literal("partial"), // "ça marche partiellement"
+      v.literal("fails") // "ça ne marche pas"
+    ),
+
+    // Confiance
+    confidence: v.number(), // Niveau de confiance (0-100)
+
+    // Méthode
+    method: v.string(), // Méthode de calcul utilisée
+    details: v.any(), // Détails du calcul (JSON)
+
+    // Indicateurs utilisés
+    indicatorIds: v.array(v.id("indicators")),
+
+    // Variations calculées
+    variations: v.array(
+      v.object({
+        indicatorId: v.id("indicators"),
+        baseline: v.number(), // Valeur avant
+        current: v.number(), // Valeur actuelle
+        variation: v.number(), // Variation (absolue)
+        variationPercent: v.number(), // Variation (%)
+      })
+    ),
+
+    // Timestamps
+    resolvedAt: v.number(),
+    createdAt: v.number(),
+  })
+    .index("decisionId", ["decisionId"])
+    .index("resolvedAt", ["resolvedAt"]),
+
+  // ============================================
+  // SEEDS TRANSACTIONS (Transactions de Seeds - Simplifié)
+  // ============================================
+  seedsTransactions: defineTable({
+    userId: v.id("users"),
+
+    // Type de transaction (SIMPLIFIÉ)
+    type: v.union(
+      v.literal("earned"), // Gagné
+      v.literal("lost") // Perdu
+    ),
+
+    // Montant
+    amount: v.number(), // Montant (positif pour earned, négatif pour lost)
+
+    // Raison
+    reason: v.string(), // "anticipation_won", "anticipation_lost", "source_added", "correction_approved"
+
+    // Référence
+    relatedId: v.optional(v.string()), // ID lié (anticipation, source, etc.)
+    relatedType: v.optional(v.string()), // "anticipation", "source", "correction"
+
+    // Niveau avant/après (pour affichage)
+    levelBefore: v.number(),
+    levelAfter: v.number(),
+
+    // Timestamps
+    createdAt: v.number(),
+  })
+    .index("userId", ["userId"])
+    .index("type", ["type"])
+    .index("createdAt", ["createdAt"])
+    .index("userId_createdAt", ["userId", "createdAt"]),
+
+  // ============================================
+  // SOURCES (Sources factuelles ajoutées par utilisateurs)
+  // ============================================
+  sources: defineTable({
+    decisionId: v.id("decisions"),
+    addedBy: v.id("users"),
+
+    // Source
+    title: v.string(),
+    url: v.string(),
+    type: v.union(
+      v.literal("official"), // Source officielle
+      v.literal("news"), // Article de presse
+      v.literal("data"), // Données publiques
+      v.literal("other") // Autre
+    ),
+
+    // Validation
+    validated: v.boolean(), // Validée ou non
+    validatedBy: v.optional(v.id("users")),
+    validatedAt: v.optional(v.number()),
+
+    // Récompense
+    seedsAwarded: v.optional(v.number()), // Seeds gagnés
+
+    // Timestamps
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("decisionId", ["decisionId"])
+    .index("addedBy", ["addedBy"])
+    .index("validated", ["validated"]),
+
+  // ============================================
+  // CORRECTIONS (Corrections de données)
+  // ============================================
+  corrections: defineTable({
+    decisionId: v.id("decisions"),
+    indicatorDataId: v.optional(v.id("indicatorData")), // Si correction de donnée
+    proposedBy: v.id("users"),
+
+    // Correction
+    field: v.string(), // Champ corrigé
+    oldValue: v.any(), // Ancienne valeur
+    newValue: v.any(), // Nouvelle valeur
+    reason: v.string(), // Raison de la correction
+
+    // Validation
+    status: v.union(
+      v.literal("pending"), // En attente
+      v.literal("approved"), // Approuvée
+      v.literal("rejected") // Rejetée
+    ),
+
+    // Votes communautaires
+    votesFor: v.number(),
+    votesAgainst: v.number(),
+
+    // Validation
+    validatedBy: v.optional(v.id("users")),
+    validatedAt: v.optional(v.number()),
+
+    // Récompense
+    seedsAwarded: v.optional(v.number()), // Seeds gagnés
+
+    // Timestamps
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("decisionId", ["decisionId"])
+    .index("proposedBy", ["proposedBy"])
+    .index("status", ["status"]),
+
+  // ============================================
+  // REPORTS (Signalisations d'incohérences)
+  // ============================================
+  reports: defineTable({
+    decisionId: v.id("decisions"),
+    reportedBy: v.id("users"),
+
+    // Signalisation
+    type: v.union(
+      v.literal("inconsistency"), // Incohérence
+      v.literal("error"), // Erreur
+      v.literal("spam"), // Spam
+      v.literal("other") // Autre
+    ),
+
+    // Description
+    description: v.string(),
+
+    // Statut
+    status: v.union(
+      v.literal("pending"), // En attente
+      v.literal("reviewed"), // Examiné
+      v.literal("resolved"), // Résolu
+      v.literal("dismissed") // Rejeté
+    ),
+
+    // Traitement
+    reviewedBy: v.optional(v.id("users")),
+    reviewedAt: v.optional(v.number()),
+
+    // Timestamps
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("decisionId", ["decisionId"])
+    .index("reportedBy", ["reportedBy"])
+    .index("status", ["status"]),
+
+  // ============================================
+  // NEWS ITEMS (Actualités agrégées automatiquement)
+  // ============================================
+  newsItems: defineTable({
+    decisionId: v.id("decisions"),
+
+    // Actualité
+    title: v.string(),
+    url: v.string(),
+    source: v.string(), // Nom du média
+    publishedAt: v.number(), // Timestamp
+
+    // Résumé automatique
+    summary: v.optional(v.string()),
+
+    // Score de pertinence (calculé par IA)
+    relevanceScore: v.number(), // 0-100
+
+    // Métadonnées
+    author: v.optional(v.string()),
+    imageUrl: v.optional(v.string()),
+
+    // Timestamps
+    createdAt: v.number(),
+  })
+    .index("decisionId", ["decisionId"])
+    .index("publishedAt", ["publishedAt"])
+    .index("relevanceScore", ["relevanceScore"])
+    .index("decisionId_relevanceScore", ["decisionId", "relevanceScore"]),
+
+  // ============================================
+  // INSTAGRAM POSTS (Posts Instagram publiés)
+  // ============================================
+  instagramPosts: defineTable({
+    // Post Instagram
+    instagramPostId: v.string(), // ID du post Instagram
+    mediaId: v.optional(v.string()), // ID du média Instagram
+    accountId: v.optional(v.id("instagramAccounts")), // Compte Instagram utilisé
+
+    // Decision Cards incluses
+    decisionIds: v.array(v.id("decisions")), // Decision Cards dans le carrousel
+
+    // Contenu
+    caption: v.string(), // Légende du post
+    carouselImages: v.array(v.string()), // URLs des images du carrousel
+
+    // Métriques
+    impressions: v.number(),
+    reach: v.number(),
+    engagement: v.number(), // Likes + comments + shares
+    clicks: v.number(), // Clics vers l'app
+
+    // Statut
+    status: v.union(
+      v.literal("scheduled"), // Programmé
+      v.literal("published"), // Publié
+      v.literal("failed") // Échec
+    ),
+
+    // Timestamps
+    scheduledAt: v.optional(v.number()),
+    publishedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("instagramPostId", ["instagramPostId"])
+    .index("status", ["status"])
+    .index("publishedAt", ["publishedAt"])
+    .index("decisionIds", ["decisionIds"])
+    .index("accountId", ["accountId"]),
+
+  // ============================================
+  // INSTAGRAM ACCOUNTS (Comptes Instagram par pays/langue)
+  // ============================================
+  instagramAccounts: defineTable({
+    // Identité
+    accountName: v.string(), // Nom du compte Instagram
+    accountId: v.string(), // ID Instagram officiel
+    country: v.string(), // Code pays (ex: "FR", "US", "ES")
+    language: v.string(), // Code langue (ex: "fr", "en", "es")
+
+    // Credentials (stockés de manière sécurisée)
+    accessToken: v.optional(v.string()), // Token d'accès Instagram
+    refreshToken: v.optional(v.string()), // Token de rafraîchissement
+
+    // Statut
+    active: v.boolean(), // Compte actif ou non
+    lastPostAt: v.optional(v.number()), // Dernier post publié
+
+    // Timestamps
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("accountId", ["accountId"])
+    .index("country", ["country"])
+    .index("language", ["language"])
+    .index("active", ["active"]),
+
+  // ============================================
+  // BOTS (Personnification des bots automatisés)
+  // ============================================
+  bots: defineTable({
+    // Identité
+    name: v.string(), // Nom du bot (ex: "Détecteur", "Résolveur")
+    slug: v.string(), // Slug unique pour l'URL (ex: "detecteur", "resolveur")
+    description: v.string(), // Description du bot
+    bio: v.optional(v.string()), // Bio plus détaillée
+    avatar: v.optional(v.string()), // URL de l'avatar du bot
+    color: v.optional(v.string()), // Couleur principale du bot (hex)
+    
+    // Fonctionnalités
+    functionName: v.string(), // Nom de la fonction Convex (ex: "detectDecisions")
+    category: v.union(
+      v.literal("detection"), // Détection de décisions
+      v.literal("generation"), // Génération de contenu
+      v.literal("resolution"), // Résolution automatique
+      v.literal("tracking"), // Suivi d'indicateurs
+      v.literal("aggregation"), // Agrégation d'actualités
+      v.literal("other") // Autre
+    ),
+    
+    // Statistiques
+    decisionsCreated: v.number(), // Nombre de décisions créées
+    decisionsResolved: v.number(), // Nombre de décisions résolues
+    newsAggregated: v.number(), // Nombre d'actualités agrégées
+    indicatorsTracked: v.number(), // Nombre d'indicateurs suivis
+    lastActivityAt: v.optional(v.number()), // Dernière activité
+    
+    // Statut
+    active: v.boolean(), // Bot actif ou non
+    status: v.union(
+      v.literal("active"), // Actif et fonctionnel
+      v.literal("paused"), // En pause
+      v.literal("maintenance") // En maintenance
+    ),
+    
+    // Timestamps
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("slug", ["slug"])
+    .index("category", ["category"])
+    .index("active", ["active"])
+    .index("status", ["status"]),
+
+  // ============================================
+  // BOT LOGS (Logs d'activité des bots)
+  // ============================================
+  botLogs: defineTable({
+    botId: v.id("bots"), // Référence au bot
+    level: v.union(
+      v.literal("info"), // Information
+      v.literal("success"), // Succès
+      v.literal("warning"), // Avertissement
+      v.literal("error") // Erreur
+    ),
+    message: v.string(), // Message du log
+    details: v.optional(v.any()), // Détails supplémentaires (JSON)
+    functionName: v.optional(v.string()), // Nom de la fonction exécutée
+    executionTime: v.optional(v.number()), // Temps d'exécution en ms
+    createdAt: v.number(), // Date de création
+  })
+    .index("botId", ["botId"])
+    .index("botId_createdAt", ["botId", "createdAt"])
+    .index("level", ["level"]),
+
+  // ============================================
+  // BOT METRICS (Métriques temporelles des bots)
+  // ============================================
+  botMetrics: defineTable({
+    botId: v.id("bots"), // Référence au bot
+    timestamp: v.number(), // Timestamp de la métrique
+    metricType: v.union(
+      v.literal("decisionsCreated"), // Décisions créées
+      v.literal("decisionsResolved"), // Décisions résolues
+      v.literal("newsAggregated"), // Actualités agrégées
+      v.literal("indicatorsTracked"), // Indicateurs suivis
+      v.literal("executionTime"), // Temps d'exécution
+      v.literal("errorCount") // Nombre d'erreurs
+    ),
+    value: v.number(), // Valeur de la métrique
+    period: v.union(
+      v.literal("hour"), // Par heure
+      v.literal("day"), // Par jour
+      v.literal("week") // Par semaine
+    ),
+    createdAt: v.number(), // Date de création
+  })
+    .index("botId", ["botId"])
+    .index("botId_timestamp", ["botId", "timestamp"])
+    .index("botId_metricType", ["botId", "metricType"])
+    .index("botId_metricType_timestamp", ["botId", "metricType", "timestamp"]),
 });

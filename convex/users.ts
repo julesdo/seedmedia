@@ -1,12 +1,11 @@
-import { query, mutation, internalMutation } from "./_generated/server";
+import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { betterAuthComponent } from "./auth";
 import { Id } from "./_generated/dataModel";
-import { internal } from "./_generated/api";
+import { betterAuthComponent } from "./auth";
 
 /**
- * Récupère l'utilisateur connecté avec toutes ses données
- * Crée automatiquement l'utilisateur dans la table users s'il n'existe pas encore
+ * Récupère l'utilisateur actuellement connecté
+ * Compatible avec l'ancienne API pour éviter les erreurs
  */
 export const getCurrentUser = query({
   args: {},
@@ -16,51 +15,33 @@ export const getCurrentUser = query({
       return null;
     }
 
-    let appUser = await ctx.db
+    const appUser = await ctx.db
       .query("users")
       .withIndex("email", (q) => q.eq("email", betterAuthUser.email))
       .first();
 
-    // Si l'utilisateur n'existe pas encore dans la table users
-    // (peut arriver si le hook onCreateUser n'a pas encore été appelé ou a échoué)
     if (!appUser) {
-      // On ne peut pas faire d'insert dans une query, donc on retourne juste Better Auth data
-      // avec des valeurs par défaut pour que l'UI fonctionne
-      // La sidebar appellera ensureUserExists() automatiquement
-      return {
-        _id: undefined as any, // Pas d'ID car pas encore dans la DB
-        email: betterAuthUser.email,
-        name: betterAuthUser.name || betterAuthUser.email.split("@")[0] || "Utilisateur",
-        image: betterAuthUser.image || null,
-        level: 1,
-        reachRadius: 10,
-        tags: [],
-        links: [],
-        profileCompletion: 0,
-        premiumTier: "free" as const,
-        boostCredits: 0,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        emailVerified: betterAuthUser.emailVerified || false,
-      };
+      return null;
     }
 
-    // Merge app user data with Better Auth user data
-    // Pour name et image, on utilise la valeur de la table users si elle existe, sinon Better Auth
+    // Prioriser le nom de appUser s'il existe et est différent de celui de Better Auth
+    // Cela permet à l'utilisateur de modifier son nom dans l'app même si Better Auth en a un
+    const displayName = appUser.name && appUser.name !== betterAuthUser.name 
+      ? appUser.name 
+      : (betterAuthUser.name || appUser.name);
+
     return {
       ...appUser,
-      email: betterAuthUser.email,
-      name: appUser.name || betterAuthUser.name || appUser.email.split("@")[0],
-      image: appUser.image || betterAuthUser.image || null,
-      emailVerified: betterAuthUser.emailVerified || false,
+      ...betterAuthUser,
+      name: displayName, // Utiliser le nom prioritaire
+      _id: appUser._id,
     };
   },
 });
 
 /**
- * Helper function pour garantir qu'un utilisateur existe dans la table users
- * Peut être utilisée dans les mutations et internalMutations
- * @internal - Utilisée en interne, utiliser ensureUserExists pour les appels externes
+ * Helper pour s'assurer qu'un utilisateur existe (utilisé par les mutations)
+ * Crée l'utilisateur s'il n'existe pas encore
  */
 export async function ensureUserExistsHelper(ctx: any): Promise<Id<"users">> {
   const betterAuthUser = await betterAuthComponent.safeGetAuthUser(ctx);
@@ -68,283 +49,92 @@ export async function ensureUserExistsHelper(ctx: any): Promise<Id<"users">> {
     throw new Error("Not authenticated");
   }
 
+  // Vérifier si l'utilisateur existe déjà
   let appUser = await ctx.db
     .query("users")
     .withIndex("email", (q: any) => q.eq("email", betterAuthUser.email))
     .first();
 
-  // Si l'utilisateur n'existe pas, le créer
-  if (!appUser) {
-    const now = Date.now();
-    const userData: any = {
-      email: betterAuthUser.email,
-      level: 1,
-      reachRadius: 10,
-      tags: [],
-      links: [],
-      profileCompletion: 0,
-      premiumTier: "free",
-      boostCredits: 0,
-      credibilityScore: 0,
-      role: "explorateur",
-      expertiseDomains: [],
-      createdAt: now,
-      updatedAt: now,
-    };
-    
-    // Ajouter name et image depuis Better Auth si disponibles
-    if (betterAuthUser.name) {
-      userData.name = betterAuthUser.name;
-    }
-    if (betterAuthUser.image) {
-      userData.image = betterAuthUser.image;
-    }
-    
-    const userId = await ctx.db.insert("users", userData);
-    
-    // Initialiser les missions pour le nouvel utilisateur
-    try {
-      await ctx.runMutation(internal.missions.initializeMissionsInternal, {
-        userId,
+    if (!appUser) {
+      // Créer l'utilisateur s'il n'existe pas
+      const now = Date.now();
+      const userId = await ctx.db.insert("users", {
+        email: betterAuthUser.email,
+        name: betterAuthUser.name || null,
+        image: betterAuthUser.image || null,
+        level: 1,
+        seedsBalance: 100, // Seeds de départ
+        seedsToNextLevel: 100, // Seeds nécessaires pour passer au niveau 2
+        preferredLanguage: "fr",
+        role: "explorateur",
+        isPublic: false, // Profil privé par défaut
+        createdAt: now,
+        updatedAt: now,
       });
-    } catch (error) {
-      // Ignorer les erreurs d'initialisation des missions (peut ne pas exister ou échouer)
-      console.error("Erreur initialisation missions:", error);
+      return userId;
     }
-    
-    return userId;
-  }
-
-  // Sinon, synchroniser les données depuis Better Auth si nécessaire
-  const updates: any = {
-    updatedAt: Date.now(),
-  };
-  
-  // Synchroniser l'email si nécessaire
-  if (appUser.email !== betterAuthUser.email) {
-    updates.email = betterAuthUser.email;
-  }
-  
-  // Synchroniser le nom si l'utilisateur n'en a pas ou si Better Auth en a un
-  if (betterAuthUser.name && (!appUser.name || appUser.name === appUser.email.split("@")[0])) {
-    updates.name = betterAuthUser.name;
-  }
-  
-  // Synchroniser l'image si l'utilisateur n'en a pas et que Better Auth en a une
-  if (betterAuthUser.image && !appUser.image) {
-    updates.image = betterAuthUser.image;
-  }
-  
-  // Appliquer les mises à jour si nécessaire
-  if (Object.keys(updates).length > 1) { // Plus que updatedAt
-    await ctx.db.patch(appUser._id, updates);
-  }
 
   return appUser._id;
 }
 
 /**
- * Crée ou synchronise l'utilisateur dans la table users
- * À appeler après une connexion OAuth pour s'assurer que l'utilisateur existe
+ * Récupère un utilisateur par son ID
  */
-export const ensureUserExists = mutation({
-  args: {},
-  handler: async (ctx) => {
-    return await ensureUserExistsHelper(ctx);
+export const getUserById = query({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.userId);
   },
 });
 
 /**
- * Récupère un profil utilisateur public (amélioré avec Better Auth)
+ * Met à jour la balance de Seeds et le niveau d'un utilisateur
  */
-export const getUserPublic = query({
-  args: { userId: v.id("users") },
+export const updateUserSeeds = mutation({
+  args: {
+    userId: v.id("users"),
+    seedsBalance: v.number(),
+    level: v.number(),
+    seedsToNextLevel: v.number(),
+  },
   handler: async (ctx, args) => {
-    const user = await ctx.db.get(args.userId);
-    if (!user) {
-      return null;
+    const updateData: any = {
+      level: args.level,
+      updatedAt: Date.now(),
+    };
+    
+    if (args.seedsBalance !== undefined) {
+      updateData.seedsBalance = args.seedsBalance;
+    }
+    
+    if (args.seedsToNextLevel !== undefined) {
+      updateData.seedsToNextLevel = args.seedsToNextLevel;
     }
 
-    // Vérifier si c'est le profil de l'utilisateur connecté
-    const betterAuthUser = await betterAuthComponent.safeGetAuthUser(ctx as any);
-    const isOwnProfile = betterAuthUser ? await ctx.db
-      .query("users")
-      .withIndex("email", (q) => q.eq("email", betterAuthUser.email))
-      .first()
-      .then((appUser) => appUser?._id === args.userId) : false;
+    await ctx.db.patch(args.userId, updateData);
 
-    // Récupérer les données Better Auth pour le nom et l'image
-    // Pour l'instant, on utilise l'email comme nom par défaut
-    const name = user.email.split("@")[0] || "Utilisateur";
-    const image = isOwnProfile && betterAuthUser?.image ? betterAuthUser.image : null;
-
-    return {
-      ...user,
-      name,
-      image,
-      isOwnProfile,
-      // Données publiques uniquement
-      email: isOwnProfile ? user.email : undefined, // Email seulement si c'est son propre profil
-    };
+    return args.userId;
   },
 });
 
 /**
- * Récupère un profil utilisateur public (version simple, pour compatibilité)
- * Délègue à getUserPublic
+ * Met à jour le profil utilisateur (nom, bio, etc.)
  */
-export const getUserProfile = query({
-  args: { userId: v.id("users") },
+export const updateUserProfile = mutation({
+  args: {
+    name: v.optional(v.string()),
+    username: v.optional(v.string()),
+    bio: v.optional(v.string()),
+    isPublic: v.optional(v.boolean()),
+    showBreakingNews: v.optional(v.boolean()),
+    preferredLanguage: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
-    const user = await ctx.db.get(args.userId);
-    if (!user) {
-      return null;
-    }
-
-    // Vérifier si c'est le profil de l'utilisateur connecté
-    const betterAuthUser = await betterAuthComponent.safeGetAuthUser(ctx as any);
-    const isOwnProfile = betterAuthUser ? await ctx.db
-      .query("users")
-      .withIndex("email", (q) => q.eq("email", betterAuthUser.email))
-      .first()
-      .then((appUser) => appUser?._id === args.userId) : false;
-
-    // Récupérer les données Better Auth pour le nom et l'image
-    const name = user.email.split("@")[0] || "Utilisateur";
-    const image = isOwnProfile && betterAuthUser?.image ? betterAuthUser.image : null;
-
-    return {
-      ...user,
-      name,
-      image,
-      isOwnProfile,
-      // Données publiques uniquement
-      email: isOwnProfile ? user.email : undefined,
-    };
-  },
-});
-
-/**
- * Récupère les statistiques publiques d'un utilisateur
- */
-export const getUserStats = query({
-  args: { userId: v.id("users") },
-  handler: async (ctx, args) => {
-    // Compter les followers
-    const followers = await ctx.db
-      .query("follows")
-      .withIndex("targetType_targetId", (q) =>
-        q.eq("targetType", "user").eq("targetId", args.userId)
-      )
-      .collect();
-
-    // Articles publiés
-    const articles = await ctx.db
-      .query("articles")
-      .withIndex("authorId", (q) => q.eq("authorId", args.userId))
-      .filter((q) => q.eq(q.field("status"), "published"))
-      .collect();
-
-    // Projets (si l'utilisateur a des projets)
-    const projects = await ctx.db
-      .query("projects")
-      .withIndex("authorId", (q) => q.eq("authorId", args.userId))
-      .collect();
-
-    // Actions (si l'utilisateur a des actions)
-    const actions = await ctx.db
-      .query("actions")
-      .withIndex("authorId", (q) => q.eq("authorId", args.userId))
-      .filter((q) => q.eq(q.field("status"), "active"))
-      .collect();
-
-    // Corrections approuvées
-    const corrections = await ctx.db
-      .query("articleCorrections")
-      .collect();
-    const approvedCorrections = corrections.filter(
-      (c) => c.proposerId === args.userId && c.status === "approved"
-    );
-
-    return {
-      followersCount: followers.length,
-      articlesCount: articles.length,
-      projectsCount: projects.length,
-      actionsCount: actions.length,
-      correctionsCount: approvedCorrections.length,
-      credibilityScore: (await ctx.db.get(args.userId))?.credibilityScore || 0,
-    };
-  },
-});
-
-/**
- * Récupère les articles publics d'un utilisateur
- */
-export const getUserArticlesPublic = query({
-  args: { userId: v.id("users") },
-  handler: async (ctx, args) => {
-    const articles = await ctx.db
-      .query("articles")
-      .withIndex("authorId", (q) => q.eq("authorId", args.userId))
-      .filter((q) => q.eq(q.field("status"), "published"))
-      .collect();
-
-    return articles.sort((a, b) => (b.publishedAt || b.createdAt) - (a.publishedAt || a.createdAt));
-  },
-});
-
-/**
- * Récupère les corrections publiques d'un utilisateur avec les slugs des articles
- */
-export const getUserCorrectionsPublic = query({
-  args: { userId: v.id("users") },
-  handler: async (ctx, args) => {
-    const corrections = await ctx.db
-      .query("articleCorrections")
-      .collect();
-
-    const userCorrections = corrections.filter((c) => c.proposerId === args.userId);
-
-    // Enrichir avec les slugs des articles
-    const correctionsWithSlugs = await Promise.all(
-      userCorrections.map(async (correction) => {
-        const article = await ctx.db.get(correction.articleId);
-        return {
-          ...correction,
-          articleSlug: article?.slug || null,
-        };
-      })
-    );
-
-    return correctionsWithSlugs.sort((a, b) => b.createdAt - a.createdAt);
-  },
-});
-
-/**
- * Récupère uniquement le nom d'un utilisateur (pour le breadcrumb)
- */
-export const getUserName = query({
-  args: { userId: v.id("users") },
-  handler: async (ctx, args) => {
-    const user = await ctx.db.get(args.userId);
-    if (!user) {
-      return null;
-    }
-    // Utiliser l'email comme nom par défaut (le nom est dans Better Auth, mais on utilise l'email ici pour simplifier)
-    const name = user.email.split("@")[0] || "Utilisateur";
-    return { name };
-  },
-});
-
-/**
- * Récupère tous les utilisateurs (pour les sélecteurs, réservé aux éditeurs)
- */
-export const getAllUsers = query({
-  args: {},
-  handler: async (ctx) => {
     const betterAuthUser = await betterAuthComponent.safeGetAuthUser(ctx as any);
     if (!betterAuthUser) {
-      return [];
+      throw new Error("Not authenticated");
     }
 
     const appUser = await ctx.db
@@ -352,312 +142,200 @@ export const getAllUsers = query({
       .withIndex("email", (q) => q.eq("email", betterAuthUser.email))
       .first();
 
-    // Seuls les éditeurs peuvent voir tous les utilisateurs
-    if (!appUser || appUser.role !== "editeur") {
-      return [];
-    }
-
-    const users = await ctx.db.query("users").collect();
-    return users.map((user) => ({
-      _id: user._id,
-      email: user.email,
-      name: user.name || user.email.split("@")[0],
-    }));
-  },
-});
-
-/**
- * Calcule le rayon d'audience selon le niveau
- */
-export const getUserReach = query({
-  args: { userId: v.id("users") },
-  handler: async (ctx, args) => {
-    const user = await ctx.db.get(args.userId);
-    if (!user) {
-      return null;
-    }
-
-    // Calcul du rayon selon niveau
-    const reachByLevel: Record<number, number> = {
-      1: 10,   // 10km
-      2: 25,   // 25km
-      3: 50,   // 50km (régional)
-      4: 100,  // 100km
-      5: 200,  // 200km+
-    };
-
-    const reachRadius = reachByLevel[user.level] || 10;
-
-    return {
-      level: user.level,
-      reachRadius,
-      region: user.region,
-      location: user.location,
-    };
-  },
-});
-
-/**
- * Met à jour le profil utilisateur
- */
-export const updateProfile = mutation({
-  args: {
-    name: v.optional(v.string()), // Nom d'affichage (synchronisé avec Better Auth si possible)
-    username: v.optional(v.string()), // Nom d'utilisateur unique
-    image: v.optional(v.string()), // URL de l'image de profil (synchronisé avec Better Auth si possible)
-    coverImage: v.optional(v.string()), // URL de l'image de couverture
-    bio: v.optional(v.string()),
-    location: v.optional(
-      v.object({
-        lat: v.number(),
-        lng: v.number(),
-        city: v.optional(v.string()),
-        region: v.optional(v.string()),
-        country: v.optional(v.string()),
-      })
-    ),
-    tags: v.optional(v.array(v.string())),
-    links: v.optional(
-      v.array(
-        v.object({
-          type: v.string(),
-          url: v.string(),
-        })
-      )
-    ),
-  },
-  handler: async (ctx, args) => {
-    const betterAuthUser = await betterAuthComponent.safeGetAuthUser(ctx as any);
-    if (!betterAuthUser) {
-      throw new Error("Not authenticated");
-    }
-
-    let appUser = await ctx.db
-      .query("users")
-      .withIndex("email", (q) => q.eq("email", betterAuthUser.email))
-      .first();
-
     if (!appUser) {
-      // Créer l'utilisateur s'il n'existe pas
-      const now = Date.now();
-      const userId = await ctx.db.insert("users", {
-        email: betterAuthUser.email,
-        level: 1,
-        reachRadius: 10,
-        tags: [],
-        links: [],
-        profileCompletion: 0,
-        premiumTier: "free",
-        boostCredits: 0,
-        credibilityScore: 0,
-        role: "explorateur",
-        expertiseDomains: [],
-        createdAt: now,
-        updatedAt: now,
-      });
-      appUser = await ctx.db.get(userId);
-      if (!appUser) {
-        throw new Error("Failed to create user");
-      }
+      throw new Error("User not found");
     }
 
     const updates: any = {
       updatedAt: Date.now(),
     };
 
-    // Note: name et image sont stockés localement mais Better Auth reste la source de vérité
-    // Pour une synchronisation complète, il faudrait utiliser l'API Better Auth
     if (args.name !== undefined) {
-      // On pourrait synchroniser avec Better Auth ici, mais pour l'instant on stocke juste localement
       updates.name = args.name;
     }
-    if (args.username !== undefined) updates.username = args.username;
-    if (args.image !== undefined) {
-      // On pourrait synchroniser avec Better Auth ici
-      updates.image = args.image;
+
+    if (args.username !== undefined) {
+      // Nettoyer le username (enlever @ si présent, mettre en minuscules, enlever espaces)
+      const cleanUsername = args.username
+        .trim()
+        .toLowerCase()
+        .replace(/^@/, "")
+        .replace(/[^a-z0-9_]/g, ""); // Seulement lettres, chiffres et underscore
+
+      if (cleanUsername.length === 0) {
+        throw new Error("Le nom d'utilisateur ne peut pas être vide");
+      }
+
+      if (cleanUsername.length < 3) {
+        throw new Error("Le nom d'utilisateur doit contenir au moins 3 caractères");
+      }
+
+      if (cleanUsername.length > 30) {
+        throw new Error("Le nom d'utilisateur ne peut pas dépasser 30 caractères");
+      }
+
+      // Vérifier l'unicité (sauf si c'est le même username que l'utilisateur actuel)
+      if (cleanUsername !== appUser.username) {
+        const existingUser = await ctx.db
+          .query("users")
+          .withIndex("username", (q) => q.eq("username", cleanUsername))
+          .first();
+
+        if (existingUser) {
+          throw new Error("Ce nom d'utilisateur est déjà pris");
+        }
+      }
+
+      updates.username = cleanUsername;
     }
-    if (args.coverImage !== undefined) updates.coverImage = args.coverImage;
-    if (args.bio !== undefined) updates.bio = args.bio;
-    if (args.location !== undefined) updates.location = args.location;
-    if (args.tags !== undefined) updates.tags = args.tags;
-    if (args.links !== undefined) updates.links = args.links;
+
+    if (args.bio !== undefined) {
+      updates.bio = args.bio;
+    }
+
+    if (args.isPublic !== undefined) {
+      updates.isPublic = args.isPublic;
+    }
+
+    if (args.showBreakingNews !== undefined) {
+      updates.showBreakingNews = args.showBreakingNews;
+    }
+
+    if (args.preferredLanguage !== undefined) {
+      updates.preferredLanguage = args.preferredLanguage;
+    }
 
     await ctx.db.patch(appUser._id, updates);
 
-    // Recalculer le % de complétion
-    const updatedUser = await ctx.db.get(appUser._id);
-    if (updatedUser) {
-      let completion = 0;
-      const fields = [
-        updatedUser.name || betterAuthUser.name,
-        updatedUser.image || betterAuthUser.image,
-        updatedUser.bio,
-        updatedUser.location,
-        updatedUser.tags.length > 0,
-        updatedUser.links.length > 0,
-        updatedUser.coverImage,
-      ];
-      const completedFields = fields.filter(Boolean).length;
-      completion = Math.round((completedFields / fields.length) * 100);
-      
-      await ctx.db.patch(appUser._id, {
-        profileCompletion: completion,
-      });
-    }
-
     return { success: true };
   },
 });
 
 /**
- * Change la région sélectionnée
+ * Vérifie si un nom d'utilisateur est disponible
  */
-export const updateRegion = mutation({
+export const isUsernameAvailable = query({
   args: {
-    region: v.string(),
+    username: v.string(),
   },
   handler: async (ctx, args) => {
     const betterAuthUser = await betterAuthComponent.safeGetAuthUser(ctx as any);
-    if (!betterAuthUser) {
-      throw new Error("Not authenticated");
+    const currentUser = betterAuthUser
+      ? await ctx.db
+          .query("users")
+          .withIndex("email", (q) => q.eq("email", betterAuthUser.email))
+          .first()
+      : null;
+
+    // Nettoyer le username
+    const cleanUsername = args.username
+      .trim()
+      .toLowerCase()
+      .replace(/^@/, "")
+      .replace(/[^a-z0-9_]/g, "");
+
+    if (cleanUsername.length < 3) {
+      return { available: false, reason: "too_short" };
     }
 
-    let appUser = await ctx.db
+    if (cleanUsername.length > 30) {
+      return { available: false, reason: "too_long" };
+    }
+
+    // Vérifier si le username existe déjà
+    const existingUser = await ctx.db
       .query("users")
-      .withIndex("email", (q) => q.eq("email", betterAuthUser.email))
+      .withIndex("username", (q) => q.eq("username", cleanUsername))
       .first();
 
-    if (!appUser) {
-      // Créer l'utilisateur s'il n'existe pas
-      const now = Date.now();
-      const userId = await ctx.db.insert("users", {
-        email: betterAuthUser.email,
-        level: 1,
-        reachRadius: 10,
-        tags: [],
-        links: [],
-        profileCompletion: 0,
-        premiumTier: "free",
-        boostCredits: 0,
-        credibilityScore: 0,
-        role: "explorateur",
-        expertiseDomains: [],
-        createdAt: now,
-        updatedAt: now,
-      });
-      appUser = await ctx.db.get(userId);
-      if (!appUser) {
-        throw new Error("Failed to create user");
-      }
+    // Si c'est le username actuel de l'utilisateur, il est disponible
+    if (existingUser && currentUser && existingUser._id === currentUser._id) {
+      return { available: true };
     }
 
-    await ctx.db.patch(appUser._id, {
-      region: args.region,
-      updatedAt: Date.now(),
-    });
+    if (existingUser) {
+      return { available: false, reason: "taken" };
+    }
 
-    return { success: true };
+    return { available: true };
   },
 });
 
 /**
- * Recalcule le % de complétion du profil
+ * Récupère un utilisateur par son username
  */
-export const calculateProfileCompletion = mutation({
+export const getUserByUsername = query({
+  args: {
+    username: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Enlever le @ si présent
+    const cleanUsername = args.username.startsWith("@") 
+      ? args.username.slice(1) 
+      : args.username;
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("username", (q) => q.eq("username", cleanUsername))
+      .first();
+
+    if (!user) {
+      return null;
+    }
+
+    // Si le profil est privé, retourner seulement les infos de base
+    if (!user.isPublic) {
+      return {
+        _id: user._id,
+        name: user.name,
+        username: user.username,
+        image: user.image,
+        bio: user.bio,
+        isPublic: false,
+      };
+    }
+
+    // Si public, retourner toutes les infos
+    return user;
+  },
+});
+
+/**
+ * Récupère le profil utilisateur complet
+ */
+export const getUserProfile = query({
   args: {
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
     const user = await ctx.db.get(args.userId);
-    if (!user) {
-      return;
-    }
+    if (!user) return null;
 
-    let completion = 0;
-    const fields = [
-      user.bio,
-      user.location,
-      user.tags.length > 0,
-      user.links.length > 0,
-    ];
-
-    const completedFields = fields.filter(Boolean).length;
-    completion = Math.round((completedFields / fields.length) * 100);
-
-    await ctx.db.patch(args.userId, {
-      profileCompletion: completion,
-      updatedAt: Date.now(),
-    });
-  },
-});
-
-/**
- * Monte de niveau (si conditions remplies)
- */
-export const upgradeLevel = mutation({
-  args: {},
-  handler: async (ctx) => {
-    const betterAuthUser = await betterAuthComponent.safeGetAuthUser(ctx as any);
-    if (!betterAuthUser) {
-      throw new Error("Not authenticated");
-    }
-
-    let appUser = await ctx.db
-      .query("users")
-      .withIndex("email", (q) => q.eq("email", betterAuthUser.email))
-      .first();
-
-    if (!appUser) {
-      // Créer l'utilisateur s'il n'existe pas
-      const now = Date.now();
-      const userId = await ctx.db.insert("users", {
-        email: betterAuthUser.email,
-        level: 1,
-        reachRadius: 10,
-        tags: [],
-        links: [],
-        profileCompletion: 0,
-        premiumTier: "free",
-        boostCredits: 0,
-        credibilityScore: 0,
-        role: "explorateur",
-        expertiseDomains: [],
-        createdAt: now,
-        updatedAt: now,
-      });
-      appUser = await ctx.db.get(userId);
-      if (!appUser) {
-        throw new Error("Failed to create user");
-      }
-    }
-
-    // Vérifier si toutes les missions du niveau actuel sont complétées
-    const missions = await ctx.db
-      .query("missions")
-      .withIndex("userId", (q) => q.eq("userId", appUser._id))
-      .filter((q) => q.eq(q.field("completed"), false))
+    // Récupérer les statistiques de l'utilisateur
+    const anticipations = await ctx.db
+      .query("anticipations")
+      .withIndex("userId", (q) => q.eq("userId", args.userId))
       .collect();
 
-    // Si toutes les missions sont complétées, monter de niveau
-    if (missions.length === 0 && appUser.level < 5) {
-      const newLevel = appUser.level + 1;
-      const reachByLevel: Record<number, number> = {
-        1: 10,
-        2: 25,
-        3: 50,
-        4: 100,
-        5: 200,
-      };
+    const resolvedAnticipations = anticipations.filter((a) => a.resolved);
+    const correctAnticipations = resolvedAnticipations.filter(
+      (a) => a.result === a.issue
+    );
 
-      await ctx.db.patch(appUser._id, {
-        level: newLevel,
-        reachRadius: reachByLevel[newLevel] || 200,
-        updatedAt: Date.now(),
-      });
-
-      return { success: true, newLevel };
-    }
-
-    return { success: false, message: "Missions not completed" };
+    return {
+      ...user,
+      stats: {
+        totalAnticipations: anticipations.length,
+        resolvedAnticipations: resolvedAnticipations.length,
+        correctAnticipations: correctAnticipations.length,
+        accuracy:
+          resolvedAnticipations.length > 0
+            ? Math.round(
+                (correctAnticipations.length / resolvedAnticipations.length) *
+                  100
+              )
+            : 0,
+      },
+    };
   },
 });

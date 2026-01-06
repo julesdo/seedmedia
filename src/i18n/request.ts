@@ -3,10 +3,11 @@ import { routing } from './routing';
 import { cookies, headers } from 'next/headers';
 
 export default getRequestConfig(async () => {
-  // Get locale from cookie first, then header, then default
+  // Get locale from cookie first, then localStorage (via cookie), then header, then default
   const cookieStore = await cookies();
   const headersList = await headers();
   
+  // Priorité : NEXT_LOCALE cookie > preferredLanguage cookie > accept-language header > default
   let locale = 
     cookieStore.get('NEXT_LOCALE')?.value || 
     cookieStore.get('preferredLanguage')?.value ||
@@ -21,13 +22,15 @@ export default getRequestConfig(async () => {
   try {
     return {
       locale,
-      messages: (await import(`../../messages/${locale}.json`)).default
+      messages: (await import(`../../messages/${locale}.json`)).default,
+      timeZone: 'Europe/Paris' // Timezone par défaut pour éviter les mismatches
     };
   } catch (error) {
     // Fallback to French if locale file doesn't exist
     return {
       locale: routing.defaultLocale,
-      messages: (await import(`../../messages/${routing.defaultLocale}.json`)).default
+      messages: (await import(`../../messages/${routing.defaultLocale}.json`)).default,
+      timeZone: 'Europe/Paris'
     };
   }
 });

@@ -1,0 +1,494 @@
+{
+  "common": {
+    "search": "Suchen",
+    "notifications": "Benachrichtigungen",
+    "profile": "Profil",
+    "settings": "Einstellungen",
+    "logout": "Abmelden",
+    "loading": "Laden...",
+    "error": "Fehler",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "create": "Erstellen",
+    "view": "Ansehen",
+    "close": "Schließen",
+    "back": "Zurück",
+    "share": "Teilen",
+    "follow": "Folgen",
+    "unfollow": "Nicht mehr folgen",
+    "following": "Folgt",
+    "unfollowed": "Folgt nicht mehr",
+    "confirm": "Bestätigen",
+    "all": "Alle"
+  },
+  "navigation": {
+    "home": "Startseite",
+    "decisions": "Entscheidungen",
+    "trending": "Trends",
+    "map": "Karte",
+    "bots": "Bots",
+    "profile": "Profil",
+    "settings": "Einstellungen",
+    "level": "Level",
+    "user": "Benutzer",
+    "rules": "Regeln",
+    "help": "Hilfe",
+    "about": "Über",
+    "copyright": "© 2026 Seed"
+  },
+  "decisions": {
+    "title": "Entscheidungen",
+    "description": "Folgen Sie politischen, wirtschaftlichen und diplomatischen Entscheidungen",
+    "announced": "Angekündigt",
+    "tracking": "In Verfolgung",
+    "resolved": "Gelöst",
+    "anticipations": "Antizipationen",
+    "anticipation": "Antizipation",
+    "noResults": "Keine Ergebnisse",
+    "seeMore": "Mehr anzeigen",
+    "types": {
+      "law": "Gesetz",
+      "sanction": "Sanktion",
+      "tax": "Steuer",
+      "agreement": "Vereinbarung",
+      "policy": "Politik",
+      "regulation": "Regulierung",
+      "crisis": "Krise",
+      "disaster": "Katastrophe",
+      "conflict": "Konflikt",
+      "discovery": "Entdeckung",
+      "election": "Wahl",
+      "economic_event": "Wirtschaftsereignis",
+      "other": "Andere"
+    },
+    "detail": {
+      "notFound": "Entscheidung nicht gefunden",
+      "notFoundDescription": "Diese Entscheidung existiert nicht oder wurde gelöscht.",
+      "backToDecisions": "Zurück zu den Entscheidungen",
+      "source": "Quelle",
+      "relatedNews": "Verwandte Nachrichten",
+      "resolution": "Auflösung",
+      "result": "Ergebnis:",
+      "confidence": "Vertrauen:",
+      "indicatorVariations": "Indikatorvariationen:"
+    },
+    "save": {
+      "save": "Speichern",
+      "saved": "Gespeichert",
+      "savedToast": "Ereignis gespeichert",
+      "unsavedToast": "Ereignis aus gespeicherten entfernt"
+    }
+  },
+  "quiz": {
+    "works": "Funktioniert",
+    "partial": "Teilweise",
+    "fails": "Scheitert",
+    "confirm": "Bestätigen",
+    "viewDetails": "Details anzeigen",
+    "hideDetails": "Details ausblenden",
+    "yourAnswer": "Ihre Antwort",
+    "alreadyAnticipated": "Bereits antizipiert",
+    "saving": "Speichern..."
+  },
+  "search": {
+    "placeholder": "Entscheidungen suchen...",
+    "noResults": "Keine Ergebnisse",
+    "noResultsDescription": "Keine Entscheidung entspricht \"{query}\"",
+    "startTyping": "Beginnen Sie mit der Eingabe, um Entscheidungen zu suchen",
+    "useFilters": "Verwenden Sie Filter, um Ihre Suche zu verfeinern",
+    "resetFilters": "Filter zurücksetzen",
+    "types": {
+      "all": "Alle",
+      "law": "Gesetz",
+      "sanction": "Sanktion",
+      "tax": "Steuer",
+      "agreement": "Vereinbarung",
+      "policy": "Politik",
+      "regulation": "Regulierung"
+    },
+    "statuses": {
+      "all": "Alle",
+      "announced": "Angekündigt",
+      "tracking": "In Verfolgung",
+      "resolved": "Gelöst"
+    },
+    "filters": "Filter"
+  },
+  "profile": {
+    "follow": "Folgen",
+    "unfollow": "Nicht mehr folgen",
+    "following": "Folgt",
+    "unfollowed": "Folgt nicht mehr",
+    "followDescription": "Sie folgen jetzt {name}",
+    "unfollowDescription": "Sie folgen {name} nicht mehr",
+    "memberSince": "Mitglied seit",
+    "stats": {
+      "inProgress": "In Bearbeitung",
+      "correct": "Korrekt",
+      "accuracy": "Genauigkeit",
+      "seeds": "Seeds",
+      "followers": "Follower",
+      "following": "Folgt"
+    },
+    "tabs": {
+      "inProgress": "In Bearbeitung",
+      "correct": "Korrekt",
+      "saved": "Gespeichert"
+    },
+    "empty": {
+      "inProgress": "Keine Antizipationen in Bearbeitung",
+      "inProgressDescription": "Dieser Benutzer hat noch keine Antizipationen in Bearbeitung",
+      "correct": "Keine korrekten Antizipationen",
+      "correctDescription": "Dieser Benutzer hat noch keine korrekten Antizipationen",
+      "saved": "Keine gespeicherten Entscheidungen",
+      "savedDescription": "Dieser Benutzer hat noch keine Entscheidungen gespeichert"
+    },
+    "status": {
+      "pending": "Ausstehend",
+      "correct": "Korrekt",
+      "incorrect": "Inkorrekt",
+      "saved": "Gespeichert"
+    }
+  },
+  "anticipations": {
+    "title": "Antizipationen",
+    "description": "Ihre Antizipationen zu Entscheidungen",
+    "notAuthenticated": {
+      "title": "Anmelden",
+      "description": "Melden Sie sich an, um Ihre Antizipationen zu sehen",
+      "signIn": "Anmelden",
+      "signUp": "Registrieren"
+    },
+    "empty": {
+      "title": "Keine Antizipationen",
+      "description": "Beginnen Sie, die Auswirkungen von Entscheidungen vorherzusagen, um Seeds zu verdienen.",
+      "viewDecisions": "Entscheidungen anzeigen"
+    },
+    "stats": {
+      "inProgress": "in Bearbeitung",
+      "resolved": "gelöst",
+      "resolvedPlural": "gelöst"
+    },
+    "sections": {
+      "inProgress": "In Bearbeitung",
+      "resolved": "Gelöst"
+    },
+    "issues": {
+      "works": "Es funktioniert",
+      "partial": "Teilweise",
+      "fails": "Es funktioniert nicht"
+    },
+    "card": {
+      "seedsEngaged": "Eingesetzte Seeds",
+      "result": "Ergebnis:",
+      "correct": "Korrekt",
+      "incorrect": "Inkorrekt"
+    },
+    "button": {
+      "anticipate": "Antizipieren",
+      "alreadyAnticipated": "Bereits antizipiert"
+    },
+    "modal": {
+      "title": "Diese Entscheidung antizipieren",
+      "works": "Es funktioniert",
+      "partial": "Es funktioniert teilweise",
+      "fails": "Es funktioniert nicht",
+      "seedsInfo": "{count} Seeds werden automatisch eingesetzt",
+      "cancel": "Abbrechen",
+      "success": {
+        "title": "Antizipation erstellt",
+        "description": "Ihre Antizipation wurde erfolgreich gespeichert."
+      }
+    }
+  },
+  "rules": {
+    "title": "Berechnungsregeln",
+    "description": "Alle Seed-Berechnungsregeln sind öffentlich und transparent. Diese Regeln bestimmen, wie wir Entscheidungsergebnisse berechnen und wie wir Seeds verteilen.",
+    "note": "Hinweis:",
+    "noteDescription": "Diese Regeln werden vom Seed-Team definiert und sind schreibgeschützt. Sie können nur vom Team geändert werden, um die Genauigkeit und Fairness des Systems zu verbessern.",
+    "categories": {
+      "threshold": "Variationsschwellen",
+      "weight": "Gewicht pro Periode",
+      "scoring": "Bewertung und Vertrauen",
+      "seeds": "Seeds-Verteilung"
+    },
+    "transparency": {
+      "title": "Vollständige Transparenz",
+      "description": "Seed verpflichtet sich, vollständige Transparenz über seine Berechnungsregeln zu wahren. Alle Entscheidungen werden automatisch nach diesen Regeln gelöst, ohne menschliches Eingreifen. Die Details jeder Auflösung sind in den gelösten Decision Cards sichtbar."
+    }
+  },
+  "trending": {
+    "title": "Trends",
+    "description": "Die am meisten verfolgten und diskutierten Ereignisse im Moment",
+    "badge": "Hot",
+    "empty": {
+      "title": "Keine Trends",
+      "description": "Es gibt derzeit keine Trend-Entscheidungen."
+    }
+  },
+  "saved": {
+    "title": "Gespeichert",
+    "description": "Die Entscheidungen, die Sie gespeichert haben",
+    "notAuthenticated": {
+      "title": "Anmelden",
+      "description": "Melden Sie sich an, um Entscheidungen zu speichern",
+      "signIn": "Anmelden"
+    },
+    "empty": {
+      "title": "Keine gespeicherten Entscheidungen",
+      "description": "Entscheidungen, die Sie speichern, werden hier angezeigt",
+      "explore": "Entscheidungen erkunden"
+    }
+  },
+  "auth": {
+    "signIn": {
+      "title": "Anmelden",
+      "description": "Geben Sie Ihre E-Mail-Adresse unten ein, um sich bei Ihrem Konto anzumelden",
+      "email": "E-Mail",
+      "password": "Passwort",
+      "forgotPassword": "Passwort vergessen?",
+      "verificationCode": "Bestätigungscode",
+      "enterVerificationCode": "Bestätigungscode eingeben",
+      "signInWithPassword": "Mit Passwort anmelden",
+      "signInAnonymously": "Anonym anmelden",
+      "sendMagicLink": "Magischen Link senden",
+      "sendVerificationCode": "Bestätigungscode senden",
+      "verifyCode": "Code bestätigen",
+      "signInWithMagicLink": "Stattdessen mit magischem Link oder OTP anmelden",
+      "signInWithPasswordInstead": "Stattdessen mit Passwort anmelden",
+      "orContinueWith": "oder fortfahren mit",
+      "signInWithGithub": "Mit Github anmelden",
+      "signInWithGoogle": "Mit Google anmelden",
+      "signInWithSlack": "Mit Slack anmelden",
+      "activeAccounts": "Aktive Konten",
+      "switchingAccount": "Konto wird gewechselt...",
+      "loading": "Laden...",
+      "dontHaveAccount": "Haben Sie kein Konto?",
+      "signUp": "Registrieren",
+      "checkEmail": "Überprüfen Sie Ihre E-Mail für den Link zum Zurücksetzen des Passworts!",
+      "checkEmailMagicLink": "Überprüfen Sie Ihre E-Mail für den magischen Link!",
+      "resetPasswordFailed": "Fehler beim Senden des Links zum Zurücksetzen des Passworts. Bitte versuchen Sie es erneut.",
+      "poweredBy": "Unterstützt von"
+    },
+    "signUp": {
+      "title": "Registrieren",
+      "description": "Geben Sie Ihre Informationen ein, um ein Konto zu erstellen",
+      "firstName": "Vorname",
+      "lastName": "Nachname",
+      "email": "E-Mail",
+      "password": "Passwort",
+      "confirmPassword": "Passwort bestätigen",
+      "profileImage": "Profilbild (optional)",
+      "createAccount": "Konto erstellen",
+      "orContinueWith": "oder fortfahren mit",
+      "signUpWithGithub": "Mit Github registrieren",
+      "signUpWithGoogle": "Mit Google registrieren",
+      "signUpWithSlack": "Mit Slack registrieren",
+      "alreadyHaveAccount": "Haben Sie bereits ein Konto?",
+      "signIn": "Anmelden",
+      "accountCreated": "Konto erfolgreich erstellt! Überprüfen Sie Ihre E-Mail.",
+      "securedBy": "Gesichert durch"
+    }
+  },
+  "notifications": {
+    "title": "Benachrichtigungen",
+    "description": "Ihre Benachrichtigungen und Warnungen",
+    "notAuthenticated": {
+      "title": "Anmelden",
+      "description": "Melden Sie sich an, um Ihre Benachrichtigungen zu sehen",
+      "signIn": "Anmelden"
+    },
+    "empty": {
+      "title": "Keine Benachrichtigungen",
+      "description": "Sie werden benachrichtigt, wenn Ihre Antizipationen gelöst werden"
+    }
+  },
+  "map": {
+    "title": "Weltkarte",
+    "legend": {
+      "progress": "Fortschritt",
+      "neutral": "Neutral",
+      "crisis": "Krise",
+      "cold": "Kalt",
+      "hot": "Heiß"
+    }
+  },
+  "errors": {
+    "generic": "Ein Fehler ist aufgetreten",
+    "followError": "Folge-Status konnte nicht geändert werden",
+    "loadError": "Fehler beim Laden"
+  },
+  "success": {
+    "linkCopied": "Link kopiert",
+    "linkCopiedDescription": "Profil-URL wurde in die Zwischenablage kopiert"
+  },
+  "breakingNews": {
+    "badge": "BREAKING",
+    "readMore": "Mehr lesen"
+  },
+  "widgets": {
+    "trendingRegions": "Trendregionen",
+    "eventTypes": "Ereignistypen",
+    "recentResolutions": "Aktuelle Lösungen",
+    "wordCloud": "Schlüsselwörter"
+  },
+  "studio": {
+    "dashboard": "Dashboard",
+    "articles": "Artikel",
+    "projects": "Projekte",
+    "actions": "Aktionen",
+    "debates": "Debatten",
+    "governance": "Governance",
+    "credibility": "Glaubwürdigkeit",
+    "missions": "Missionen",
+    "organizations": "Organisationen",
+    "stats": "Statistiken"
+  },
+  "bots": {
+    "title": "Unsere Bots",
+    "description": "Entdecken Sie die automatisierten Bots, die Seed mit objektiven und faktischen Daten versorgen",
+    "noBots": "Derzeit sind keine Bots verfügbar",
+    "back": "Zurück zu den Bots",
+    "categories": {
+      "detection": "Erkennung",
+      "generation": "Generierung",
+      "resolution": "Auflösung",
+      "tracking": "Verfolgung",
+      "aggregation": "Aggregation",
+      "other": "Andere"
+    },
+    "status": {
+      "active": "Aktiv",
+      "paused": "Pausiert",
+      "maintenance": "Wartung"
+    },
+    "stats": {
+      "decisionsCreated": "Erstellte Entscheidungen",
+      "decisionsResolved": "Gelöste Entscheidungen",
+      "newsAggregated": "Aggregierte Nachrichten",
+      "indicatorsTracked": "Verfolgte Indikatoren",
+      "decisions": "Entscheidungen",
+      "resolved": "gelöst"
+    },
+    "descriptions": {
+      "decisionsCreated": "Automatisch generierte Decision Cards",
+      "decisionsResolved": "Automatische Auflösungen durchgeführt",
+      "newsAggregated": "Gesammelte Presseartikel",
+      "indicatorsTracked": "Verfolgte Wirtschaftsindikatoren"
+    },
+    "detail": {
+      "temporalMetrics": "Zeitliche Metriken",
+      "activityLogs": "Aktivitätsprotokolle",
+      "technicalInfo": "Technische Informationen",
+      "function": "Funktion:",
+      "category": "Kategorie:",
+      "lastActivity": "Letzte Aktivität:",
+      "createdAt": "Erstellt am:",
+      "never": "Nie"
+    },
+    "logs": {
+      "title": "Aktivitätsprotokolle",
+      "filterByLevel": "Nach Ebene filtern",
+      "allLevels": "Alle Ebenen",
+      "levels": {
+        "info": "Info",
+        "success": "Erfolg",
+        "warning": "Warnung",
+        "error": "Fehler"
+      },
+      "details": "Details",
+      "loadMore": "Mehr Protokolle laden",
+      "noLogs": "Keine Protokolle verfügbar"
+    },
+    "metrics": {
+      "decisionsCreated": "Erstellte Entscheidungen",
+      "decisionsResolved": "Gelöste Entscheidungen",
+      "newsAggregated": "Aggregierte Nachrichten",
+      "indicatorsTracked": "Verfolgte Indikatoren",
+      "executionTime": "Ausführungszeit (ms)",
+      "errorCount": "Fehler",
+      "noData": "Keine Daten verfügbar"
+    }
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "account": {
+      "title": "Konto",
+      "description": "Verwalten Sie Ihre Kontoinformationen",
+      "email": "E-Mail",
+      "emailDescription": "Ihre E-Mail-Adresse (nicht bearbeitbar)",
+      "username": "Benutzername",
+      "usernameDescription": "Ihr eindeutiger Benutzername (wird in Ihrer Profil-URL verwendet)",
+      "name": "Anzeigename",
+      "nameDescription": "Der Name, der in Ihrem Profil angezeigt wird",
+      "bio": "Biografie",
+      "bioDescription": "Erzählen Sie uns von sich (max. 500 Zeichen)",
+      "save": "Speichern",
+      "cancel": "Abbrechen",
+      "edit": "Bearbeiten",
+      "updated": "Profil aktualisiert",
+      "usernameUpdated": "Ihr Benutzername wurde erfolgreich aktualisiert",
+      "nameUpdated": "Ihr Name wurde erfolgreich aktualisiert",
+      "bioUpdated": "Ihre Biografie wurde erfolgreich aktualisiert",
+      "usernameTaken": "Dieser Benutzername ist bereits vergeben. Bitte wählen Sie einen anderen.",
+      "usernameTooShort": "Der Benutzername muss mindestens 3 Zeichen enthalten",
+      "usernameTooLong": "Der Benutzername darf 30 Zeichen nicht überschreiten",
+      "usernameInvalid": "Der Benutzername darf nur Buchstaben, Zahlen und Unterstriche enthalten",
+      "characters": "Zeichen",
+      "charactersDescription": "Zeichen (nur Buchstaben, Zahlen und _)",
+      "minimumCharacters": "Mindestens {count} Zeichen",
+      "checking": "Überprüfung...",
+      "usernameAvailable": "Dieser Benutzername ist verfügbar",
+      "usernameTakenMessage": "Dieser Benutzername ist bereits vergeben",
+      "suggestions": "Vorschläge:",
+      "notDefined": "Nicht definiert",
+      "noBio": "Keine Biografie",
+      "error": "Fehler",
+      "updateUsernameError": "Benutzername konnte nicht aktualisiert werden",
+      "updateNameError": "Name konnte nicht aktualisiert werden",
+      "updateBioError": "Biografie konnte nicht aktualisiert werden"
+    },
+    "preferences": {
+      "title": "Präferenzen",
+      "description": "Passen Sie Ihre Erfahrung an",
+      "language": "Sprache",
+      "languageDescription": "Wählen Sie Ihre bevorzugte Sprache",
+      "publicProfile": "Öffentliches Profil",
+      "publicProfileDescription": "Machen Sie Ihr Profil für alle Benutzer sichtbar",
+      "breakingNews": "Breaking-News-Banner",
+      "breakingNewsDescription": "Zeigen Sie das scrollende Banner für wichtige Ereignisse an",
+      "notifications": "Benachrichtigungen",
+      "notificationsDescription": "Benachrichtigungen aktivieren oder deaktivieren",
+      "profileUpdated": "Profil aktualisiert",
+      "profilePublic": "Ihr Profil ist jetzt öffentlich",
+      "profilePrivate": "Ihr Profil ist jetzt privat",
+      "preferenceUpdated": "Präferenz aktualisiert",
+      "breakingNewsShown": "Das Breaking-News-Banner wird jetzt angezeigt",
+      "breakingNewsHidden": "Das Breaking-News-Banner ist jetzt ausgeblendet"
+    },
+    "stats": {
+      "title": "Statistiken",
+      "description": "Ihre Leistung auf Seed",
+      "level": "Level",
+      "seeds": "Seeds",
+      "credibility": "Glaubwürdigkeit"
+    },
+    "notAuthenticated": {
+      "title": "Anmelden",
+      "description": "Melden Sie sich an, um auf die Einstellungen zuzugreifen",
+      "signIn": "Anmelden"
+    },
+    "about": {
+      "title": "Über",
+      "description": "Seed zeigt, was nach Machtentscheidungen passiert.",
+      "version": "Version 1.0.0",
+      "rules": "Regeln",
+      "help": "Hilfe",
+      "privacy": "Datenschutz",
+      "terms": "Bedingungen"
+    }
+  }
+}
+

@@ -11,9 +11,10 @@ export const isFavorite = query({
     targetType: v.union(
       v.literal("article"),
       v.literal("project"),
-      v.literal("action")
+      v.literal("action"),
+      v.literal("decision")
     ),
-    targetId: v.union(v.id("articles"), v.id("projects"), v.id("actions")),
+    targetId: v.union(v.id("articles"), v.id("projects"), v.id("actions"), v.id("decisions")),
   },
   handler: async (ctx, args) => {
     const betterAuthUser = await betterAuthComponent.safeGetAuthUser(ctx as any);
@@ -50,9 +51,10 @@ export const toggleFavorite = mutation({
     targetType: v.union(
       v.literal("article"),
       v.literal("project"),
-      v.literal("action")
+      v.literal("action"),
+      v.literal("decision")
     ),
-    targetId: v.union(v.id("articles"), v.id("projects"), v.id("actions")),
+    targetId: v.union(v.id("articles"), v.id("projects"), v.id("actions"), v.id("decisions")),
   },
   handler: async (ctx, args) => {
     const betterAuthUser = await betterAuthComponent.safeGetAuthUser(ctx as any);
@@ -96,29 +98,21 @@ export const toggleFavorite = mutation({
 });
 
 /**
- * Récupère tous les favoris de l'utilisateur connecté
+ * Récupère tous les favoris d'un utilisateur spécifique (pour les profils publics)
  */
-export const getMyFavorites = query({
-  args: {},
-  handler: async (ctx) => {
-    const betterAuthUser = await betterAuthComponent.safeGetAuthUser(ctx as any);
-    if (!betterAuthUser) {
-      return [];
-    }
-
-    const appUser = await ctx.db
-      .query("users")
-      .withIndex("email", (q) => q.eq("email", betterAuthUser.email))
-      .first();
-
-    if (!appUser) {
-      return [];
-    }
-
+export const getUserFavorites = query({
+  args: {
+    userId: v.id("users"),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit || 20;
+    
     const favorites = await ctx.db
       .query("favorites")
-      .withIndex("userId", (q) => q.eq("userId", appUser._id))
-      .collect();
+      .withIndex("userId", (q) => q.eq("userId", args.userId))
+      .order("desc")
+      .take(limit);
 
     // Enrichir avec les données des contenus
     const enriched = await Promise.all(
@@ -191,6 +185,21 @@ export const getMyFavorites = query({
                 image: actionAuthor.image,
               };
             }
+          }
+        } else if (favorite.targetType === "decision") {
+          const decision = await ctx.db.get(favorite.targetId as Id<"decisions">);
+          if (decision) {
+            content = {
+              _id: decision._id,
+              title: decision.title,
+              slug: decision.slug,
+              description: decision.question,
+              coverImage: decision.imageUrl || null,
+              createdAt: decision.createdAt,
+              views: 0,
+            };
+            // Les décisions n'ont pas d'auteur, elles sont créées par des bots
+            author = null;
           }
         }
 
