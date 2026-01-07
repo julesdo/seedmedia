@@ -55,10 +55,15 @@ export const ensureUserExists = mutation({
  * Crée l'utilisateur s'il n'existe pas encore
  */
 export async function ensureUserExistsHelper(ctx: any): Promise<Id<"users">> {
+  console.log("🔍 ensureUserExistsHelper: Starting...");
+  
   const betterAuthUser = await betterAuthComponent.safeGetAuthUser(ctx);
   if (!betterAuthUser) {
+    console.error("❌ ensureUserExistsHelper: Not authenticated - betterAuthUser is null");
     throw new Error("Not authenticated");
   }
+  
+  console.log(`✅ ensureUserExistsHelper: Authenticated as ${betterAuthUser.email}`);
 
   // Vérifier si l'utilisateur existe déjà
   let appUser = await ctx.db
@@ -66,28 +71,37 @@ export async function ensureUserExistsHelper(ctx: any): Promise<Id<"users">> {
     .withIndex("email", (q: any) => q.eq("email", betterAuthUser.email))
     .first();
 
-    if (!appUser) {
-      // Créer l'utilisateur s'il n'existe pas
-      const now = Date.now();
-      const userId = await ctx.db.insert("users", {
-        email: betterAuthUser.email,
-        name: betterAuthUser.name || null,
-        image: betterAuthUser.image || null,
-        level: 1,
-        seedsBalance: 100, // Seeds de départ
-        seedsToNextLevel: 100, // Seeds nécessaires pour passer au niveau 2
-        preferredLanguage: "fr",
-        role: "explorateur",
-        isPublic: false, // Profil privé par défaut
-        lastLoginDate: undefined, // Sera défini au premier daily login
-        loginStreak: 0, // Streak initialisé à 0
-        createdAt: now,
-        updatedAt: now,
-      });
-      return userId;
-    }
+  if (appUser) {
+    console.log(`✅ ensureUserExistsHelper: User ${betterAuthUser.email} already exists with ID: ${appUser._id}`);
+    return appUser._id;
+  }
 
-  return appUser._id;
+  // Créer l'utilisateur s'il n'existe pas
+  console.log(`🔄 ensureUserExistsHelper: Creating new user for ${betterAuthUser.email}...`);
+  const now = Date.now();
+  
+  try {
+    const userId = await ctx.db.insert("users", {
+      email: betterAuthUser.email,
+      name: betterAuthUser.name || null,
+      image: betterAuthUser.image || null,
+      level: 1,
+      seedsBalance: 100, // Seeds de départ
+      seedsToNextLevel: 100, // Seeds nécessaires pour passer au niveau 2
+      preferredLanguage: "fr",
+      role: "explorateur",
+      isPublic: false, // Profil privé par défaut
+      lastLoginDate: undefined, // Sera défini au premier daily login
+      loginStreak: 0, // Streak initialisé à 0
+      createdAt: now,
+      updatedAt: now,
+    });
+    console.log(`✅ ensureUserExistsHelper: Successfully created user ${betterAuthUser.email} with ID: ${userId}`);
+    return userId;
+  } catch (error) {
+    console.error(`❌ ensureUserExistsHelper: Failed to create user ${betterAuthUser.email}:`, error);
+    throw error;
+  }
 }
 
 /**

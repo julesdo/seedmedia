@@ -88,13 +88,18 @@ function OAuthCallbackContent() {
       } else if (!isAdding) {
         // Connexion normale - s'assurer que l'utilisateur existe dans Convex
         if (session?.data?.user) {
-          console.log('🔄 Ensuring user exists in Convex...');
+          const user = session.data.user;
+          console.log('🔄 OAuth Callback: Ensuring user exists in Convex...', { email: user.email });
           try {
-            await ensureUserExists();
-            console.log('✅ User ensured in Convex via ensureUserExists');
+            const userId = await ensureUserExists();
+            console.log('✅ OAuth Callback: User ensured in Convex via ensureUserExists', { userId, email: user.email });
             await new Promise((resolve) => setTimeout(resolve, 300));
-          } catch (error) {
-            console.error('❌ Failed to ensure user exists:', error);
+          } catch (error: any) {
+            console.error('❌ OAuth Callback: Failed to ensure user exists:', {
+              error: error?.message || error,
+              stack: error?.stack,
+              email: user.email,
+            });
           }
         }
         

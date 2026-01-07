@@ -172,14 +172,18 @@ function CallbackContent() {
           // NOUVEAU : S'assurer que l'utilisateur existe dans Convex avant de rediriger
           // On appelle directement ensureUserExists pour garantir la création, même si le trigger onCreate échoue
           // Cela résout la race condition en production où la latence réseau peut retarder le trigger
-          console.log('🔄 Ensuring user exists in Convex...');
+          console.log('🔄 Callback: Ensuring user exists in Convex...', { email: user.email });
           try {
-            await ensureUserExists();
-            console.log('✅ User ensured in Convex via ensureUserExists');
+            const userId = await ensureUserExists();
+            console.log('✅ Callback: User ensured in Convex via ensureUserExists', { userId, email: user.email });
             // Attendre un peu pour que la création soit propagée dans la base de données
             await new Promise((resolve) => setTimeout(resolve, 300));
-          } catch (error) {
-            console.error('❌ Failed to ensure user exists:', error);
+          } catch (error: any) {
+            console.error('❌ Callback: Failed to ensure user exists:', {
+              error: error?.message || error,
+              stack: error?.stack,
+              email: user.email,
+            });
             // Rediriger quand même pour éviter de bloquer l'utilisateur
             // Le trigger onCreate pourrait quand même créer l'utilisateur en arrière-plan
           }

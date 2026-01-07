@@ -7,7 +7,7 @@ import { DataModel, Id } from "./_generated/dataModel";
 import { asyncMap } from "convex-helpers";
 
 export const betterAuthComponent = createClient(components.betterAuth, {
-  verbose: false,
+  verbose: true, // Activé pour le debugging en production
   triggers: {
     user: {
       onCreate: async (ctx, user) => {

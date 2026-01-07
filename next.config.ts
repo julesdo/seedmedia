@@ -15,6 +15,10 @@ const nextConfig: NextConfig = {
   },
   // Optimisations de performance
   compress: true,
+  // Conserver les console.log en production pour le debugging
+  compiler: {
+    removeConsole: false, // Garder tous les console.log, console.error, etc.
+  },
   experimental: {
     // Optimiser les imports de packages volumineux
     optimizePackageImports: [
