@@ -40,6 +40,17 @@ export const getCurrentUser = query({
 });
 
 /**
+ * Mutation pour s'assurer qu'un utilisateur existe (appelable depuis le client)
+ * Crée l'utilisateur s'il n'existe pas encore
+ */
+export const ensureUserExists = mutation({
+  args: {},
+  handler: async (ctx) => {
+    return await ensureUserExistsHelper(ctx);
+  },
+});
+
+/**
  * Helper pour s'assurer qu'un utilisateur existe (utilisé par les mutations)
  * Crée l'utilisateur s'il n'existe pas encore
  */

@@ -107,7 +107,7 @@ export default function SignIn() {
           }
           
           if (!isAddingAccount && !isSilent) {
-            router.push("/studio");
+            router.push("/");
           }
         },
         onError: (ctx) => {
@@ -177,7 +177,7 @@ export default function SignIn() {
           }
           
           if (!isAddingAccount && !isSilent) {
-            router.push("/studio");
+            router.push("/");
           }
         },
         onError: (ctx) => {
@@ -389,7 +389,7 @@ export default function SignIn() {
             console.log("SignIn: Auto-reconnect successful (email), redirecting to discover");
             // Attendre un peu pour que la session soit bien établie
             setTimeout(() => {
-              window.location.href = "/studio";
+              window.location.href = "/";
             }, 500);
             return;
           }

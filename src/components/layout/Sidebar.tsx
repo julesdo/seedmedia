@@ -53,13 +53,8 @@ const navSections: NavSection[] = [
     items: [
       {
         title: "Découvrir",
-        href: "/studio",
+        href: "/",
         icon: "magnifer-bold",
-      },
-      {
-        title: "Articles",
-        href: "/studio/articles",
-        icon: "document-bold",
       },
       {
         title: "Carte",
@@ -188,8 +183,8 @@ function AppSidebar() {
                 {section.items.map((item) => {
                   const isActive =
                     pathname === item.href ||
-                    (item.href !== "/studio" && pathname.startsWith(item.href + "/")) ||
-                    (item.href === "/studio" && (pathname === "/studio" || pathname === "/"));
+                    (item.href !== "/" && pathname.startsWith(item.href + "/")) ||
+                    (item.href === "/" && pathname === "/");
                   const isActionButton = item.href === "/create";
 
                   return (

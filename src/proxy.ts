@@ -44,10 +44,10 @@ export default async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/sign-in", request.url));
   }
 
-  // Rediriger vers studio seulement si pas de paramètre add_account, switch_to_account, ou auto_reconnect (et pas callback)
+  // Rediriger vers la page d'accueil seulement si pas de paramètre add_account, switch_to_account, ou auto_reconnect (et pas callback)
   if (isSignInRoute && !addAccountParam && !switchToAccountParam && !autoReconnectParam && !isCallbackRoute) {
     return NextResponse.redirect(
-      new URL("/studio", request.url),
+      new URL("/", request.url),
     );
   }
 

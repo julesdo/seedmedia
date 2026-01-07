@@ -3,6 +3,9 @@
 import { useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { useMutation } from "convex/react";
+import { ConvexReactClient } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
 /**
  * Page de callback OAuth qui détecte si on est en mode "ajouter un compte"
@@ -13,6 +16,12 @@ function CallbackContent() {
   const isAddingAccount = searchParams.get("add_account") === "true";
   const isSilent = searchParams.get("silent") === "true"; // Mode silencieux pour switch de compte
   const autoReconnect = searchParams.get("auto_reconnect") === "true"; // Reconnexion automatique après switch
+  
+  // Hooks Convex pour créer l'utilisateur
+  const ensureUserExists = useMutation(api.users.ensureUserExists);
+  
+  // Créer un client Convex pour les appels impératifs
+  const convexClient = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -163,10 +172,57 @@ function CallbackContent() {
               // Ignorer les erreurs
             }
           }
+          
+          // NOUVEAU : Attendre que l'utilisateur soit créé dans Convex avant de rediriger
+          // Cela résout la race condition en production où la latence réseau peut retarder le trigger onCreate
+          let userCreated = false;
+          let attempts = 0;
+          const maxAttempts = 20; // 20 tentatives × 300ms = 6s max
+          const delay = 300; // 300ms entre chaque tentative
+          
+          // Fonction pour vérifier si l'utilisateur existe via le client Convex
+          const checkUserExists = async (): Promise<boolean> => {
+            try {
+              const user = await convexClient.query(api.users.getCurrentUser, {});
+              return user !== null && user !== undefined && !!user._id;
+            } catch (error) {
+              // Ignorer les erreurs et continuer
+              return false;
+            }
+          };
+          
+          while (!userCreated && attempts < maxAttempts) {
+            await new Promise((resolve) => setTimeout(resolve, delay));
+            
+            // Vérifier si l'utilisateur existe dans Convex
+            const exists = await checkUserExists();
+            
+            if (exists) {
+              userCreated = true;
+              console.log(`✅ User created in Convex after ${attempts + 1} attempts`);
+              break;
+            }
+            
+            attempts++;
+          }
+          
+          // Fallback : Créer l'utilisateur manuellement si le trigger n'a pas fonctionné
+          if (!userCreated) {
+            console.warn('⚠️ User not created by trigger after max attempts, creating manually...');
+            try {
+              await ensureUserExists();
+              console.log('✅ User created manually via ensureUserExists');
+              // Attendre un peu pour que la création soit propagée
+              await new Promise((resolve) => setTimeout(resolve, 500));
+            } catch (error) {
+              console.error('❌ Failed to create user manually:', error);
+              // Rediriger quand même pour éviter de bloquer l'utilisateur
+            }
+          }
         }
         
-        // Rediriger vers discover
-        window.location.href = "/studio";
+        // Rediriger vers la page d'accueil
+        window.location.href = "/";
       } else if ((isSilent || autoReconnect) && typeof window !== "undefined" && !window.opener) {
         // Si on est en mode silencieux ou auto_reconnect mais pas dans une popup
         // Mettre à jour le provider dans localStorage si on a une session
@@ -208,19 +264,19 @@ function CallbackContent() {
           }
         }
         
-        console.log("Callback: Auto-reconnect successful, redirecting to discover");
+        console.log("Callback: Auto-reconnect successful, redirecting to home");
         // Nettoyer le provider du sessionStorage
         if (typeof window !== "undefined") {
           sessionStorage.removeItem("oauthProvider");
         }
         setTimeout(() => {
-          window.location.href = "/studio";
+          window.location.href = "/";
         }, 500);
       }
     };
 
     handleCallback();
-  }, [isAddingAccount, isSilent, searchParams]);
+  }, [isAddingAccount, isSilent, searchParams, ensureUserExists]);
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center">
