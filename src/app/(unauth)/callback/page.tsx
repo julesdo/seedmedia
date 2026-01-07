@@ -4,7 +4,6 @@ import { useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { useMutation } from "convex/react";
-import { ConvexReactClient } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
 /**
@@ -17,11 +16,8 @@ function CallbackContent() {
   const isSilent = searchParams.get("silent") === "true"; // Mode silencieux pour switch de compte
   const autoReconnect = searchParams.get("auto_reconnect") === "true"; // Reconnexion automatique après switch
   
-  // Hooks Convex pour créer l'utilisateur
+  // Hook Convex pour créer l'utilisateur
   const ensureUserExists = useMutation(api.users.ensureUserExists);
-  
-  // Créer un client Convex pour les appels impératifs
-  const convexClient = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -173,51 +169,19 @@ function CallbackContent() {
             }
           }
           
-          // NOUVEAU : Attendre que l'utilisateur soit créé dans Convex avant de rediriger
-          // Cela résout la race condition en production où la latence réseau peut retarder le trigger onCreate
-          let userCreated = false;
-          let attempts = 0;
-          const maxAttempts = 20; // 20 tentatives × 300ms = 6s max
-          const delay = 300; // 300ms entre chaque tentative
-          
-          // Fonction pour vérifier si l'utilisateur existe via le client Convex
-          const checkUserExists = async (): Promise<boolean> => {
-            try {
-              const user = await convexClient.query(api.users.getCurrentUser, {});
-              return user !== null && user !== undefined && !!user._id;
-            } catch (error) {
-              // Ignorer les erreurs et continuer
-              return false;
-            }
-          };
-          
-          while (!userCreated && attempts < maxAttempts) {
-            await new Promise((resolve) => setTimeout(resolve, delay));
-            
-            // Vérifier si l'utilisateur existe dans Convex
-            const exists = await checkUserExists();
-            
-            if (exists) {
-              userCreated = true;
-              console.log(`✅ User created in Convex after ${attempts + 1} attempts`);
-              break;
-            }
-            
-            attempts++;
-          }
-          
-          // Fallback : Créer l'utilisateur manuellement si le trigger n'a pas fonctionné
-          if (!userCreated) {
-            console.warn('⚠️ User not created by trigger after max attempts, creating manually...');
-            try {
-              await ensureUserExists();
-              console.log('✅ User created manually via ensureUserExists');
-              // Attendre un peu pour que la création soit propagée
-              await new Promise((resolve) => setTimeout(resolve, 500));
-            } catch (error) {
-              console.error('❌ Failed to create user manually:', error);
-              // Rediriger quand même pour éviter de bloquer l'utilisateur
-            }
+          // NOUVEAU : S'assurer que l'utilisateur existe dans Convex avant de rediriger
+          // On appelle directement ensureUserExists pour garantir la création, même si le trigger onCreate échoue
+          // Cela résout la race condition en production où la latence réseau peut retarder le trigger
+          console.log('🔄 Ensuring user exists in Convex...');
+          try {
+            await ensureUserExists();
+            console.log('✅ User ensured in Convex via ensureUserExists');
+            // Attendre un peu pour que la création soit propagée dans la base de données
+            await new Promise((resolve) => setTimeout(resolve, 300));
+          } catch (error) {
+            console.error('❌ Failed to ensure user exists:', error);
+            // Rediriger quand même pour éviter de bloquer l'utilisateur
+            // Le trigger onCreate pourrait quand même créer l'utilisateur en arrière-plan
           }
         }
         

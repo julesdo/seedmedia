@@ -4,7 +4,6 @@ import { useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { useMutation } from "convex/react";
-import { ConvexReactClient } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
 /**
@@ -14,9 +13,6 @@ import { api } from "@/convex/_generated/api";
 function OAuthCallbackContent() {
   const searchParams = useSearchParams();
   const ensureUserExists = useMutation(api.users.ensureUserExists);
-  
-  // Créer un client Convex pour les appels impératifs
-  const convexClient = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
   useEffect(() => {
     const handleOAuthCallback = async () => {
@@ -90,43 +86,15 @@ function OAuthCallbackContent() {
           }
         }
       } else if (!isAdding) {
-        // Connexion normale - attendre que l'utilisateur soit créé dans Convex
+        // Connexion normale - s'assurer que l'utilisateur existe dans Convex
         if (session?.data?.user) {
-          // Attendre que l'utilisateur soit créé dans Convex avant de rediriger
-          let userCreated = false;
-          let attempts = 0;
-          const maxAttempts = 20;
-          const delay = 300;
-          
-          const checkUserExists = async (): Promise<boolean> => {
-            try {
-              const user = await convexClient.query(api.users.getCurrentUser, {});
-              return user !== null && user !== undefined && !!user._id;
-            } catch (error) {
-              return false;
-            }
-          };
-          
-          while (!userCreated && attempts < maxAttempts) {
-            await new Promise((resolve) => setTimeout(resolve, delay));
-            const exists = await checkUserExists();
-            if (exists) {
-              userCreated = true;
-              console.log(`✅ User created in Convex after ${attempts + 1} attempts`);
-              break;
-            }
-            attempts++;
-          }
-          
-          // Fallback : Créer l'utilisateur manuellement si le trigger n'a pas fonctionné
-          if (!userCreated) {
-            console.warn('⚠️ User not created by trigger, creating manually...');
-            try {
-              await ensureUserExists();
-              await new Promise((resolve) => setTimeout(resolve, 500));
-            } catch (error) {
-              console.error('❌ Failed to create user manually:', error);
-            }
+          console.log('🔄 Ensuring user exists in Convex...');
+          try {
+            await ensureUserExists();
+            console.log('✅ User ensured in Convex via ensureUserExists');
+            await new Promise((resolve) => setTimeout(resolve, 300));
+          } catch (error) {
+            console.error('❌ Failed to ensure user exists:', error);
           }
         }
         
