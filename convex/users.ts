@@ -68,6 +68,8 @@ export async function ensureUserExistsHelper(ctx: any): Promise<Id<"users">> {
         preferredLanguage: "fr",
         role: "explorateur",
         isPublic: false, // Profil privé par défaut
+        lastLoginDate: undefined, // Sera défini au premier daily login
+        loginStreak: 0, // Streak initialisé à 0
         createdAt: now,
         updatedAt: now,
       });

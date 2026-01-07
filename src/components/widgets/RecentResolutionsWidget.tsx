@@ -6,11 +6,13 @@ import { SolarIcon } from "@/components/icons/SolarIcon";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { useTranslations } from 'next-intl';
 
 /**
  * Widget : Dernières résolutions
  */
 export function RecentResolutionsWidget() {
+  const t = useTranslations('widgets.recentResolutions');
   const resolutions = useQuery(api.resolutions.getAllResolutions, { limit: 5 });
 
   if (!resolutions) {
@@ -31,7 +33,7 @@ export function RecentResolutionsWidget() {
       <div className="flex items-center gap-2">
         <SolarIcon icon="check-circle-bold" className="size-4 text-muted-foreground" />
         <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-          Résolutions récentes
+          {t('title')}
         </h4>
       </div>
       <div className="space-y-3">
@@ -57,7 +59,7 @@ export function RecentResolutionsWidget() {
                     isCorrect && "bg-green-500/10 text-green-600 dark:text-green-400"
                   )}
                 >
-                  {isCorrect ? "✓ Correct" : "✗ Incorrect"}
+                  {isCorrect ? t('correct') : t('incorrect')}
                 </Badge>
                 <span className="text-[10px] text-muted-foreground">
                   {new Date(resolution.resolvedAt).toLocaleDateString("fr-FR", {

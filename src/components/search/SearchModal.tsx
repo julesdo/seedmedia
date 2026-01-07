@@ -129,10 +129,11 @@ export function SearchModal({ open, onOpenChange, initialQuery = "" }: SearchMod
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className={cn(
-          // Mobile-first: plein écran sur mobile
-          "inset-0 w-full h-full max-w-none max-h-none rounded-none",
+          // Mobile-first: plein écran sur mobile, centré verticalement
+          "!fixed !inset-0 !w-full !h-full !max-w-none !max-h-none !rounded-none",
+          "!top-0 !left-0 !right-0 !bottom-0 !translate-x-0 !translate-y-0 !mx-0",
           // Desktop: centré avec max-width
-          "sm:inset-auto sm:max-w-2xl sm:max-h-[90vh] sm:rounded-lg sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2",
+          "sm:!inset-auto sm:!max-w-2xl sm:!max-h-[90vh] sm:!rounded-lg sm:!top-1/2 sm:!left-1/2 sm:!-translate-x-1/2 sm:!-translate-y-1/2 sm:!mx-auto",
           "p-0 gap-0 overflow-hidden flex flex-col",
           "data-[state=open]:animate-in data-[state=closed]:animate-out"
         )}
@@ -262,7 +263,7 @@ export function SearchModal({ open, onOpenChange, initialQuery = "" }: SearchMod
 
         {/* Résultats avec scroll - Optimisé pour mobile */}
         <div className="flex-1 overflow-y-auto min-h-0 overscroll-contain">
-          <div className="px-4 py-4 sm:px-6 sm:py-5">
+          <div className="px-4 py-4 pb-20 sm:pb-4 sm:px-6 sm:py-5">
             {!searchQuery.trim() ? (
               <div className="flex flex-col items-center justify-center py-16 sm:py-12 text-center">
                 <div className="size-20 sm:size-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
@@ -402,6 +403,18 @@ export function SearchModal({ open, onOpenChange, initialQuery = "" }: SearchMod
               </div>
             )}
           </div>
+        </div>
+
+        {/* Bouton fermer en bas - Mobile uniquement */}
+        <div className="sm:hidden border-t border-border/50 bg-background/95 backdrop-blur-sm sticky bottom-0 z-10 p-4 safe-area-inset-bottom">
+          <Button
+            onClick={() => onOpenChange(false)}
+            variant="default"
+            className="w-full h-12 text-base font-semibold"
+          >
+            <SolarIcon icon="close-circle-bold" className="size-5 mr-2" />
+            {tCommon('close') || 'Fermer'}
+          </Button>
         </div>
       </DialogContent>
 

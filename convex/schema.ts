@@ -57,6 +57,9 @@ export default defineSchema({
     // Préférences
     preferredLanguage: v.optional(v.string()), // Langue préférée (ex: "fr", "en", "es")
     showBreakingNews: v.optional(v.boolean()), // Afficher le bandeau de breaking news (défaut: true)
+    // Gamification - Daily Login & Streak
+    lastLoginDate: v.optional(v.number()), // Date de dernière connexion (timestamp, jour à 00:00)
+    loginStreak: v.optional(v.number()), // Nombre de jours consécutifs de connexion
     // Timestamps
     createdAt: v.number(),
     updatedAt: v.number(),

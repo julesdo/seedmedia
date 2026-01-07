@@ -96,13 +96,18 @@ export function SaveButton({
       <SolarIcon
         icon="bookmark-bold"
         className={cn(
-          size === "icon" ? "size-5" : "size-4"
+          size === "icon" ? "size-5" : "size-4",
+          // Si le bouton a text-white dans className, forcer l'icône en blanc
+          className?.includes("text-white") && "!text-white"
         )}
         style={{
-          color: saved 
+          // Si className contient text-white, forcer la couleur blanche
+          color: className?.includes("text-white")
+            ? "white"
+            : saved 
             ? "hsl(var(--primary))" 
             : "hsl(var(--muted-foreground))",
-          opacity: saved ? 1 : 0.7
+          opacity: className?.includes("text-white") ? 1 : (saved ? 1 : 0.7)
         }}
       />
       {size !== "icon" && (

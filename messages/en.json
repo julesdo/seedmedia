@@ -29,6 +29,7 @@
     "trending": "Trending",
     "map": "Map",
     "bots": "Bots",
+    "stats": "Stats",
     "profile": "Profile",
     "settings": "Settings",
     "level": "Level",
@@ -331,10 +332,70 @@
     "readMore": "Read more"
   },
   "widgets": {
-    "trendingRegions": "Trending regions",
-    "eventTypes": "Event types",
-    "recentResolutions": "Recent resolutions",
-    "wordCloud": "Keywords"
+    "sidebar": {
+      "importantDecisions": "Important decisions",
+      "seeAll": "See all"
+    },
+    "dailyLogin": {
+      "title": "Daily login",
+      "streak": "Streak:",
+      "days": "days",
+      "claimBonus": "Claim bonus",
+      "alreadyClaimed": "Already claimed today",
+      "seedsEarned": "+{seeds} seeds",
+      "streakDays": "Streak {streak} days",
+      "luckyBonus": "Lucky bonus!",
+      "levelReached": "Level {level} reached",
+      "errorClaiming": "Error claiming bonus"
+    },
+    "leaderboard": {
+      "title": "Top this week",
+      "user": "User",
+      "yourPosition": "Your position"
+    },
+    "worldMap": {
+      "title": "World map",
+      "seeFullMap": "See full map",
+      "activeZone": "active zone",
+      "activeZones": "active zones"
+    },
+    "wordCloud": {
+      "title": "Keywords",
+      "occurrence": "occurrence",
+      "occurrences": "occurrences",
+      "keyword": "keyword",
+      "keywords": "keywords",
+      "mostFrequent": "most frequent"
+    },
+    "trendingRegions": {
+      "title": "Active zones",
+      "event": "event",
+      "events": "events"
+    },
+    "eventTypes": {
+      "title": "Today's trends",
+      "noRecentEvents": "No recent events",
+      "types": {
+        "crisis": "Crisis",
+        "disaster": "Disaster",
+        "conflict": "Conflict",
+        "discovery": "Discovery",
+        "election": "Election",
+        "economic_event": "Economy",
+        "law": "Law",
+        "sanction": "Sanction",
+        "tax": "Tax",
+        "agreement": "Agreement",
+        "policy": "Policy",
+        "regulation": "Regulation",
+        "other": "Other"
+      }
+    },
+    "recentResolutions": {
+      "title": "Recent resolutions",
+      "correct": "✓ Correct",
+      "incorrect": "✗ Incorrect"
+    }
   },
   "studio": {
     "dashboard": "Dashboard",

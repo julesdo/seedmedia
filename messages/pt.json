@@ -29,6 +29,7 @@
     "trending": "Tendências",
     "map": "Mapa",
     "bots": "Bots",
+    "stats": "Estatísticas",
     "profile": "Perfil",
     "settings": "Configurações",
     "level": "Nível",
@@ -329,10 +330,70 @@
     "readMore": "Ler mais"
   },
   "widgets": {
-    "trendingRegions": "Regiões em tendência",
-    "eventTypes": "Tipos de eventos",
-    "recentResolutions": "Resoluções recentes",
-    "wordCloud": "Palavras-chave"
+    "sidebar": {
+      "importantDecisions": "Decisões importantes",
+      "seeAll": "Ver tudo"
+    },
+    "dailyLogin": {
+      "title": "Login diário",
+      "streak": "Sequência:",
+      "days": "dias",
+      "claimBonus": "Reivindicar bônus",
+      "alreadyClaimed": "Já reivindicado hoje",
+      "seedsEarned": "+{seeds} seeds",
+      "streakDays": "Sequência {streak} dias",
+      "luckyBonus": "Bônus da sorte!",
+      "levelReached": "Nível {level} alcançado",
+      "errorClaiming": "Erro ao reivindicar"
+    },
+    "leaderboard": {
+      "title": "Top desta semana",
+      "user": "Usuário",
+      "yourPosition": "Sua posição"
+    },
+    "worldMap": {
+      "title": "Mapa do mundo",
+      "seeFullMap": "Ver mapa completo",
+      "activeZone": "zona ativa",
+      "activeZones": "zonas ativas"
+    },
+    "wordCloud": {
+      "title": "Palavras-chave",
+      "occurrence": "ocorrência",
+      "occurrences": "ocorrências",
+      "keyword": "palavra-chave",
+      "keywords": "palavras-chave",
+      "mostFrequent": "mais frequentes"
+    },
+    "trendingRegions": {
+      "title": "Zonas ativas",
+      "event": "evento",
+      "events": "eventos"
+    },
+    "eventTypes": {
+      "title": "Tendências do dia",
+      "noRecentEvents": "Nenhum evento recente",
+      "types": {
+        "crisis": "Crise",
+        "disaster": "Desastre",
+        "conflict": "Conflito",
+        "discovery": "Descoberta",
+        "election": "Eleição",
+        "economic_event": "Economia",
+        "law": "Lei",
+        "sanction": "Sanção",
+        "tax": "Fiscal",
+        "agreement": "Acordo",
+        "policy": "Política",
+        "regulation": "Regulamentação",
+        "other": "Outro"
+      }
+    },
+    "recentResolutions": {
+      "title": "Resoluções recentes",
+      "correct": "✓ Correto",
+      "incorrect": "✗ Incorreto"
+    }
   },
   "studio": {
     "dashboard": "Painel",

@@ -57,11 +57,13 @@ function calculateBadgeColor(heat: number, sentiment: "positive" | "negative" | 
 
 interface DecisionReelFeedProps {
   initialDecisionId: Id<"decisions">;
+  initialDecisions?: any[]; // Décisions préchargées côté serveur
   onBack?: () => void;
 }
 
 export function DecisionReelFeed({
   initialDecisionId,
+  initialDecisions,
   onBack,
 }: DecisionReelFeedProps) {
   const router = useRouter();
@@ -69,10 +71,28 @@ export function DecisionReelFeed({
   const [displayLimit, setDisplayLimit] = useState(20);
   const [allLoadedDecisions, setAllLoadedDecisions] = useState<any[]>([]);
 
+  // Si on a des données préchargées, on commence avec elles
+  // Sinon, on charge depuis Convex
+  const hasInitialData = initialDecisions && initialDecisions.length > 0;
+  const shouldSkipQuery = hasInitialData && displayLimit <= initialDecisions.length;
+
   // Récupérer les décisions pour le feed
-  const decisions = useQuery(api.decisions.getDecisions, {
-    limit: displayLimit,
-  });
+  const clientDecisions = useQuery(
+    api.decisions.getDecisions,
+    shouldSkipQuery ? "skip" : {
+      limit: displayLimit,
+    }
+  );
+
+  // Fusionner les données préchargées avec les données client
+  const decisions = (() => {
+    if (hasInitialData && displayLimit <= initialDecisions.length) {
+      // Utiliser les données préchargées (plus rapide)
+      return initialDecisions.slice(0, displayLimit);
+    }
+    // Utiliser les données client (chargées au scroll)
+    return clientDecisions;
+  })();
 
   // Enrichir les décisions avec les champs calculés si manquants
   const enrichedDecisions = useMemo(() => {
@@ -149,7 +169,15 @@ export function DecisionReelFeed({
           setAllLoadedDecisions((prev) => [...prev, ...enrichedDecisions]);
         } else {
           // Sinon, charger plus d'événements
-          setDisplayLimit((prev) => prev + 20);
+          // Si on utilise encore les données préchargées, continuer à les utiliser
+          // Sinon, charger depuis Convex
+          if (hasInitialData && initialDecisions && displayLimit < initialDecisions.length) {
+            // On utilise encore les données préchargées, augmenter la limite pour en afficher plus
+            setDisplayLimit((prev) => Math.min(prev + 20, initialDecisions.length));
+          } else {
+            // Charger plus depuis Convex (on a épuisé les données préchargées ou on n'en a pas)
+            setDisplayLimit((prev) => prev + 20);
+          }
         }
       }
     };

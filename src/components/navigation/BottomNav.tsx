@@ -41,9 +41,9 @@ export function BottomNav() {
       icon: "map-point-bold",
     },
     {
-      label: t('bots'),
-      href: "/bots",
-      icon: "smile-square-bold",
+      label: t('stats'),
+      href: "/stats",
+      icon: "chart-2-bold",
     },
     {
       label: t('profile'),
@@ -75,6 +75,7 @@ export function BottomNav() {
               key={item.href}
               href={href}
               prefetch={true}
+              data-prefetch="viewport"
               className={cn(
                 "flex flex-col items-center justify-center gap-1.5 transition-all duration-200 active:scale-95 w-full h-full",
                 isActive

@@ -69,9 +69,16 @@ function TabsTrigger({
 function TabsContent({
   className,
   value,
+  forceMount,
   ...props
-}: React.ComponentProps<typeof TabsPrimitive.Content>) {
+}: React.ComponentProps<typeof TabsPrimitive.Content> & { forceMount?: boolean }) {
   const contentRef = React.useRef<HTMLDivElement>(null);
+  
+  // Si animate-none est présent, forcer le montage pour garder dans le DOM
+  const shouldForceMount = forceMount || className?.includes("animate-none");
+  
+  // En mode carousel (animate-none), forcer l'affichage avec un style inline
+  const isCarouselMode = className?.includes("animate-none");
 
   React.useEffect(() => {
     if (contentRef.current) {
@@ -83,8 +90,19 @@ function TabsContent({
       } else {
         contentRef.current.style.viewTransitionName = "none";
       }
+      
+      // En mode carousel, forcer l'affichage
+      // Mais ne pas forcer display car le parent flex gère l'affichage
+      if (isCarouselMode && contentRef.current) {
+        contentRef.current.style.visibility = "visible";
+        contentRef.current.style.opacity = "1";
+        // Retirer display: none si présent
+        if (contentRef.current.style.display === "none") {
+          contentRef.current.style.display = "";
+        }
+      }
     }
-  });
+  }, [isCarouselMode]);
 
   // Observer les changements d'état pour mettre à jour le view-transition-name
   React.useEffect(() => {
@@ -98,6 +116,17 @@ function TabsContent({
       } else {
         element.style.viewTransitionName = "none";
       }
+      
+      // En mode carousel, forcer l'affichage même si l'état change
+      // Mais ne pas forcer display car le parent flex gère l'affichage
+      if (isCarouselMode) {
+        element.style.visibility = "visible";
+        element.style.opacity = "1";
+        // Retirer display: none si présent
+        if (element.style.display === "none") {
+          element.style.display = "";
+        }
+      }
     });
 
     observer.observe(element, {
@@ -105,19 +134,43 @@ function TabsContent({
       attributeFilter: ["data-state"],
     });
 
-    return () => observer.disconnect();
-  }, []);
+    // Forcer l'affichage initial en mode carousel
+    // Mais ne pas forcer display car le parent flex gère l'affichage
+    if (isCarouselMode) {
+      element.style.visibility = "visible";
+      element.style.opacity = "1";
+      // Retirer display: none si présent
+      if (element.style.display === "none") {
+        element.style.display = "";
+      }
+    }
 
+    return () => observer.disconnect();
+  }, [isCarouselMode]);
+  
   return (
     <TabsPrimitive.Content
       ref={contentRef}
       data-slot="tabs-content"
+      forceMount={shouldForceMount}
       className={cn(
         "flex-1 outline-none",
-        "data-[state=active]:animate-in data-[state=active]:fade-in-0 data-[state=active]:duration-200",
-        "data-[state=inactive]:animate-out data-[state=inactive]:fade-out-0 data-[state=inactive]:duration-150",
+        // Si animate-none est présent, on est en mode carousel - ne pas cacher les tabs
+        // Sinon, utiliser hidden pour cacher les inactifs
+        isCarouselMode 
+          ? "" // Pas de hidden en mode carousel, le transform gère l'affichage
+          : "data-[state=inactive]:hidden",
+        // Désactiver les animations si animate-none est présent dans className
+        !isCarouselMode && "data-[state=active]:animate-in data-[state=active]:fade-in-0 data-[state=active]:duration-200",
+        !isCarouselMode && "data-[state=inactive]:animate-out data-[state=inactive]:fade-out-0 data-[state=inactive]:duration-150",
         className
       )}
+      style={{
+        // En mode carousel, s'assurer que l'élément n'est pas caché par Radix UI
+        // Utiliser un style qui empêche le masquage mais laisse le parent gérer le display
+        ...(isCarouselMode ? { visibility: 'visible', opacity: 1 } : {}),
+        ...props.style,
+      }}
       value={value}
       {...props}
     />

@@ -39,7 +39,7 @@ export function DesktopSidebar() {
     <aside className="hidden lg:flex flex-col w-[244px] border-r border-border/50 bg-background fixed left-0 top-0 bottom-0 overflow-y-auto">
       <div className="flex flex-col h-full px-4 py-6">
         {/* Logo */}
-        <Link href="/" className="mb-8">
+        <Link href="/" prefetch={true} data-prefetch="viewport" className="mb-8">
           <div className="flex items-center gap-2">
             <div className="size-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
               <SolarIcon icon="leaf-bold" className="size-5 text-white" />
@@ -57,6 +57,8 @@ export function DesktopSidebar() {
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch={true}
+                data-prefetch="viewport"
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
                   isActive
@@ -82,6 +84,8 @@ export function DesktopSidebar() {
           <div className="mt-auto pt-6 border-t border-border/50">
             <Link
               href="/profile"
+              prefetch={true}
+              data-prefetch="viewport"
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors"
             >
               <Avatar className="size-8">
@@ -131,7 +135,7 @@ export function DesktopSidebar() {
         <div className="mt-6 pt-6 border-t border-border/50">
           <div className="text-[10px] text-muted-foreground space-y-1">
             <div className="flex flex-wrap gap-x-2 gap-y-0">
-              <Link href="/rules" className="hover:underline">{t('navigation.rules')}</Link>
+              <Link href="/rules" prefetch={true} data-prefetch="viewport" className="hover:underline">{t('navigation.rules')}</Link>
               <span>•</span>
               <a href="#" className="hover:underline">{t('navigation.help')}</a>
               <span>•</span>

@@ -5,6 +5,7 @@ import { api } from "@/convex/_generated/api";
 import { SolarIcon } from "@/components/icons/SolarIcon";
 import { useMemo } from "react";
 import { cn } from "@/lib/utils";
+import { useTranslations } from 'next-intl';
 
 // Mots à exclure (stop words en français et anglais)
 const stopWords = new Set([
@@ -43,6 +44,7 @@ function extractWords(text: string): string[] {
  * Widget : Nuage de mots des événements
  */
 export function WordCloudWidget() {
+  const t = useTranslations('widgets.wordCloud');
   const decisions = useQuery(api.decisions.getDecisions, { limit: 100 });
 
   // Extraire et compter les mots
@@ -91,7 +93,7 @@ export function WordCloudWidget() {
       <div className="flex items-center gap-2">
         <SolarIcon icon="hashtag-bold" className="size-4 text-muted-foreground" />
         <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-          Mots-clés
+          {t('title')}
         </h4>
       </div>
       <div className="flex flex-wrap gap-2 items-center justify-center p-3 rounded-lg border border-border/50 bg-muted/20 min-h-[120px]">
@@ -112,7 +114,7 @@ export function WordCloudWidget() {
                 fontSize: `${fontSize}px`,
                 opacity,
               }}
-              title={`${count} ${count === 1 ? "occurrence" : "occurrences"}`}
+              title={`${count} ${count === 1 ? t('occurrence') : t('occurrences')}`}
             >
               {word}
             </span>
@@ -120,7 +122,7 @@ export function WordCloudWidget() {
         })}
       </div>
       <p className="text-[10px] text-muted-foreground text-center">
-        {topWords.length} {topWords.length === 1 ? "mot-clé" : "mots-clés"} les plus fréquents
+        {topWords.length} {topWords.length === 1 ? t('keyword') : t('keywords')} {t('mostFrequent')}
       </p>
     </div>
   );

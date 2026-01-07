@@ -6,6 +6,7 @@ import { SolarIcon } from "@/components/icons/SolarIcon";
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { DottedMap } from "@/components/ui/dotted-map";
+import { useTranslations } from 'next-intl';
 
 // Coordonnées simplifiées des pays (capitales)
 const countryCoordinates: Record<string, [number, number]> = {
@@ -152,6 +153,7 @@ function geocodeDecider(decider: string, deciderType: "country" | "institution" 
  */
 export function WorldMapWidget() {
   const router = useRouter();
+  const t = useTranslations('widgets.worldMap');
   const decisions = useQuery(api.decisions.getDecisions, { limit: 100 });
 
   // Créer les markers pour les événements
@@ -186,7 +188,7 @@ export function WorldMapWidget() {
       <div className="flex items-center gap-2">
         <SolarIcon icon="global-bold" className="size-4 text-muted-foreground" />
         <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-          Carte du monde
+          {t('title')}
         </h4>
       </div>
       <div 
@@ -206,11 +208,11 @@ export function WorldMapWidget() {
         />
         {/* Overlay pour indiquer que c'est cliquable */}
         <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-background/50">
-          <span className="text-xs font-medium text-foreground">Voir la carte complète</span>
+          <span className="text-xs font-medium text-foreground">{t('seeFullMap')}</span>
         </div>
       </div>
       <p className="text-[10px] text-muted-foreground text-center">
-        {markers.length} {markers.length === 1 ? "zone active" : "zones actives"}
+        {markers.length} {markers.length === 1 ? t('activeZone') : t('activeZones')}
       </p>
     </div>
   );

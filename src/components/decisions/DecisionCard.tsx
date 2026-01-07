@@ -72,6 +72,15 @@ export function DecisionCard({
     router.prefetch(`/${decision.slug}`);
   };
 
+  // Navigation optimiste avec startTransition
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    // Précharger si pas déjà fait
+    router.prefetch(`/${decision.slug}`);
+    
+    // Laisser Next.js gérer la navigation (déjà optimisée)
+    // Pas besoin de preventDefault, Next.js gère déjà
+  };
+
   const typeLabels: Record<DecisionCardProps["decision"]["type"], string> = {
     law: t('types.law'),
     sanction: t('types.sanction'),
@@ -159,9 +168,10 @@ export function DecisionCard({
         <Link 
           href={`/${decision.slug}`} 
           className="block space-y-2"
-          prefetch={false}
+          prefetch={true}
+          data-prefetch="viewport"
           onMouseEnter={!isMobile ? handlePrefetch : undefined}
-          onClick={isMobile ? handlePrefetch : undefined}
+          onClick={handleClick}
         >
           <h3 className="text-base font-semibold text-foreground line-clamp-2">
             {decision.title}

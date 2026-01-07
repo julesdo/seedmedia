@@ -21,6 +21,163 @@ import { toast } from "sonner";
 import { CircularProgress } from "@/components/ui/circular-progress";
 import { useTranslations } from 'next-intl';
 
+/**
+ * Composant wrapper pour gérer le swipe horizontal sur mobile
+ */
+function SwipeableTabsContent({
+  children,
+  onSwipeLeft,
+  onSwipeRight,
+  className,
+  baseTransform,
+}: {
+  children: React.ReactNode;
+  onSwipeLeft?: () => void;
+  onSwipeRight?: () => void;
+  className?: string;
+  baseTransform?: string; // Transform de base (position du carousel)
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  const touchMoveRef = useRef<{ x: number; y: number } | null>(null);
+  const [isSwiping, setIsSwiping] = useState(false);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  // Mettre à jour la largeur du conteneur
+  useEffect(() => {
+    const updateWidth = () => {
+      if (containerRef.current) {
+        setContainerWidth(containerRef.current.offsetWidth);
+      }
+    };
+    
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
+  }, []);
+
+  // Seuil minimum pour déclencher un swipe (en pixels)
+  const SWIPE_THRESHOLD = 50;
+  // Vitesse minimum pour déclencher un swipe (en pixels/ms)
+  const SWIPE_VELOCITY_THRESHOLD = 0.3;
+  // Seuil vertical pour ignorer les swipes verticaux
+  const VERTICAL_THRESHOLD = 30;
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    touchStartRef.current = {
+      x: touch.clientX,
+      y: touch.clientY,
+      time: Date.now(),
+    };
+    touchMoveRef.current = null;
+    setIsSwiping(false);
+    setSwipeOffset(0);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStartRef.current) return;
+
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - touchStartRef.current.x;
+    const deltaY = touch.clientY - touchStartRef.current.y;
+
+    // Ignorer si le mouvement vertical est plus important que le horizontal
+    if (Math.abs(deltaY) > Math.abs(deltaX) + VERTICAL_THRESHOLD) {
+      return;
+    }
+
+    touchMoveRef.current = { x: touch.clientX, y: touch.clientY };
+    setIsSwiping(true);
+    setSwipeOffset(deltaX);
+
+    // Empêcher le scroll vertical pendant le swipe horizontal
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+      e.preventDefault();
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartRef.current || !touchMoveRef.current) {
+      touchStartRef.current = null;
+      touchMoveRef.current = null;
+      setIsSwiping(false);
+      setSwipeOffset(0);
+      return;
+    }
+
+    const deltaX = touchMoveRef.current.x - touchStartRef.current.x;
+    const deltaY = touchMoveRef.current.y - touchStartRef.current.y;
+    const deltaTime = Date.now() - touchStartRef.current.time;
+    const velocity = Math.abs(deltaX) / deltaTime;
+
+    // Vérifier si c'est un swipe horizontal valide
+    const isHorizontalSwipe = Math.abs(deltaX) > Math.abs(deltaY) + VERTICAL_THRESHOLD;
+    const isSwipeLongEnough = Math.abs(deltaX) > SWIPE_THRESHOLD;
+    const isSwipeFastEnough = velocity > SWIPE_VELOCITY_THRESHOLD;
+
+    if (isHorizontalSwipe && (isSwipeLongEnough || isSwipeFastEnough)) {
+      if (deltaX > 0 && onSwipeRight) {
+        // Swipe vers la droite
+        onSwipeRight();
+      } else if (deltaX < 0 && onSwipeLeft) {
+        // Swipe vers la gauche
+        onSwipeLeft();
+      }
+    }
+
+    // Réinitialiser
+    touchStartRef.current = null;
+    touchMoveRef.current = null;
+    setIsSwiping(false);
+    setSwipeOffset(0);
+  };
+
+  // Extraire le pourcentage de baseTransform (ex: "-100%" -> -100)
+  const basePercent = baseTransform 
+    ? parseFloat(baseTransform.match(/-?(\d+(?:\.\d+)?)%/)?.[1] || "0") * (baseTransform.includes("-") ? -1 : 1)
+    : 0;
+  
+  // Convertir le pourcentage en pixels
+  const basePixels = containerWidth > 0 ? (basePercent / 100) * containerWidth : 0;
+  
+  // Calculer le transform final : base en pixels + offset du swipe en pixels
+  const finalTransform = isSwiping && containerWidth > 0
+    ? `translateX(${basePixels + swipeOffset}px)`
+    : baseTransform || "translateX(0%)";
+
+  return (
+    <div
+      ref={containerRef}
+      className={cn(
+        "relative overflow-hidden",
+        className
+      )}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      style={{
+        touchAction: "pan-y", // Permettre le scroll vertical mais intercepter le swipe horizontal
+      }}
+    >
+      <div
+        className={cn(
+          "transition-transform duration-300 ease-out",
+          isSwiping && "transition-none",
+          // Les enfants doivent être en flex horizontal pour le carousel (mobile ET desktop)
+          "flex"
+        )}
+        style={{
+          transform: finalTransform,
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
 interface UserProfileClientProps {
   username: string;
 }
@@ -100,6 +257,25 @@ function PublicProfileView({ user, userId }: { user: any; userId: string }) {
   const [resolvedLimit, setResolvedLimit] = useState(20);
   const [correctLimit, setCorrectLimit] = useState(20);
   const [savedLimit, setSavedLimit] = useState(20);
+
+  // Ordre des tabs pour la navigation par swipe
+  const tabs = ["resolved", "correct", "saved"] as const;
+  const currentTabIndex = tabs.indexOf(activeTab as typeof tabs[number]);
+
+  // Navigation par swipe
+  const handleSwipeLeft = () => {
+    // Swipe vers la gauche = aller au tab suivant
+    if (currentTabIndex < tabs.length - 1) {
+      setActiveTab(tabs[currentTabIndex + 1]);
+    }
+  };
+
+  const handleSwipeRight = () => {
+    // Swipe vers la droite = aller au tab précédent
+    if (currentTabIndex > 0) {
+      setActiveTab(tabs[currentTabIndex - 1]);
+    }
+  };
   
   // Réinitialiser les limites quand on change d'onglet (optionnel, pour optimiser)
   // On garde les limites pour éviter de recharger à chaque changement d'onglet
@@ -197,7 +373,16 @@ function PublicProfileView({ user, userId }: { user: any; userId: string }) {
   return (
     <div className="bg-background pb-16 lg:pb-0">
       <div className="max-w-[614px] mx-auto">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs 
+          value={activeTab} 
+          onValueChange={(value) => {
+            // Changement instantané sans transition (bypass View Transitions)
+            setActiveTab(value);
+          }} 
+          className="w-full"
+          // Forcer le montage de tous les tabs pour éviter les sauts de layout
+          // Tous les tabs seront dans le DOM, seul le tab actif sera visible
+        >
         {/* Header Profil - COMPACT avec toutes les infos + Tabs */}
         {/* Mobile: sticky en dessous du MobileSubPageHeader (56px) + SimplifiedHeader (56px) + breaking news */}
         {/* Desktop: top-14 (3.5rem) pour DesktopTopBar h-14 (fixed) + breaking news height */}
@@ -394,8 +579,17 @@ function PublicProfileView({ user, userId }: { user: any; userId: string }) {
           </div>
 
           {/* Contenu scrollable des tabs - en dehors du div sticky */}
-          {/* Tab En cours */}
-          <TabsContent value="resolved" className="px-4 pt-4 md:pt-16 pb-6">
+          {/* Carousel pour mobile ET desktop - Tous les tabs côte à côte */}
+          <div className="relative overflow-hidden">
+            <SwipeableTabsContent
+              onSwipeLeft={handleSwipeLeft}
+              onSwipeRight={handleSwipeRight}
+              className=""
+              baseTransform={`translateX(-${currentTabIndex * 100}%)`}
+            >
+              {/* Tab En cours */}
+              <div className="w-full shrink-0">
+                <TabsContent value="resolved" className="px-4 pt-4 md:pt-16 pb-6 animate-none">
             {allAnticipations === undefined ? (
                 <div className="space-y-4">
                   {[...Array(3)].map((_, i) => (
@@ -500,10 +694,12 @@ function PublicProfileView({ user, userId }: { user: any; userId: string }) {
                 )}
               </div>
             )}
-          </TabsContent>
+                </TabsContent>
+              </div>
 
-          {/* Tab Correctes */}
-          <TabsContent value="correct" className="px-4 pt-4 md:pt-16 pb-6">
+              {/* Tab Correctes */}
+              <div className="w-full shrink-0">
+                <TabsContent value="correct" className="px-4 pt-4 md:pt-16 pb-6 animate-none">
             {correctAnticipations === undefined ? (
               <div className="space-y-4">
                 {[...Array(3)].map((_, i) => (
@@ -590,10 +786,12 @@ function PublicProfileView({ user, userId }: { user: any; userId: string }) {
                 )}
               </div>
             )}
-          </TabsContent>
+                </TabsContent>
+              </div>
 
-          {/* Tab Sauvegardées */}
-          <TabsContent value="saved" className="px-4 pt-4 md:pt-16 pb-6">
+              {/* Tab Sauvegardées */}
+              <div className="w-full shrink-0">
+                <TabsContent value="saved" className="px-4 pt-4 md:pt-16 pb-6 animate-none">
             {savedFavorites === undefined ? (
               <div className="space-y-4">
                 {[...Array(3)].map((_, i) => (
@@ -681,7 +879,10 @@ function PublicProfileView({ user, userId }: { user: any; userId: string }) {
                     )}
               </div>
             )}
-          </TabsContent>
+                </TabsContent>
+              </div>
+            </SwipeableTabsContent>
+          </div>
           </Tabs>
       
         {/* Espace pour la bottom nav mobile */}

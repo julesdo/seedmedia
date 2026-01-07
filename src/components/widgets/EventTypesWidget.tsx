@@ -5,22 +5,7 @@ import { api } from "@/convex/_generated/api";
 import { SolarIcon } from "@/components/icons/SolarIcon";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-
-const typeLabels: Record<string, string> = {
-  crisis: "Crise",
-  disaster: "Catastrophe",
-  conflict: "Conflit",
-  discovery: "Découverte",
-  election: "Élection",
-  economic_event: "Économie",
-  law: "Loi",
-  sanction: "Sanction",
-  tax: "Fiscalité",
-  agreement: "Accord",
-  policy: "Politique",
-  regulation: "Réglementation",
-  other: "Autre",
-};
+import { useTranslations } from 'next-intl';
 
 const typeColors: Record<string, string> = {
   crisis: "bg-red-500/10 text-red-600 dark:text-red-400",
@@ -42,6 +27,7 @@ const typeColors: Record<string, string> = {
  * Widget : Types d'événements du jour
  */
 export function EventTypesWidget() {
+  const t = useTranslations('widgets.eventTypes');
   const now = Date.now();
   const oneDayAgo = now - 24 * 60 * 60 * 1000;
   
@@ -77,10 +63,10 @@ export function EventTypesWidget() {
         <div className="flex items-center gap-2">
           <SolarIcon icon="chart-2-bold" className="size-4 text-muted-foreground" />
           <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            Tendances du jour
+            {t('title')}
           </h4>
         </div>
-        <p className="text-xs text-muted-foreground">Aucun événement récent</p>
+        <p className="text-xs text-muted-foreground">{t('noRecentEvents')}</p>
       </div>
     );
   }
@@ -90,7 +76,7 @@ export function EventTypesWidget() {
       <div className="flex items-center gap-2">
         <SolarIcon icon="chart-2-bold" className="size-4 text-muted-foreground" />
         <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-          Tendances du jour
+          {t('title')}
         </h4>
       </div>
       <div className="flex flex-wrap gap-2">
@@ -100,7 +86,7 @@ export function EventTypesWidget() {
             variant="outline"
             className={cn("text-xs", typeColors[type] || typeColors.other)}
           >
-            {typeLabels[type] || type} ({count})
+            {t(`types.${type}`)} ({count})
           </Badge>
         ))}
       </div>

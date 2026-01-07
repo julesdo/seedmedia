@@ -130,7 +130,7 @@ export function DecisionReelCard({
             onClick={onBack || (() => router.back())}
             className="h-10 w-10 rounded-full bg-black/40 backdrop-blur-md text-white hover:bg-black/60 border-0 pointer-events-auto"
           >
-            <SolarIcon icon="alt-arrow-left-bold" className="size-5" />
+            <SolarIcon icon="alt-arrow-left-bold" className="size-5 text-white" />
           </Button>
 
           {/* Badge Statut */}
@@ -156,7 +156,7 @@ export function DecisionReelCard({
               decisionId={decision._id}
               size="icon"
               variant="ghost"
-              className="h-10 w-10 rounded-full bg-black/40 backdrop-blur-md text-white hover:bg-black/60 border-0"
+              className="h-10 w-10 rounded-full bg-black/40 backdrop-blur-md text-white hover:bg-black/60 border-0 [&_svg]:text-white"
             />
           </div>
         </header>
@@ -221,7 +221,7 @@ export function DecisionReelCard({
               size="icon"
               className="h-10 w-10 rounded-full bg-black/40 backdrop-blur-md text-white hover:bg-black/60 border-0"
             >
-              <SolarIcon icon="heart-bold" className="size-5" />
+              <SolarIcon icon="heart-bold" className="size-5 text-white" />
             </Button>
             <Button
               variant="ghost"
@@ -229,7 +229,7 @@ export function DecisionReelCard({
               className="h-10 w-10 rounded-full bg-black/40 backdrop-blur-md text-white hover:bg-black/60 border-0"
               onClick={() => router.push(`/${decision.slug}`)}
             >
-              <SolarIcon icon="share-bold" className="size-5" />
+              <SolarIcon icon="share-bold" className="size-5 text-white" />
             </Button>
           </div>
           <div className="text-xs text-white/60">

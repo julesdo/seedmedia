@@ -141,9 +141,10 @@ const DecisionReelFeed = dynamic(
 
 interface DecisionDetailClientProps {
   slug: string;
+  initialDecisions?: any[]; // Décisions préchargées pour le feed reel
 }
 
-export function DecisionDetailClient({ slug }: DecisionDetailClientProps) {
+export function DecisionDetailClient({ slug, initialDecisions }: DecisionDetailClientProps) {
   const router = useRouter();
   const [isMobile, setIsMobile] = useState(false);
   const decision = useQuery(api.decisions.getDecisionBySlug, { slug });
@@ -170,9 +171,11 @@ export function DecisionDetailClient({ slug }: DecisionDetailClientProps) {
     }
   }, [isMobile]);
 
+  // Afficher immédiatement le skeleton (navigation optimiste)
+  // Ne pas attendre que decision soit défini
   if (decision === undefined) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="container mx-auto px-4 py-8 max-w-4xl animate-in fade-in duration-150">
         <Skeleton className="aspect-video w-full mb-6" />
         <div className="space-y-4">
           <Skeleton className="h-8 w-3/4" />
@@ -194,6 +197,7 @@ export function DecisionDetailClient({ slug }: DecisionDetailClientProps) {
       <div className="fixed inset-0 z-50 lg:hidden bg-background">
         <DecisionReelFeed
           initialDecisionId={decision._id}
+          initialDecisions={initialDecisions}
           onBack={() => router.back()}
         />
       </div>

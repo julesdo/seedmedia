@@ -4,6 +4,8 @@ import { DecisionStories } from "@/components/decisions/DecisionStories";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SolarIcon } from "@/components/icons/SolarIcon";
 import { getTranslations } from 'next-intl/server';
+import { ConvexHttpClient } from "convex/browser";
+import { api } from "@/convex/_generated/api";
 
 // ISR: Régénérer toutes les minutes (page très visitée, données qui changent fréquemment)
 export const revalidate = 60;
@@ -50,6 +52,23 @@ function HomePageSkeleton() {
 }
 
 export default async function HomePage() {
+  // Précharger les données côté serveur (au build time avec ISR)
+  // Cela permet un chargement instantané sans attendre la connexion Convex
+  let initialDecisions: any[] | undefined = undefined;
+  
+  try {
+    const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+    // @ts-expect-error - Type instantiation is deep but works at runtime
+    const decisions = await convex.query(api.decisions.getDecisions, {
+      limit: 20,
+    });
+    initialDecisions = Array.isArray(decisions) ? decisions : undefined;
+  } catch (error) {
+    console.error("Error preloading decisions:", error);
+    // En cas d'erreur, DecisionList chargera les données côté client
+    initialDecisions = undefined;
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header - Masqué en mobile */}
@@ -62,7 +81,7 @@ export default async function HomePage() {
 
       {/* Feed vertical - Style Instagram */}
       <div className="max-w-[614px] mx-auto">
-        <DecisionList limit={20} />
+        <DecisionList initialDecisions={initialDecisions} limit={20} />
       </div>
 
       {/* Espace pour la bottom nav mobile */}

@@ -10,6 +10,7 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useConvexAuth } from "convex/react";
 import Link from "next/link";
 import { SearchModal } from "@/components/search/SearchModal";
+import { useUser } from "@/contexts/UserContext";
 
 /**
  * Top Bar Desktop - Style Instagram
@@ -20,6 +21,7 @@ export function DesktopTopBar() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const { isAuthenticated } = useConvexAuth();
+  const { user } = useUser();
 
   // TODO: Vérifier les notifications non lues
   const hasUnreadNotifications = false;
@@ -59,8 +61,18 @@ export function DesktopTopBar() {
 
         {/* Actions droite */}
         <div className="flex items-center gap-2">
+          {/* Seeds - Gamification */}
+          {isAuthenticated && user && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary/10 border border-primary/20 hover:bg-primary/15 transition-colors">
+              <SolarIcon icon="leaf-bold" className="size-4 text-primary" />
+              <span className="text-sm font-semibold text-foreground">
+                {user.seedsBalance || 0}
+              </span>
+            </div>
+          )}
+
           {/* Notifications */}
-          <Link href="/notifications">
+          <Link href="/notifications" prefetch={true} data-prefetch="viewport">
             <Button
               variant="ghost"
               size="icon"
@@ -85,7 +97,10 @@ export function DesktopTopBar() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => router.push("/sign-in")}
+                onClick={() => {
+                  router.prefetch("/sign-in");
+                  router.push("/sign-in");
+                }}
                 className="h-9 text-xs"
               >
                 Connexion
@@ -93,7 +108,10 @@ export function DesktopTopBar() {
               <Button
                 variant="default"
                 size="sm"
-                onClick={() => router.push("/sign-up")}
+                onClick={() => {
+                  router.prefetch("/sign-up");
+                  router.push("/sign-up");
+                }}
                 className="h-9 text-xs"
               >
                 Inscription

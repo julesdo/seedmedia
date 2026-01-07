@@ -29,6 +29,7 @@
     "trending": "Trends",
     "map": "Kaart",
     "bots": "Bots",
+    "stats": "Statistieken",
     "profile": "Profiel",
     "settings": "Instellingen",
     "level": "Niveau",
@@ -329,10 +330,70 @@
     "readMore": "Lees meer"
   },
   "widgets": {
-    "trendingRegions": "Trendregio's",
-    "eventTypes": "Gebeurtenistypen",
-    "recentResolutions": "Recente oplossingen",
-    "wordCloud": "Trefwoorden"
+    "sidebar": {
+      "importantDecisions": "Belangrijke beslissingen",
+      "seeAll": "Alles bekijken"
+    },
+    "dailyLogin": {
+      "title": "Dagelijkse aanmelding",
+      "streak": "Reeks:",
+      "days": "dagen",
+      "claimBonus": "Bonus claimen",
+      "alreadyClaimed": "Vandaag al geclaimd",
+      "seedsEarned": "+{seeds} seeds",
+      "streakDays": "Reeks {streak} dagen",
+      "luckyBonus": "Geluksbonus!",
+      "levelReached": "Niveau {level} bereikt",
+      "errorClaiming": "Fout bij claimen"
+    },
+    "leaderboard": {
+      "title": "Top deze week",
+      "user": "Gebruiker",
+      "yourPosition": "Jouw positie"
+    },
+    "worldMap": {
+      "title": "Wereldkaart",
+      "seeFullMap": "Volledige kaart bekijken",
+      "activeZone": "actieve zone",
+      "activeZones": "actieve zones"
+    },
+    "wordCloud": {
+      "title": "Trefwoorden",
+      "occurrence": "voorkomen",
+      "occurrences": "voorkomens",
+      "keyword": "trefwoord",
+      "keywords": "trefwoorden",
+      "mostFrequent": "meest voorkomende"
+    },
+    "trendingRegions": {
+      "title": "Actieve zones",
+      "event": "gebeurtenis",
+      "events": "gebeurtenissen"
+    },
+    "eventTypes": {
+      "title": "Trends van de dag",
+      "noRecentEvents": "Geen recente gebeurtenissen",
+      "types": {
+        "crisis": "Crisis",
+        "disaster": "Ramp",
+        "conflict": "Conflict",
+        "discovery": "Ontdekking",
+        "election": "Verkiezing",
+        "economic_event": "Economie",
+        "law": "Wet",
+        "sanction": "Sanctie",
+        "tax": "Belasting",
+        "agreement": "Overeenkomst",
+        "policy": "Beleid",
+        "regulation": "Regelgeving",
+        "other": "Anders"
+      }
+    },
+    "recentResolutions": {
+      "title": "Recente oplossingen",
+      "correct": "✓ Correct",
+      "incorrect": "✗ Incorrect"
+    }
   },
   "studio": {
     "dashboard": "Dashboard",

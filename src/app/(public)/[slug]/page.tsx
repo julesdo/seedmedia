@@ -52,6 +52,23 @@ export default async function DecisionDetailPage({
 }) {
   const { slug } = await params;
   
-  return <DecisionDetailClient slug={slug} />;
+  // Précharger les décisions pour le feed reel (au build time avec ISR)
+  // Cela permet un chargement instantané du feed reel sur mobile
+  let initialDecisions: any[] | undefined = undefined;
+  
+  try {
+    const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+    // @ts-ignore - Type instantiation is deep but works at runtime
+    const decisions = await convex.query(api.decisions.getDecisions, {
+      limit: 20,
+    });
+    initialDecisions = Array.isArray(decisions) ? decisions : undefined;
+  } catch (error) {
+    console.error("Error preloading decisions for reel feed:", error);
+    // En cas d'erreur, DecisionReelFeed chargera les données côté client
+    initialDecisions = undefined;
+  }
+  
+  return <DecisionDetailClient slug={slug} initialDecisions={initialDecisions} />;
 }
 

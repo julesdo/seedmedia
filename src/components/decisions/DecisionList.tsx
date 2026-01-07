@@ -17,6 +17,7 @@ interface DecisionListProps {
   impactedDomain?: string;
   limit?: number;
   className?: string;
+  initialDecisions?: any[]; // Décisions préchargées côté serveur
 }
 
 function DecisionCardSkeleton() {
@@ -62,15 +63,21 @@ export function DecisionList({
   impactedDomain,
   limit = 20,
   className,
+  initialDecisions,
 }: DecisionListProps) {
   const [displayLimit, setDisplayLimit] = useState(limit);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const { isAuthenticated } = useConvexAuth();
 
-  const decisions = useQuery(
+  // Si on a des données préchargées, on commence avec elles
+  // Sinon, on charge depuis Convex
+  const hasInitialData = initialDecisions && initialDecisions.length > 0;
+  const shouldSkipQuery = hasInitialData && displayLimit <= initialDecisions.length;
+
+  const clientDecisions = useQuery(
     api.decisions.getDecisions,
-    {
+    shouldSkipQuery ? "skip" : {
       limit: displayLimit,
       status,
       type,
@@ -79,10 +86,22 @@ export function DecisionList({
     }
   );
 
+  // Fusionner les données préchargées avec les données client
+  // Utiliser les données préchargées si disponibles et si displayLimit <= initialDecisions.length
+  // Sinon utiliser les données client (qui contiennent plus d'éléments)
+  const decisions = (() => {
+    if (hasInitialData && displayLimit <= initialDecisions.length) {
+      // Utiliser les données préchargées (plus rapide)
+      return initialDecisions.slice(0, displayLimit);
+    }
+    // Utiliser les données client (chargées au scroll)
+    return clientDecisions;
+  })();
+
   // Récupérer tous les favoris en une seule requête au lieu de N requêtes
   const favoriteIdsArray = useQuery(
     api.favorites.getFavoritesForDecisions,
-    isAuthenticated && decisions
+    isAuthenticated && decisions && decisions.length > 0
       ? {
           decisionIds: decisions.map((d) => d._id),
         }
@@ -93,8 +112,11 @@ export function DecisionList({
   const favoriteIds = favoriteIdsArray ? new Set(favoriteIdsArray) : undefined;
 
   // Infinite scroll avec Intersection Observer
+  // Ne déclencher que si on a chargé toutes les données préchargées
   useEffect(() => {
     if (!decisions || decisions.length < displayLimit) return;
+    // Si on utilise encore les données préchargées, ne pas déclencher le scroll auto
+    if (hasInitialData && initialDecisions && displayLimit <= initialDecisions.length) return;
 
     if (observerRef.current) {
       observerRef.current.disconnect();

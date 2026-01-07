@@ -2,6 +2,7 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { betterAuthComponent } from "./auth";
 import { Id } from "./_generated/dataModel";
+import { api } from "./_generated/api";
 
 /**
  * Récupère les anticipations d'un utilisateur
@@ -288,6 +289,9 @@ export const createAnticipation = mutation({
 
     // TODO: Débiter les Seeds de l'utilisateur
     // TODO: Créer une transaction Seeds
+
+    // Récompense de participation sera gérée côté client après la création
+    // (appelée depuis AnticipationModal et QuizSimple)
 
     return anticipationId;
   },

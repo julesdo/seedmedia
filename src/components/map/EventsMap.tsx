@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
 import L, { divIcon } from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -9,6 +9,7 @@ import { SolarIcon } from "@/components/icons/SolarIcon";
 import { useRouter } from "next/navigation";
 import type { Id } from "@/convex/_generated/dataModel";
 import { useTheme } from "next-themes";
+import { MapDecisionCard } from "./MapDecisionCard";
 
 // Fonction pour calculer la couleur du badge (identique à celle dans generateDecision.ts)
 function calculateBadgeColor(heat: number, sentiment: "positive" | "negative" | "neutral"): string {
@@ -58,7 +59,12 @@ function calculateBadgeColor(heat: number, sentiment: "positive" | "negative" | 
 }
 
 // Fonction pour créer une icône personnalisée avec emoji
-function createEmojiIcon(emoji: string, badgeColor: string, isHovered: boolean = false) {
+function createEmojiIcon(
+  emoji: string, 
+  badgeColor: string, 
+  isHovered: boolean = false,
+  isActive: boolean = false
+) {
   const baseSize = 40;
   const hoverSize = 50;
   const size = isHovered ? hoverSize : baseSize;
@@ -68,28 +74,103 @@ function createEmojiIcon(emoji: string, badgeColor: string, isHovered: boolean =
   return divIcon({
     className: "custom-emoji-marker",
     html: `
-      <div style="
+      <div class="marker-container" style="
+        position: relative;
         width: ${baseSize}px;
         height: ${baseSize}px;
-        border-radius: 50%;
-        background-color: ${badgeColor};
-        border: 2px solid #ffffff;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: ${fontSize}px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-        cursor: pointer;
-        transition: all 0.2s ease;
-        transform: scale(${scale});
-        z-index: ${isHovered ? 1000 : 100};
       ">
-        ${emoji}
+        ${isActive ? `
+          <div class="marker-ping" style="
+            position: absolute;
+            width: ${baseSize * 3}px;
+            height: ${baseSize * 3}px;
+            border-radius: 50%;
+            background-color: ${badgeColor};
+            opacity: 0.4;
+            animation: marker-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+            transform: translate(-50%, -50%);
+            top: 50%;
+            left: 50%;
+            pointer-events: none;
+          "></div>
+        ` : ''}
+        <div style="
+          width: ${baseSize}px;
+          height: ${baseSize}px;
+          border-radius: 50%;
+          background-color: ${badgeColor};
+          border: ${isActive ? '3px' : '2px'} solid #ffffff;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: ${fontSize}px;
+          box-shadow: ${isActive ? '0 4px 16px rgba(0, 0, 0, 0.4)' : '0 2px 8px rgba(0, 0, 0, 0.3)'};
+          cursor: pointer;
+          transition: all 0.2s ease;
+          transform: scale(${scale});
+          z-index: ${isHovered || isActive ? 1000 : 100};
+          position: relative;
+        ">
+          ${emoji}
+        </div>
       </div>
+      <style>
+        @keyframes marker-ping {
+          0% {
+            transform: translate(-50%, -50%) scale(0.8);
+            opacity: 0.4;
+          }
+          50% {
+            opacity: 0.2;
+          }
+          75%, 100% {
+            transform: translate(-50%, -50%) scale(2);
+            opacity: 0;
+          }
+        }
+      </style>
     `,
     iconSize: [baseSize, baseSize],
     iconAnchor: [baseSize / 2, baseSize / 2],
     popupAnchor: [0, -baseSize / 2],
+  });
+}
+
+// Fonction pour décaler les markers qui ont les mêmes coordonnées
+function offsetMarkers(
+  decisionsWithCoords: { decision: Decision; coords: [number, number] }[]
+): { decision: Decision; coords: [number, number]; originalIndex: number }[] {
+  const offsetDistance = 0.08; // ~8.8km de décalage pour mieux voir les markers
+  const coordsMap = new Map<string, number[]>();
+  
+  return decisionsWithCoords.map((item, index) => {
+    const key = `${item.coords[0].toFixed(3)},${item.coords[1].toFixed(3)}`;
+    const existing = coordsMap.get(key);
+    
+    if (!existing) {
+      coordsMap.set(key, [0]);
+      return { ...item, originalIndex: index };
+    }
+    
+    // Calculer l'offset en spirale
+    const count = existing.length;
+    const angle = (count * 45) * (Math.PI / 180); // 45 degrés entre chaque marker
+    const radius = offsetDistance * (1 + Math.floor(count / 8)); // Augmenter le rayon tous les 8 markers
+    
+    const offsetLat = radius * Math.cos(angle);
+    const offsetLng = radius * Math.sin(angle);
+    
+    existing.push(count);
+    coordsMap.set(key, existing);
+    
+    return {
+      ...item,
+      coords: [item.coords[0] + offsetLat, item.coords[1] + offsetLng] as [number, number],
+      originalIndex: index,
+    };
   });
 }
 
@@ -106,6 +187,7 @@ interface Decision {
   emoji: string;
   badgeColor: string;
   status: "announced" | "tracking" | "resolved";
+  imageUrl?: string;
 }
 
 interface EventsMapProps {
@@ -248,23 +330,57 @@ function geocodeDecider(decider: string, deciderType: string): [number, number] 
   return null;
 }
 
-// Composant pour ajuster la vue de la carte
-function MapViewAdjuster({ decisions }: { decisions: Decision[] }) {
+// Composant pour centrer sur un marker spécifique
+function MapCenterer({ 
+  coords, 
+  zoom = 6 
+}: { 
+  coords: [number, number] | null;
+  zoom?: number;
+}) {
   const map = useMap();
+  const lastCoordsRef = useRef<string | null>(null);
   
   useEffect(() => {
-    const coordinates = decisions
-      .map((d) => geocodeDecider(d.decider, d.deciderType))
-      .filter((c): c is [number, number] => c !== null);
+    if (coords) {
+      const coordsKey = `${coords[0]},${coords[1]}`;
+      // Ne centrer que si les coordonnées ont changé
+      if (lastCoordsRef.current !== coordsKey) {
+        lastCoordsRef.current = coordsKey;
+        map.flyTo(coords, zoom, {
+          duration: 0.8,
+          easeLinearity: 0.25,
+        });
+      }
+    }
+  }, [coords, zoom, map]);
+  
+  return null;
+}
+
+// Composant pour ajuster la vue de la carte initiale (une seule fois au montage)
+function MapViewAdjuster({ 
+  coordinates 
+}: { 
+  coordinates: [number, number][] 
+}) {
+  const map = useMap();
+  const hasAdjustedRef = useRef(false);
+  
+  useEffect(() => {
+    // Ne s'exécuter qu'une seule fois au montage
+    if (hasAdjustedRef.current) return;
     
     if (coordinates.length > 0) {
       const bounds = L.latLngBounds(coordinates);
       map.fitBounds(bounds, { padding: [50, 50] });
+      hasAdjustedRef.current = true;
     } else {
       // Vue par défaut : monde entier
       map.setView([20, 0], 2);
+      hasAdjustedRef.current = true;
     }
-  }, [decisions, map]);
+  }, [coordinates, map]);
   
   return null;
 }
@@ -312,6 +428,7 @@ function ThemeAwareTileLayer() {
 export function EventsMap({ decisions, className }: EventsMapProps) {
   const router = useRouter();
   const [hoveredMarker, setHoveredMarker] = useState<string | null>(null);
+  const [activeDecisionIndex, setActiveDecisionIndex] = useState(0);
   
   // Filtrer les décisions avec des coordonnées valides
   const decisionsWithCoords = useMemo(() => {
@@ -323,9 +440,47 @@ export function EventsMap({ decisions, className }: EventsMapProps) {
       .filter((item): item is { decision: Decision; coords: [number, number] } => item !== null);
   }, [decisions]);
 
-  if (decisionsWithCoords.length === 0) {
+  // Décaler les markers qui ont les mêmes coordonnées
+  const decisionsWithOffsetCoords = useMemo(() => {
+    return offsetMarkers(decisionsWithCoords);
+  }, [decisionsWithCoords]);
+
+  // Mémoriser les coordonnées pour MapViewAdjuster (évite les re-renders)
+  const coordinatesForBounds = useMemo(() => {
+    return decisionsWithOffsetCoords.map(item => item.coords);
+  }, [decisionsWithOffsetCoords]);
+
+  // Décision active actuelle (utiliser l'index original pour trouver la bonne décision)
+  const activeDecision = decisionsWithOffsetCoords[activeDecisionIndex];
+  const activeDecisionId = activeDecision?.decision._id;
+  const activeCoords = activeDecision?.coords || null;
+
+  // Navigation entre les décisions
+  const handleSwipeLeft = () => {
+    if (activeDecisionIndex < decisionsWithOffsetCoords.length - 1) {
+      setActiveDecisionIndex(activeDecisionIndex + 1);
+    }
+  };
+
+  const handleSwipeRight = () => {
+    if (activeDecisionIndex > 0) {
+      setActiveDecisionIndex(activeDecisionIndex - 1);
+    }
+  };
+
+  // Activer une décision depuis un marker
+  const handleMarkerClick = (decisionId: string) => {
+    const index = decisionsWithOffsetCoords.findIndex(
+      (item) => item.decision._id === decisionId
+    );
+    if (index !== -1) {
+      setActiveDecisionIndex(index);
+    }
+  };
+
+  if (decisionsWithOffsetCoords.length === 0) {
     return (
-      <div className={cn("flex items-center justify-center h-96 bg-muted rounded-lg", className)}>
+      <div className={cn("flex items-center justify-center h-full bg-muted rounded-lg", className)}>
         <div className="text-center space-y-2">
           <SolarIcon icon="map-point-bold" className="size-12 text-muted-foreground mx-auto" />
           <p className="text-sm text-muted-foreground">Aucun événement localisable</p>
@@ -335,18 +490,18 @@ export function EventsMap({ decisions, className }: EventsMapProps) {
   }
 
   return (
-    <div className={cn("w-full h-96 rounded-lg overflow-hidden border relative", className)}>
+    <div className={cn("w-full h-full rounded-lg overflow-hidden border relative", className)}>
       {/* Légende avec une seule bande de dégradé continue (vert → jaune/orange → rouge) */}
-      <div className="absolute top-2 left-2 right-2 z-[1000] flex justify-center">
-        <div className="bg-background/95 backdrop-blur-md border border-border/50 rounded-lg px-4 py-3 shadow-lg">
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-3">
-              <span className="font-semibold text-foreground text-xs">Impact :</span>
+      <div className="absolute top-0 left-0 right-0 z-[1000] flex justify-center pt-2 px-2 safe-area-inset-top">
+        <div className="bg-background/95 backdrop-blur-md border border-border/50 rounded-lg px-3 py-2 sm:px-4 sm:py-3 shadow-lg max-w-full">
+          <div className="flex flex-col gap-1.5 sm:gap-2">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <span className="font-semibold text-foreground text-[10px] sm:text-xs shrink-0">Impact :</span>
               
               {/* Bande unique de dégradé vert → jaune/orange → rouge */}
-              <div className="relative flex-1 max-w-md">
+              <div className="relative flex-1 max-w-md min-w-0">
                 <div 
-                  className="h-8 rounded border-2 border-white shadow-sm relative overflow-hidden"
+                  className="h-6 sm:h-8 rounded border-2 border-white shadow-sm relative overflow-hidden"
                   style={{
                     background: `linear-gradient(to right, 
                       #22c55e,  /* Vert foncé (progrès chaud) */
@@ -367,19 +522,19 @@ export function EventsMap({ decisions, className }: EventsMapProps) {
                 </div>
                 
                 {/* Labels sous la bande */}
-                <div className="flex justify-between mt-1.5 text-[10px]">
-                  <span className="font-medium text-foreground">💚 Progrès</span>
-                  <span className="font-medium text-foreground">⚪ Neutre</span>
-                  <span className="font-medium text-foreground">🔴 Crise</span>
+                <div className="flex justify-between mt-1 text-[9px] sm:text-[10px]">
+                  <span className="font-medium text-foreground truncate">💚 Progrès</span>
+                  <span className="font-medium text-foreground truncate">⚪ Neutre</span>
+                  <span className="font-medium text-foreground truncate">🔴 Crise</span>
                 </div>
               </div>
             </div>
             
             {/* Indicateur froid → chaud */}
-            <div className="flex items-center justify-end gap-2 text-[10px] text-muted-foreground">
-              <span>❄️ Froid</span>
+            <div className="flex items-center justify-end gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] text-muted-foreground">
+              <span className="truncate">❄️ Froid</span>
               <span>→</span>
-              <span>🔥 Chaud</span>
+              <span className="truncate">🔥 Chaud</span>
             </div>
           </div>
         </div>
@@ -388,24 +543,30 @@ export function EventsMap({ decisions, className }: EventsMapProps) {
       <MapContainer
         center={[20, 0]}
         zoom={2}
+        minZoom={2}
+        maxZoom={10}
         style={{ height: "100%", width: "100%" }}
         scrollWheelZoom={true}
+        maxBounds={[[-85, -180], [85, 180]]}
+        maxBoundsViscosity={1.0}
       >
         <ThemeAwareTileLayer />
-        <MapViewAdjuster decisions={decisions} />
-        {decisionsWithCoords.map(({ decision, coords }) => {
+        <MapViewAdjuster coordinates={coordinatesForBounds} />
+        <MapCenterer coords={activeCoords} zoom={6} />
+        {decisionsWithOffsetCoords.map(({ decision, coords }) => {
           const isHovered = hoveredMarker === decision._id;
-          // Recréer l'icône à chaque changement d'état hover
-          const emojiIcon = createEmojiIcon(decision.emoji, decision.badgeColor, isHovered);
+          const isActive = activeDecisionId === decision._id;
+          // Recréer l'icône à chaque changement d'état hover/active
+          const emojiIcon = createEmojiIcon(decision.emoji, decision.badgeColor, isHovered, isActive);
           
           return (
             <Marker
-              key={`${decision._id}-${isHovered}`} // Force la recréation du Marker au hover
+              key={`${decision._id}-${isHovered}-${isActive}`} // Force la recréation du Marker au hover/active
               position={coords}
               icon={emojiIcon}
               eventHandlers={{
                 click: () => {
-                  router.push(`/${decision.slug}`);
+                  handleMarkerClick(decision._id);
                 },
                 mouseover: () => {
                   setHoveredMarker(decision._id);
@@ -418,6 +579,39 @@ export function EventsMap({ decisions, className }: EventsMapProps) {
           );
         })}
       </MapContainer>
+
+      {/* Card flottante en bas avec swipe */}
+      {activeDecision && (
+        <div className="absolute bottom-0 left-0 right-0 z-[1000] pointer-events-none pb-4 px-4 lg:px-16 safe-area-inset-bottom">
+          <div className="max-w-lg mx-auto pointer-events-auto">
+            <MapDecisionCard
+              decision={activeDecision.decision}
+              onSwipeLeft={handleSwipeLeft}
+              onSwipeRight={handleSwipeRight}
+              onNavigateLeft={handleSwipeRight}
+              onNavigateRight={handleSwipeLeft}
+              canNavigateLeft={activeDecisionIndex > 0}
+              canNavigateRight={activeDecisionIndex < decisionsWithOffsetCoords.length - 1}
+            />
+            {/* Indicateur de position */}
+            <div className="flex items-center justify-center gap-1.5 mt-3">
+              {decisionsWithOffsetCoords.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setActiveDecisionIndex(index)}
+                  className={cn(
+                    "h-1.5 rounded-full transition-all duration-200",
+                    index === activeDecisionIndex
+                      ? "w-8 bg-primary"
+                      : "w-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                  )}
+                  aria-label={`Aller à la décision ${index + 1}`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

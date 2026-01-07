@@ -5,11 +5,13 @@ import { api } from "@/convex/_generated/api";
 import { SolarIcon } from "@/components/icons/SolarIcon";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { useTranslations } from 'next-intl';
 
 /**
  * Widget : Régions les plus actives
  */
 export function TrendingRegionsWidget() {
+  const t = useTranslations('widgets.trendingRegions');
   const decisions = useQuery(api.decisions.getDecisions, { limit: 50 });
 
   if (!decisions) {
@@ -43,7 +45,7 @@ export function TrendingRegionsWidget() {
       <div className="flex items-center gap-2">
         <SolarIcon icon="map-point-bold" className="size-4 text-muted-foreground" />
         <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-          Zones actives
+          {t('title')}
         </h4>
       </div>
       <div className="space-y-2">
@@ -54,7 +56,7 @@ export function TrendingRegionsWidget() {
           >
             <span className="text-foreground truncate flex-1">{region}</span>
             <span className="text-muted-foreground text-xs ml-2 shrink-0">
-              {count} {count === 1 ? "événement" : "événements"}
+              {count} {count === 1 ? t('event') : t('events')}
             </span>
           </div>
         ))}

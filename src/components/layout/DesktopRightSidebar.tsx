@@ -11,12 +11,16 @@ import { EventTypesWidget } from "@/components/widgets/EventTypesWidget";
 import { RecentResolutionsWidget } from "@/components/widgets/RecentResolutionsWidget";
 import { WorldMapWidget } from "@/components/widgets/WorldMapWidget";
 import { WordCloudWidget } from "@/components/widgets/WordCloudWidget";
+import { DailyLoginWidget } from "@/components/widgets/DailyLoginWidget";
+import { LeaderboardWidget } from "@/components/widgets/LeaderboardWidget";
 import { Separator } from "@/components/ui/separator";
+import { useTranslations } from 'next-intl';
 
 /**
  * Sidebar droite - Style Instagram Desktop (Suggestions)
  */
 export function DesktopRightSidebar() {
+  const t = useTranslations('widgets.sidebar');
   // Récupérer les décisions "hot" pour les suggestions
   const hotDecisions = useQuery(api.decisions.getHotDecisions, { limit: 5 });
 
@@ -29,10 +33,10 @@ export function DesktopRightSidebar() {
           <div className="mb-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-muted-foreground">
-                Décisions importantes
+                {t('importantDecisions')}
               </h3>
               <Button variant="ghost" size="sm" className="text-xs h-auto p-0">
-                Voir tout
+                {t('seeAll')}
               </Button>
             </div>
             
@@ -77,6 +81,16 @@ export function DesktopRightSidebar() {
 
         {/* Widgets pertinents */}
         <div className="space-y-6">
+          {/* Daily Login - En haut pour visibilité */}
+          <DailyLoginWidget />
+          
+          <Separator />
+          
+          {/* Leaderboard */}
+          <LeaderboardWidget />
+          
+          <Separator />
+          
           {/* Carte du monde */}
           <WorldMapWidget />
           

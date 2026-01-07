@@ -34,6 +34,7 @@ export function DecisionStories() {
               <Link
                 href={`/${decision.slug}`}
                 prefetch={true}
+                data-prefetch="viewport"
                 className="group flex flex-col items-center gap-2 w-20 md:w-24"
               >
                 {/* Cercle avec image (comme Instagram Stories) */}

@@ -10,6 +10,7 @@ import { BreakingNewsBanner } from "@/components/breaking-news/BreakingNewsBanne
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { usePrefetchVisibleLinks } from "@/hooks/useInstantNavigation";
 
 /**
  * Layout simplifié pour Seed
@@ -24,6 +25,9 @@ export function SimplifiedLayout({
 }) {
   const pathname = usePathname();
   const isSubPage = pathname !== "/";
+  
+  // Précharger automatiquement les liens visibles dans le viewport
+  usePrefetchVisibleLinks();
 
   // Note: Les barres de navigation sont cachées uniquement en mode feed reels
   // Cette logique est gérée dans DecisionDetailClient.tsx

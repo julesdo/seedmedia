@@ -2,6 +2,7 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { betterAuthComponent } from "./auth";
 import { Id } from "./_generated/dataModel";
+import { api } from "./_generated/api";
 
 /**
  * Vérifie si l'utilisateur suit une organisation
@@ -76,12 +77,28 @@ export const toggleFollow = mutation({
       return { success: true, following: false };
     } else {
       // Suivre
-      await ctx.db.insert("follows", {
+      const followId = await ctx.db.insert("follows", {
         userId: appUser._id,
         targetType: args.targetType,
         targetId: args.targetId,
         createdAt: Date.now(),
       });
+
+      // Récompense sociale (uniquement pour suivre un utilisateur, non bloquant)
+      if (args.targetType === "user") {
+        try {
+          await ctx.runMutation(api.gamification.awardSocialAction, {
+            userId: appUser._id,
+            actionType: "follow",
+            relatedId: args.targetId,
+            relatedType: "user",
+          });
+        } catch (error) {
+          // Ne pas bloquer le follow si la récompense échoue
+          console.error("Error awarding follow reward:", error);
+        }
+      }
+
       return { success: true, following: true };
     }
   },

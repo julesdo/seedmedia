@@ -20,7 +20,7 @@ const SearchModal = dynamic(
 );
 
 export function SimplifiedHeader() {
-  const { isAuthenticated } = useUser();
+  const { isAuthenticated, user } = useUser();
   const router = useRouter();
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const t = useTranslations('navigation');
@@ -70,6 +70,7 @@ export function SimplifiedHeader() {
                 key={link.href}
                 href={link.href}
                 prefetch={true}
+                data-prefetch="viewport"
                 className="px-3 py-2 text-sm font-medium text-foreground/70 hover:text-foreground transition-colors rounded-md"
               >
                 {link.label}
@@ -77,8 +78,18 @@ export function SimplifiedHeader() {
             ))}
           </nav>
 
-          {/* Right side: Recherche + Notifications + Paramètres */}
+          {/* Right side: Seeds + Recherche + Notifications + Paramètres */}
           <div className="flex items-center gap-2">
+            {/* Seeds - Gamification */}
+            {isAuthenticated && user && (
+              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary/10 border border-primary/20 hover:bg-primary/15 transition-colors">
+                <SolarIcon icon="leaf-bold" className="size-4 text-primary" />
+                <span className="text-sm font-semibold text-foreground">
+                  {user.seedsBalance || 0}
+                </span>
+              </div>
+            )}
+
             {/* Recherche */}
             <button
               onClick={() => setIsSearchModalOpen(true)}
@@ -94,6 +105,7 @@ export function SimplifiedHeader() {
             <Link 
               href="/notifications"
               prefetch={true}
+              data-prefetch="viewport"
               className="relative flex items-center justify-center h-10 w-10 hover:bg-muted/50 rounded-lg transition-colors"
             >
               <SolarIcon 
@@ -114,6 +126,7 @@ export function SimplifiedHeader() {
             <Link
               href="/settings"
               prefetch={true}
+              data-prefetch="viewport"
               className="flex items-center justify-center h-10 w-10 hover:bg-muted/50 rounded-lg transition-colors"
             >
               <SolarIcon 

@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { betterAuthComponent } from "./auth";
 import { Id } from "./_generated/dataModel";
 import { getRuleValueAsNumber } from "./configurableRules.helpers";
-import { internal } from "./_generated/api";
+import { internal, api } from "./_generated/api";
 
 /**
  * Récupère tous les commentaires d'un contenu avec leurs réponses (threads)
@@ -155,6 +155,19 @@ export const addComment = mutation({
       createdAt: now,
       updatedAt: now,
     });
+
+    // Récompense sociale pour commentaire (non bloquant)
+    try {
+      await ctx.runMutation(api.gamification.awardSocialAction, {
+        userId: appUser._id,
+        actionType: "comment",
+        relatedId: commentId.toString(),
+        relatedType: args.targetType,
+      });
+    } catch (error) {
+      // Ne pas bloquer le commentaire si la récompense échoue
+      console.error("Error awarding comment reward:", error);
+    }
 
     // Incrémenter le compteur de commentaires sur le contenu
     if (args.targetType === "article") {

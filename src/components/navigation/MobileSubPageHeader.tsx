@@ -97,6 +97,7 @@ export function MobileSubPageHeader() {
 
   // Fonction pour modifier le profil
   const handleEdit = () => {
+    router.prefetch("/settings");
     router.push("/settings");
   };
 

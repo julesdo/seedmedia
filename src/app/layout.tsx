@@ -12,6 +12,7 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Toaster } from "@/components/ui/sonner";
 import { getLocale, getMessages } from 'next-intl/server';
 import { DynamicIntlProvider } from '@/components/providers/DynamicIntlProvider';
+import { ServiceWorkerRegistration } from '@/components/service-worker/ServiceWorkerRegistration';
 
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono",
@@ -131,6 +132,7 @@ export default async function RootLayout({
                 <UserProvider>
                   <DynamicIntlProvider initialLocale={locale} initialMessages={messages}>
                     <LanguageProvider>
+                      <ServiceWorkerRegistration />
                       <main>
                         {children}
                       </main>

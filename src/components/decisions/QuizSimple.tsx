@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation, useQuery, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
@@ -57,6 +57,7 @@ export function QuizSimple({
   );
 
   const createAnticipation = useMutation(api.anticipations.createAnticipation);
+  const awardParticipationReward = useAction(api.gamification.awardParticipationReward);
 
   // Optimistic update pour améliorer la réactivité
   const [optimisticAnswer, setOptimisticAnswer] = useState<"works" | "partial" | "fails" | null>(null);
@@ -124,14 +125,40 @@ export function QuizSimple({
     // Ne pas fermer le dropdown - le garder ouvert pour voir le message de succès
 
     try {
-      await createAnticipation({
+      const anticipationId = await createAnticipation({
         decisionId,
         issue: answer,
         seedsEngaged: 10,
       });
 
+      // Récompense de participation (non bloquant)
+      if (currentUser?._id && anticipationId) {
+        try {
+          const rewardResult = await awardParticipationReward({
+            userId: currentUser._id,
+            decisionId,
+            anticipationId,
+          });
+          
+          // Afficher un toast avec le nombre de seeds gagnés
+          if (rewardResult.awarded && rewardResult.seedsEarned) {
+            toast.success(`+${rewardResult.seedsEarned} seeds`, {
+              description: rewardResult.firstBonus 
+                ? "Participation + Premier anticipateur"
+                : rewardResult.hotBonus 
+                ? "Participation + Décision importante"
+                : "Participation à la décision",
+              duration: 3000,
+            });
+          }
+        } catch (rewardError) {
+          // Ne pas bloquer si la récompense échoue
+          console.error("Error awarding participation reward:", rewardError);
+        }
+      }
+
       toast.success("Réponse enregistrée !", {
-        description: "Vous avez gagné 10 Seeds",
+        description: "Votre anticipation a été enregistrée",
       });
     } catch (error: any) {
       toast.error("Erreur", {

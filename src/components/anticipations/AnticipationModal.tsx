@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useMutation } from "convex/react";
+import { useMutation, useAction } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import {
@@ -46,6 +46,8 @@ export function AnticipationModal({
   const tErrors = useTranslations('errors');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const createAnticipation = useMutation(api.anticipations.createAnticipation);
+  const awardParticipationReward = useAction(api.gamification.awardParticipationReward);
+  const { user } = useUser();
 
   /**
    * Sélection directe = Confirmation automatique (2 clics max)
@@ -57,11 +59,37 @@ export function AnticipationModal({
 
     setIsSubmitting(true);
     try {
-      await createAnticipation({
+      const anticipationId = await createAnticipation({
         decisionId,
         issue,
         seedsEngaged: DEFAULT_SEEDS,
       });
+
+      // Récompense de participation (non bloquant)
+      if (user?._id && anticipationId) {
+        try {
+          const rewardResult = await awardParticipationReward({
+            userId: user._id,
+            decisionId,
+            anticipationId,
+          });
+          
+          // Afficher un toast avec le nombre de seeds gagnés
+          if (rewardResult.awarded && rewardResult.seedsEarned) {
+            toast.success(`+${rewardResult.seedsEarned} seeds`, {
+              description: rewardResult.firstBonus 
+                ? "Participation + Premier anticipateur"
+                : rewardResult.hotBonus 
+                ? "Participation + Décision importante"
+                : "Participation à la décision",
+              duration: 3000,
+            });
+          }
+        } catch (rewardError) {
+          // Ne pas bloquer si la récompense échoue
+          console.error("Error awarding participation reward:", rewardError);
+        }
+      }
 
       toast.success(t('modal.success.title'), {
         description: t('modal.success.description'),

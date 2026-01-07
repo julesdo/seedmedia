@@ -48,6 +48,7 @@ import type * as emails_verifyOTP from "../emails/verifyOTP.js";
 import type * as favorites from "../favorites.js";
 import type * as files from "../files.js";
 import type * as follows from "../follows.js";
+import type * as gamification from "../gamification.js";
 import type * as governance from "../governance.js";
 import type * as governanceEvolution from "../governanceEvolution.js";
 import type * as http from "../http.js";
@@ -126,6 +127,7 @@ declare const fullApi: ApiFromModules<{
   favorites: typeof favorites;
   files: typeof files;
   follows: typeof follows;
+  gamification: typeof gamification;
   governance: typeof governance;
   governanceEvolution: typeof governanceEvolution;
   http: typeof http;

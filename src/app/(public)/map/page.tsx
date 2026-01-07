@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { EventsMap } from "@/components/map/EventsMap";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SolarIcon } from "@/components/icons/SolarIcon";
@@ -16,33 +16,35 @@ function MapPageContent() {
     limit: 100,
   });
 
-  return (
-    <div className="fixed inset-0 bg-background lg:left-[244px]">
-      {/* Header minimaliste */}
-      <div className="absolute top-0 left-0 right-0 z-10 bg-background/80 backdrop-blur-md border-b border-border/50">
-        <div className="max-w-7xl mx-auto px-4 py-3 lg:px-6">
-          <div className="flex items-center gap-3">
-            <SolarIcon icon="map-point-bold" className="size-6 text-primary" />
-            <h1 className="text-xl font-bold text-foreground">Carte des événements</h1>
-            {decisions && (
-              <span className="text-sm text-muted-foreground">
-                {decisions.length} événement{decisions.length > 1 ? "s" : ""}
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
+  const [isDesktop, setIsDesktop] = useState(false);
 
-      {/* Carte en plein écran */}
-      <div className="absolute inset-0 pt-16">
-        {decisions === undefined ? (
-          <div className="flex items-center justify-center h-full">
-            <Skeleton className="w-full h-full" />
-          </div>
-        ) : (
-          <EventsMap decisions={decisions || []} className="h-full w-full rounded-none" />
-        )}
-      </div>
+  useEffect(() => {
+    const checkDesktop = () => {
+      setIsDesktop(window.innerWidth >= 1024);
+    };
+    checkDesktop();
+    window.addEventListener("resize", checkDesktop);
+    return () => window.removeEventListener("resize", checkDesktop);
+  }, []);
+
+  return (
+    <div 
+      className="fixed left-0 right-0 bottom-[64px] lg:left-[244px] lg:right-[319px] lg:bottom-0"
+      style={{
+        // Mobile: positionné en dessous des headers et au-dessus de la bottom nav
+        // Desktop: positionné en dessous du breaking news et top bar
+        top: isDesktop 
+          ? "calc(var(--breaking-news-height, 0px) + 56px)"
+          : "calc(var(--breaking-news-height, 0px) + var(--header-height, 56px) + 56px)",
+      }}
+    >
+      {decisions === undefined ? (
+        <div className="flex items-center justify-center h-full w-full">
+          <Skeleton className="w-full h-full" />
+        </div>
+      ) : (
+        <EventsMap decisions={decisions || []} className="h-full w-full rounded-none" />
+      )}
     </div>
   );
 }
@@ -51,8 +53,13 @@ export default function MapPage() {
   return (
     <Suspense
       fallback={
-        <div className="fixed inset-0 bg-background lg:left-[244px]">
-          <div className="absolute inset-0 flex items-center justify-center">
+        <div 
+          className="fixed left-0 right-0 bottom-[64px] lg:left-[244px] lg:right-[319px] lg:bottom-0"
+          style={{
+            top: "calc(var(--breaking-news-height, 0px) + var(--header-height, 56px) + 56px)",
+          }}
+        >
+          <div className="flex items-center justify-center h-full w-full">
             <Skeleton className="w-full h-full" />
           </div>
         </div>

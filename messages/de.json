@@ -29,6 +29,7 @@
     "trending": "Trends",
     "map": "Karte",
     "bots": "Bots",
+    "stats": "Statistiken",
     "profile": "Profil",
     "settings": "Einstellungen",
     "level": "Level",
@@ -329,10 +330,70 @@
     "readMore": "Mehr lesen"
   },
   "widgets": {
-    "trendingRegions": "Trendregionen",
-    "eventTypes": "Ereignistypen",
-    "recentResolutions": "Aktuelle Lösungen",
-    "wordCloud": "Schlüsselwörter"
+    "sidebar": {
+      "importantDecisions": "Wichtige Entscheidungen",
+      "seeAll": "Alle anzeigen"
+    },
+    "dailyLogin": {
+      "title": "Tägliche Anmeldung",
+      "streak": "Serie:",
+      "days": "Tage",
+      "claimBonus": "Bonus beanspruchen",
+      "alreadyClaimed": "Heute bereits beansprucht",
+      "seedsEarned": "+{seeds} seeds",
+      "streakDays": "Serie {streak} Tage",
+      "luckyBonus": "Glücksbonus!",
+      "levelReached": "Level {level} erreicht",
+      "errorClaiming": "Fehler beim Beanspruchen"
+    },
+    "leaderboard": {
+      "title": "Top diese Woche",
+      "user": "Benutzer",
+      "yourPosition": "Deine Position"
+    },
+    "worldMap": {
+      "title": "Weltkarte",
+      "seeFullMap": "Vollständige Karte anzeigen",
+      "activeZone": "aktive Zone",
+      "activeZones": "aktive Zonen"
+    },
+    "wordCloud": {
+      "title": "Schlüsselwörter",
+      "occurrence": "Vorkommen",
+      "occurrences": "Vorkommen",
+      "keyword": "Schlüsselwort",
+      "keywords": "Schlüsselwörter",
+      "mostFrequent": "häufigste"
+    },
+    "trendingRegions": {
+      "title": "Aktive Zonen",
+      "event": "Ereignis",
+      "events": "Ereignisse"
+    },
+    "eventTypes": {
+      "title": "Trends des Tages",
+      "noRecentEvents": "Keine recenten Ereignisse",
+      "types": {
+        "crisis": "Krise",
+        "disaster": "Katastrophe",
+        "conflict": "Konflikt",
+        "discovery": "Entdeckung",
+        "election": "Wahl",
+        "economic_event": "Wirtschaft",
+        "law": "Gesetz",
+        "sanction": "Sanktion",
+        "tax": "Steuern",
+        "agreement": "Vereinbarung",
+        "policy": "Politik",
+        "regulation": "Regulierung",
+        "other": "Andere"
+      }
+    },
+    "recentResolutions": {
+      "title": "Aktuelle Lösungen",
+      "correct": "✓ Richtig",
+      "incorrect": "✗ Falsch"
+    }
   },
   "studio": {
     "dashboard": "Dashboard",

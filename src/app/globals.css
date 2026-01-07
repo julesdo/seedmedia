@@ -8,11 +8,38 @@
   navigation: auto;
 }
 
-/* Animations fluides pour les transitions de pages */
+/* Animations fluides pour les transitions de pages - Plus rapides */
 ::view-transition-old(root),
 ::view-transition-new(root) {
-  animation-duration: 0.2s;
-  animation-timing-function: ease-in-out;
+  animation-duration: 0.1s; /* Réduit de 0.2s à 0.1s pour navigation plus rapide */
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1); /* Easing plus rapide */
+}
+
+/* Optimiser les transitions pour navigation instantanée */
+::view-transition-old(root) {
+  animation-name: fade-out-fast;
+}
+
+::view-transition-new(root) {
+  animation-name: fade-in-fast;
+}
+
+@keyframes fade-out-fast {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-in-fast {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* Réduire le flash lors des transitions */
@@ -108,13 +135,13 @@
   --primary-foreground: #FFFFFF;
   --secondary: #627184;
   --secondary-foreground: #FFFFFF;
-  --muted: #F7F9FB;
-  --muted-foreground: #627184;
+  --muted: #F0F2F5;
+  --muted-foreground: #4A5568;
   --accent: #246BFD; /* Seed Blue */
   --accent-foreground: #0B1320;
   --destructive: oklch(0.6368 0.2078 25.3313);
-  --border: #E4E9EE;
-  --input: #E4E9EE;
+  --border: #D1D5DB;
+  --input: #D1D5DB;
   --ring: #246BFD;
   --chart-1: oklch(0.5940 0.0443 196.0233);
   --chart-2: oklch(0.7214 0.1337 49.9802);
@@ -127,7 +154,7 @@
   --sidebar-primary-foreground: #FFFFFF;
   --sidebar-accent: rgb(12, 17, 29);
   --sidebar-accent-foreground: #0B1320;
-  --sidebar-border: rgba(228, 233, 238, 0.5);
+  --sidebar-border: rgba(228, 233, 238, 0.8);
 
   /* Header uses same surface color as sidebar */
   --header: #FFFFFF;
@@ -139,11 +166,11 @@
 
   /* Seed specific variables */
   --seed-surface: #FFFFFF;
-  --seed-card-alt: #F7F9FB;
+  --seed-card-alt: #F0F2F5;
   --seed-glass-bg: rgba(255, 255, 255, 0.75);
-  --seed-glass-border: rgba(228, 233, 238, 0.6);
+  --seed-glass-border: rgba(209, 213, 219, 0.8);
   --seed-glass-hover-bg: rgba(247, 249, 251, 0.65);
-  --seed-glass-hover-border: rgba(228, 233, 238, 0.5);
+  --seed-glass-hover-border: rgba(209, 213, 219, 0.7);
   --font-serif: serif;
   --font-mono: JetBrains Mono, monospace;
   --shadow-color: #000000;
@@ -293,7 +320,7 @@
     background: rgba(0, 0, 0, 0.02) !important;
     backdrop-filter: blur(18px) saturate(160%) !important;
     -webkit-backdrop-filter: blur(18px) saturate(160%) !important;
-    border-right: 1px solid rgba(228, 233, 238, 0.5) !important;
+    border-right: 1px solid rgba(228, 233, 238, 0.9) !important;
   }
 
   .dark [data-sidebar="sidebar"],
@@ -2651,6 +2678,118 @@
     ::view-transition-old(tab-content),
     ::view-transition-new(tab-content) {
       animation-duration: 0.01ms !important;
+    }
+  }
+
+  /* ============================================
+     OPTIMISATIONS GPU POUR FLUIDITÉ NATIVE
+     ============================================ */
+
+  /* Force GPU acceleration pour éléments animés */
+  [data-animated="true"],
+  .swipeable-element,
+  .carousel-item,
+  [class*="animate-"],
+  [class*="transition-"] {
+    will-change: transform, opacity;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Optimiser les containers scrollables */
+  .overflow-auto,
+  .overflow-y-auto,
+  .overflow-x-auto,
+  [class*="scroll"] {
+    -webkit-overflow-scrolling: touch; /* iOS smooth scroll */
+    will-change: scroll-position;
+    contain: layout style paint;
+  }
+
+  /* Optimiser les transitions de swipe */
+  [data-swipeable="true"] {
+    will-change: transform;
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+
+  /* Optimiser les cards et éléments interactifs */
+  [data-slot="card"],
+  .card,
+  button,
+  [role="button"] {
+    transform: translateZ(0); /* Force GPU layer */
+    -webkit-tap-highlight-color: transparent; /* Retirer highlight iOS */
+  }
+
+  /* Optimiser les images */
+  img,
+  [data-slot="image"],
+  picture {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    transform: translateZ(0);
+  }
+
+  /* Optimiser les modals et overlays */
+  [role="dialog"],
+  [data-slot="dialog"],
+  .modal,
+  .overlay {
+    will-change: opacity, transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+
+  /* Optimiser les animations de tabs */
+  [data-slot="tabs-content"] {
+    will-change: transform, opacity;
+    transform: translateZ(0);
+  }
+
+  /* Optimiser le scroll pour les feeds */
+  .feed-container,
+  .decision-list,
+  .reel-feed {
+    -webkit-overflow-scrolling: touch;
+    will-change: scroll-position;
+    contain: layout style paint;
+    overscroll-behavior: contain; /* Éviter le bounce sur iOS */
+  }
+
+  /* Optimiser les transitions de page */
+  [data-page-transition] {
+    will-change: transform, opacity;
+    transform: translate3d(0, 0, 0);
+  }
+
+  /* Retirer will-change après animation pour libérer les ressources */
+  @keyframes remove-will-change {
+    to {
+      will-change: auto;
+    }
+  }
+
+  /* Optimiser les hover effects */
+  @media (hover: hover) {
+    button:hover,
+    [role="button"]:hover,
+    a:hover {
+      transform: translateZ(0) scale(1.01);
+      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  }
+
+  /* Optimiser les touch events sur mobile */
+  @media (hover: none) and (pointer: coarse) {
+    button:active,
+    [role="button"]:active,
+    a:active {
+      transform: translateZ(0) scale(0.98);
+      transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
     }
   }
 }
