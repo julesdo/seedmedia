@@ -4,55 +4,116 @@ import { internalAction, action } from "../_generated/server";
 /**
  * Action interne pour la détection et génération de décisions
  */
+// Helper function pour retry avec backoff exponentiel
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  initialDelay: number = 1000
+): Promise<T> {
+  let lastError: Error | unknown;
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      if (attempt < maxRetries - 1) {
+        const delay = initialDelay * Math.pow(2, attempt);
+        console.log(`Retry attempt ${attempt + 1}/${maxRetries} after ${delay}ms`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+  throw lastError;
+}
+
 export const runDecisionDetection = internalAction({
   args: {},
   handler: async (ctx) => {
-    console.log("Running decision detection...");
+    const startTime = Date.now();
+    console.log(`[${new Date().toISOString()}] Running decision detection...`);
 
     try {
-      // Détecter les nouvelles décisions
-      // @ts-ignore - Type instantiation is excessively deep (known Convex type issue)
-      const result = await ctx.runAction(api.bots.detectDecisions.detectDecisions, {
-        limit: 25, // Augmenté de 10 à 25 pour créer plus de décisions à chaque exécution
-      });
+      // Détecter les nouvelles décisions avec retry
+      console.log(`[${new Date().toISOString()}] Starting detectDecisions action...`);
+      const detectStartTime = Date.now();
+      
+      const result = await retryWithBackoff(async () => {
+        // @ts-ignore - Type instantiation is excessively deep (known Convex type issue)
+        return await ctx.runAction(api.bots.detectDecisions.detectDecisions, {
+          limit: 10, // Réduit à 10 pour éviter les timeouts
+        });
+      }, 2, 2000); // Réduire à 2 retries avec délai initial de 2s
 
-      console.log(`Detected ${result.detected} potential events`);
+      const detectDuration = Date.now() - detectStartTime;
+      console.log(`[${new Date().toISOString()}] Detected ${result.detected} potential events in ${detectDuration}ms`);
 
       // Cache des décisions créées dans cette batch pour éviter les doublons
       const createdInThisBatch: Array<{ title: string; sourceUrl: string; slug: string }> = [];
 
+      // Limiter le nombre d'événements traités pour éviter les timeouts
+      const maxEvents = Math.min(result.events.length, 10); // Traiter max 10 événements par exécution
+      console.log(`[${new Date().toISOString()}] Processing ${maxEvents} out of ${result.events.length} events`);
+
       // Pour chaque événement majeur détecté, générer une Decision Card
-      for (const detectedEvent of result.events) {
-        const decisionId = await ctx.runAction(
-          // @ts-ignore - Type instantiation is excessively deep (known Convex type issue)
-          api.bots.generateDecision.generateDecision,
-          {
-            detectedEvent,
-            createdInThisBatch, // Passer le cache pour vérification
-          }
-        );
+      for (let i = 0; i < maxEvents; i++) {
+        const detectedEvent = result.events[i];
+        const eventStartTime = Date.now();
+        console.log(`[${new Date().toISOString()}] Processing event ${i + 1}/${maxEvents}: ${detectedEvent.mainArticle.title.substring(0, 50)}...`);
         
-        // Si une décision a été créée, récupérer ses infos pour le cache
-        if (decisionId) {
-          try {
-            const decision = await ctx.runQuery(api.decisions.getDecisionById, {
-              decisionId,
-            });
-            if (decision) {
-              createdInThisBatch.push({
-                title: decision.title,
-                sourceUrl: decision.sourceUrl,
-                slug: decision.slug,
+        try {
+          const decisionId = await retryWithBackoff(async () => {
+            // @ts-ignore - Type instantiation is excessively deep (known Convex type issue)
+            return await ctx.runAction(
+              api.bots.generateDecision.generateDecision,
+              {
+                detectedEvent,
+                createdInThisBatch, // Passer le cache pour vérification
+              }
+            );
+          }, 2, 2000); // Réduire à 2 retries
+          
+          const eventDuration = Date.now() - eventStartTime;
+          
+          // Si une décision a été créée, récupérer ses infos pour le cache
+          if (decisionId) {
+            try {
+              const decision = await ctx.runQuery(api.decisions.getDecisionById, {
+                decisionId,
               });
+              if (decision) {
+                createdInThisBatch.push({
+                  title: decision.title,
+                  sourceUrl: decision.sourceUrl,
+                  slug: decision.slug,
+                });
+              }
+            } catch (error) {
+              // Ignorer les erreurs de récupération pour le cache
+              console.warn(`[${new Date().toISOString()}] Error fetching decision for cache:`, error);
             }
-          } catch (error) {
-            // Ignorer les erreurs de récupération pour le cache
-            console.warn("Error fetching decision for cache:", error);
+            console.log(`[${new Date().toISOString()}] ✅ Generated decision ${decisionId} in ${eventDuration}ms`);
+          } else {
+            console.log(`[${new Date().toISOString()}] ⚠️ Decision generation returned null (likely duplicate) in ${eventDuration}ms`);
           }
+        } catch (error) {
+          const eventDuration = Date.now() - eventStartTime;
+          const errorMsg = error instanceof Error ? error.message : String(error);
+          console.error(`[${new Date().toISOString()}] ❌ Error generating decision for event (${eventDuration}ms): ${errorMsg}`);
+          // Continuer avec les autres événements même en cas d'erreur
         }
       }
+
+      const totalDuration = Date.now() - startTime;
+      console.log(`[${new Date().toISOString()}] ✅ Decision detection completed in ${totalDuration}ms`);
     } catch (error) {
-      console.error("Error in detectDecisions:", error);
+      const totalDuration = Date.now() - startTime;
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      console.error(`[${new Date().toISOString()}] ❌ Error in runDecisionDetection (${totalDuration}ms): ${errorMsg}`);
+      if (errorStack) {
+        console.error(`[${new Date().toISOString()}] Stack trace: ${errorStack}`);
+      }
+      // Ne pas throw pour éviter d'arrêter le cron job - l'erreur sera loggée
     }
   },
 });
@@ -94,7 +155,7 @@ export const triggerDecisionGeneration = action({
           };
         }>;
       } = await ctx.runAction(api.bots.detectDecisions.detectDecisions, {
-        limit: 25, // Augmenté de 10 à 25 pour créer plus de décisions à chaque exécution
+        limit: 10, // Réduit à 10 pour éviter les timeouts
       });
 
       console.log(`Detected ${result.detected} potential events`);
@@ -109,14 +170,16 @@ export const triggerDecisionGeneration = action({
       // Pour chaque événement majeur détecté, générer une Decision Card
       for (const detectedEvent of result.events) {
         try {
-          const decisionId = await ctx.runAction(
+          const decisionId = await retryWithBackoff(async () => {
             // @ts-ignore - Type instantiation is excessively deep (known Convex type issue)
-            api.bots.generateDecision.generateDecision,
-            {
-              detectedEvent,
-              createdInThisBatch, // Passer le cache pour vérification
-            }
-          );
+            return await ctx.runAction(
+              api.bots.generateDecision.generateDecision,
+              {
+                detectedEvent,
+                createdInThisBatch, // Passer le cache pour vérification
+              }
+            );
+          });
           if (decisionId) {
             generated.push(decisionId);
             
@@ -144,7 +207,7 @@ export const triggerDecisionGeneration = action({
         } catch (error) {
           const errorMsg = error instanceof Error ? error.message : String(error);
           errors.push(errorMsg);
-          console.error(`❌ Error generating Decision Card:`, errorMsg);
+          console.error(`❌ Error generating Decision Card (after retries):`, errorMsg);
         }
       }
 

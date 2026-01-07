@@ -17,6 +17,7 @@ interface SaveButtonProps {
   className?: string;
   size?: "default" | "sm" | "lg" | "icon";
   variant?: "default" | "outline" | "ghost";
+  isSaved?: boolean; // Optionnel : passé depuis le parent pour éviter les requêtes multiples
 }
 
 export function SaveButton({
@@ -24,6 +25,7 @@ export function SaveButton({
   className,
   size = "default",
   variant = "outline",
+  isSaved: isSavedProp,
 }: SaveButtonProps) {
   const t = useTranslations('decisions');
   const tErrors = useTranslations('errors');
@@ -31,15 +33,19 @@ export function SaveButton({
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
 
-  const isSaved = useQuery(
+  // Si isSaved est passé en prop, l'utiliser directement (optimisation pour les listes)
+  // Sinon, faire une requête individuelle (pour les pages de détail)
+  const isSavedFromQuery = useQuery(
     api.favorites.isFavorite,
-    isAuthenticated
+    isSavedProp === undefined && isAuthenticated
       ? {
           targetType: "decision",
           targetId: decisionId,
         }
       : "skip"
   );
+
+  const isSaved = isSavedProp !== undefined ? isSavedProp : isSavedFromQuery;
 
   const toggleSave = useMutation(api.favorites.toggleFavorite);
 

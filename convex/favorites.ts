@@ -44,6 +44,50 @@ export const isFavorite = query({
 });
 
 /**
+ * Récupère tous les favoris d'un type spécifique pour l'utilisateur connecté
+ * Optimisé pour éviter les N+1 queries
+ * Retourne un array des IDs favoris (Set n'est pas supporté par Convex)
+ */
+export const getFavoritesForDecisions = query({
+  args: {
+    decisionIds: v.array(v.id("decisions")),
+  },
+  handler: async (ctx, args) => {
+    const betterAuthUser = await betterAuthComponent.safeGetAuthUser(ctx as any);
+    if (!betterAuthUser) {
+      return [] as string[];
+    }
+
+    const appUser = await ctx.db
+      .query("users")
+      .withIndex("email", (q) => q.eq("email", betterAuthUser.email))
+      .first();
+
+    if (!appUser) {
+      return [] as string[];
+    }
+
+    // Récupérer tous les favoris de type "decision" pour cet utilisateur
+    const favorites = await ctx.db
+      .query("favorites")
+      .withIndex("targetType_targetId", (q) => q.eq("targetType", "decision"))
+      .filter((q) => q.eq(q.field("userId"), appUser._id))
+      .collect();
+
+    // Créer un array des IDs favoris (filtrer seulement ceux dans decisionIds)
+    const favoriteIds: string[] = [];
+    const decisionIdsSet = new Set(args.decisionIds);
+    for (const favorite of favorites) {
+      if (decisionIdsSet.has(favorite.targetId as Id<"decisions">)) {
+        favoriteIds.push(favorite.targetId);
+      }
+    }
+
+    return favoriteIds;
+  },
+});
+
+/**
  * Ajoute ou retire un contenu des favoris
  */
 export const toggleFavorite = mutation({

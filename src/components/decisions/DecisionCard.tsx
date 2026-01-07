@@ -35,6 +35,7 @@ interface DecisionCardProps {
     badgeColor: string;
   };
   className?: string;
+  isSaved?: boolean; // Passé depuis DecisionList pour éviter les requêtes multiples
 }
 
 const statusColors: Record<DecisionCardProps["decision"]["status"], string> = {
@@ -46,6 +47,7 @@ const statusColors: Record<DecisionCardProps["decision"]["status"], string> = {
 export function DecisionCard({
   decision,
   className,
+  isSaved: isSavedProp,
 }: DecisionCardProps) {
   const t = useTranslations('decisions');
   const decisionDate = new Date(decision.date);
@@ -103,7 +105,7 @@ export function DecisionCard({
             {decision.decider}
           </span>
         </Link>
-        <SaveButton decisionId={decision._id} size="icon" />
+        <SaveButton decisionId={decision._id} size="icon" isSaved={isSavedProp} />
       </div>
 
       {/* Image pleine largeur - Style Instagram */}

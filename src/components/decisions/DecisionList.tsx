@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "convex/react";
+import { useQuery, useConvexAuth } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import { DecisionCard } from "./DecisionCard";
@@ -55,6 +55,7 @@ export function DecisionList({
   const [displayLimit, setDisplayLimit] = useState(limit);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
+  const { isAuthenticated } = useConvexAuth();
 
   const decisions = useQuery(
     api.decisions.getDecisions,
@@ -66,6 +67,19 @@ export function DecisionList({
       impactedDomain,
     }
   );
+
+  // Récupérer tous les favoris en une seule requête au lieu de N requêtes
+  const favoriteIdsArray = useQuery(
+    api.favorites.getFavoritesForDecisions,
+    isAuthenticated && decisions
+      ? {
+          decisionIds: decisions.map((d) => d._id),
+        }
+      : "skip"
+  );
+
+  // Convertir l'array en Set pour lookup rapide côté client
+  const favoriteIds = favoriteIdsArray ? new Set(favoriteIdsArray) : undefined;
 
   // Infinite scroll avec Intersection Observer
   useEffect(() => {
@@ -122,7 +136,11 @@ export function DecisionList({
       {/* Feed vertical - Style Instagram (une colonne) */}
       <div className="flex flex-col">
         {decisions.map((decision) => (
-          <DecisionCard key={decision._id} decision={decision} />
+          <DecisionCard 
+            key={decision._id} 
+            decision={decision}
+            isSaved={favoriteIds ? favoriteIds.has(decision._id) : undefined}
+          />
         ))}
       </div>
 
