@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useOptimistic } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "motion/react";
 import { useTranslations } from 'next-intl';
+import { useUser } from "@/contexts/UserContext";
 
 interface QuizSimpleProps {
   decisionId: Id<"decisions">;
@@ -33,6 +34,7 @@ export function QuizSimple({
   status,
 }: QuizSimpleProps) {
   const { isAuthenticated } = useConvexAuth();
+  const { user: currentUser } = useUser();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [expandedAnswer, setExpandedAnswer] = useState<string | null>(null);
@@ -59,14 +61,39 @@ export function QuizSimple({
   // Optimistic update pour améliorer la réactivité
   const [optimisticAnswer, setOptimisticAnswer] = useState<"works" | "partial" | "fails" | null>(null);
 
+  // Réinitialiser l'optimistic update quand l'anticipation utilisateur est disponible
+  // OU quand l'anticipation apparaît dans la liste anticipations (pour éviter le double comptage)
+  useEffect(() => {
+    if (optimisticAnswer && currentUser?._id) {
+      // Vérifier si l'anticipation est déjà dans la liste (mutation réussie)
+      const anticipationExists = anticipations?.some(
+        (a) => a.userId === currentUser._id && a.issue === optimisticAnswer
+      );
+      
+      // Ou si userAnticipation existe maintenant
+      if (userAnticipation || anticipationExists) {
+        setOptimisticAnswer(null);
+      }
+    }
+  }, [userAnticipation, optimisticAnswer, anticipations, currentUser?._id]);
+
   // Calculer les stats avec optimistic update
+  // Ne pas ajouter l'optimistic update si l'utilisateur a déjà une anticipation (pour éviter le double comptage)
+  // OU si l'anticipation est déjà dans la liste anticipations
   const totalAnticipations = anticipations?.length || 0;
-  const optimisticTotal = optimisticAnswer ? totalAnticipations + 1 : totalAnticipations;
+  
+  // Vérifier si l'anticipation optimistic est déjà dans la liste
+  const optimisticAlreadyInList = optimisticAnswer && currentUser?._id && anticipations?.some(
+    (a) => a.userId === currentUser._id && a.issue === optimisticAnswer
+  );
+  
+  const shouldUseOptimistic = optimisticAnswer && !userAnticipation && !optimisticAlreadyInList;
+  const optimisticTotal = shouldUseOptimistic ? totalAnticipations + 1 : totalAnticipations;
   
   const stats = {
-    works: (anticipations?.filter((a) => a.issue === "works").length || 0) + (optimisticAnswer === "works" ? 1 : 0),
-    partial: (anticipations?.filter((a) => a.issue === "partial").length || 0) + (optimisticAnswer === "partial" ? 1 : 0),
-    fails: (anticipations?.filter((a) => a.issue === "fails").length || 0) + (optimisticAnswer === "fails" ? 1 : 0),
+    works: (anticipations?.filter((a) => a.issue === "works").length || 0) + (shouldUseOptimistic && optimisticAnswer === "works" ? 1 : 0),
+    partial: (anticipations?.filter((a) => a.issue === "partial").length || 0) + (shouldUseOptimistic && optimisticAnswer === "partial" ? 1 : 0),
+    fails: (anticipations?.filter((a) => a.issue === "fails").length || 0) + (shouldUseOptimistic && optimisticAnswer === "fails" ? 1 : 0),
   };
 
   const percentages = {
