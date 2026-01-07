@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useOptimistic } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
@@ -56,18 +56,23 @@ export function QuizSimple({
 
   const createAnticipation = useMutation(api.anticipations.createAnticipation);
 
-  // Calculer les stats
+  // Optimistic update pour améliorer la réactivité
+  const [optimisticAnswer, setOptimisticAnswer] = useState<"works" | "partial" | "fails" | null>(null);
+
+  // Calculer les stats avec optimistic update
   const totalAnticipations = anticipations?.length || 0;
+  const optimisticTotal = optimisticAnswer ? totalAnticipations + 1 : totalAnticipations;
+  
   const stats = {
-    works: anticipations?.filter((a) => a.issue === "works").length || 0,
-    partial: anticipations?.filter((a) => a.issue === "partial").length || 0,
-    fails: anticipations?.filter((a) => a.issue === "fails").length || 0,
+    works: (anticipations?.filter((a) => a.issue === "works").length || 0) + (optimisticAnswer === "works" ? 1 : 0),
+    partial: (anticipations?.filter((a) => a.issue === "partial").length || 0) + (optimisticAnswer === "partial" ? 1 : 0),
+    fails: (anticipations?.filter((a) => a.issue === "fails").length || 0) + (optimisticAnswer === "fails" ? 1 : 0),
   };
 
   const percentages = {
-    works: totalAnticipations > 0 ? Math.round((stats.works / totalAnticipations) * 100) : 0,
-    partial: totalAnticipations > 0 ? Math.round((stats.partial / totalAnticipations) * 100) : 0,
-    fails: totalAnticipations > 0 ? Math.round((stats.fails / totalAnticipations) * 100) : 0,
+    works: optimisticTotal > 0 ? Math.round((stats.works / optimisticTotal) * 100) : 0,
+    partial: optimisticTotal > 0 ? Math.round((stats.partial / optimisticTotal) * 100) : 0,
+    fails: optimisticTotal > 0 ? Math.round((stats.fails / optimisticTotal) * 100) : 0,
   };
 
   // Toggle pour voir les détails d'une réponse (toujours accessible)
@@ -88,7 +93,8 @@ export function QuizSimple({
 
     setIsSubmitting(true);
     setSelectedAnswer(answer);
-    setExpandedAnswer(null);
+    setOptimisticAnswer(answer); // Optimistic update pour réactivité immédiate
+    // Ne pas fermer le dropdown - le garder ouvert pour voir le message de succès
 
     try {
       await createAnticipation({
@@ -105,8 +111,11 @@ export function QuizSimple({
         description: error.message || "Une erreur est survenue.",
       });
       setSelectedAnswer(null);
+      setOptimisticAnswer(null); // Annuler l'optimistic update en cas d'erreur
     } finally {
       setIsSubmitting(false);
+      // Garder optimisticAnswer jusqu'à ce que les queries se rechargent
+      // Il sera automatiquement remplacé par les vraies données
     }
   };
 
@@ -122,13 +131,13 @@ export function QuizSimple({
       label: t('works'), 
       text: answer1, 
       icon: "check-circle-bold", 
-      color: "green",
-      bgColor: "bg-green-500/10 dark:bg-green-500/20",
-      borderColor: "border-green-500/50 dark:border-green-400/50",
-      textColor: "text-green-600 dark:text-green-400",
-      hoverBg: "hover:bg-green-500/20 dark:hover:bg-green-500/30",
-      activeBg: "active:bg-green-500/30 dark:active:bg-green-500/40",
-      gradient: "from-green-500/20 to-green-600/10"
+      color: "red",
+      bgColor: "bg-red-500/10 dark:bg-red-500/20",
+      borderColor: "border-red-500/50 dark:border-red-400/50",
+      textColor: "text-red-600 dark:text-red-400",
+      hoverBg: "hover:bg-red-500/20 dark:hover:bg-red-500/30",
+      activeBg: "active:bg-red-500/30 dark:active:bg-red-500/40",
+      gradient: "from-red-500/20 to-red-600/10"
     },
     { 
       key: "partial" as const, 
@@ -148,13 +157,13 @@ export function QuizSimple({
       label: t('fails'), 
       text: answer3, 
       icon: "close-circle-bold", 
-      color: "red",
-      bgColor: "bg-red-500/10 dark:bg-red-500/20",
-      borderColor: "border-red-500/50 dark:border-red-400/50",
-      textColor: "text-red-600 dark:text-red-400",
-      hoverBg: "hover:bg-red-500/20 dark:hover:bg-red-500/30",
-      activeBg: "active:bg-red-500/30 dark:active:bg-red-500/40",
-      gradient: "from-red-500/20 to-red-600/10"
+      color: "green",
+      bgColor: "bg-green-500/10 dark:bg-green-500/20",
+      borderColor: "border-green-500/50 dark:border-green-400/50",
+      textColor: "text-green-600 dark:text-green-400",
+      hoverBg: "hover:bg-green-500/20 dark:hover:bg-green-500/30",
+      activeBg: "active:bg-green-500/30 dark:active:bg-green-500/40",
+      gradient: "from-green-500/20 to-green-600/10"
     },
   ];
 
@@ -290,7 +299,7 @@ export function QuizSimple({
 
               {/* Zone de détails expandable (toujours accessible même après réponse) */}
               <AnimatePresence>
-                {isExpanded && (
+                {(isExpanded || (isSelected && selectedAnswer === answer.key)) && (
                   <motion.div
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: "auto", opacity: 1 }}

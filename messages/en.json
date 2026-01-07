@@ -82,9 +82,9 @@
     }
   },
   "quiz": {
-    "works": "It works",
+    "works": "It fails",
     "partial": "Partially",
-    "fails": "It fails",
+    "fails": "It works",
     "confirm": "Confirm",
     "viewDetails": "View details",
     "hideDetails": "Hide details",
@@ -178,9 +178,9 @@
       "resolved": "Resolved"
     },
     "issues": {
-      "works": "It works",
+      "works": "It doesn't work",
       "partial": "Partially",
-      "fails": "It doesn't work"
+      "fails": "It works"
     },
     "card": {
       "seedsEngaged": "Seeds engaged",
@@ -194,9 +194,9 @@
     },
     "modal": {
       "title": "Anticipate this decision",
-      "works": "It works",
+      "works": "It doesn't work",
       "partial": "It works partially",
-      "fails": "It doesn't work",
+      "fails": "It works",
       "seedsInfo": "{count} Seeds will be automatically engaged",
       "cancel": "Cancel",
       "success": {

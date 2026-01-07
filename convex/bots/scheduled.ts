@@ -1,6 +1,5 @@
-import { cronJobs } from "convex/server";
-import { api, internal } from "../_generated/api";
-import { internalAction } from "../_generated/server";
+import { api } from "../_generated/api";
+import { internalAction, action } from "../_generated/server";
 
 /**
  * Action interne pour la détection et génération de décisions
@@ -12,20 +11,156 @@ export const runDecisionDetection = internalAction({
 
     try {
       // Détecter les nouvelles décisions
+      // @ts-ignore - Type instantiation is excessively deep (known Convex type issue)
       const result = await ctx.runAction(api.bots.detectDecisions.detectDecisions, {
-        limit: 10,
+        limit: 25, // Augmenté de 10 à 25 pour créer plus de décisions à chaque exécution
       });
 
       console.log(`Detected ${result.detected} potential events`);
 
+      // Cache des décisions créées dans cette batch pour éviter les doublons
+      const createdInThisBatch: Array<{ title: string; sourceUrl: string; slug: string }> = [];
+
       // Pour chaque événement majeur détecté, générer une Decision Card
       for (const detectedEvent of result.events) {
-        await ctx.runAction(api.bots.generateDecision.generateDecision, {
-          detectedEvent,
-        });
+        const decisionId = await ctx.runAction(
+          // @ts-ignore - Type instantiation is excessively deep (known Convex type issue)
+          api.bots.generateDecision.generateDecision,
+          {
+            detectedEvent,
+            createdInThisBatch, // Passer le cache pour vérification
+          }
+        );
+        
+        // Si une décision a été créée, récupérer ses infos pour le cache
+        if (decisionId) {
+          try {
+            const decision = await ctx.runQuery(api.decisions.getDecisionById, {
+              decisionId,
+            });
+            if (decision) {
+              createdInThisBatch.push({
+                title: decision.title,
+                sourceUrl: decision.sourceUrl,
+                slug: decision.slug,
+              });
+            }
+          } catch (error) {
+            // Ignorer les erreurs de récupération pour le cache
+            console.warn("Error fetching decision for cache:", error);
+          }
+        }
       }
     } catch (error) {
       console.error("Error in detectDecisions:", error);
+    }
+  },
+});
+
+/**
+ * Action publique pour déclencher manuellement la détection et génération
+ * Utile pour tester ou déclencher manuellement depuis le dashboard
+ */
+export const triggerDecisionGeneration = action({
+  args: {},
+  handler: async (ctx): Promise<{
+    success: boolean;
+    detected?: number;
+    generated?: number;
+    decisionIds?: string[];
+    errors?: string[];
+    error?: string;
+  }> => {
+    console.log("Manually triggering decision detection and generation...");
+
+    try {
+      // Détecter les nouvelles décisions
+      const result: {
+        detected: number;
+        events: Array<{
+          articles: Array<{
+            title: string;
+            url: string;
+            publishedAt: number;
+            source: string;
+            content?: string;
+          }>;
+          mainArticle: {
+            title: string;
+            url: string;
+            publishedAt: number;
+            source: string;
+            content?: string;
+          };
+        }>;
+      } = await ctx.runAction(api.bots.detectDecisions.detectDecisions, {
+        limit: 25, // Augmenté de 10 à 25 pour créer plus de décisions à chaque exécution
+      });
+
+      console.log(`Detected ${result.detected} potential events`);
+
+      const generated: string[] = [];
+      const errors: string[] = [];
+      
+      // Cache des décisions créées dans cette batch pour éviter les doublons
+      // Format: { title: string, sourceUrl: string, slug: string }[]
+      const createdInThisBatch: Array<{ title: string; sourceUrl: string; slug: string }> = [];
+
+      // Pour chaque événement majeur détecté, générer une Decision Card
+      for (const detectedEvent of result.events) {
+        try {
+          const decisionId = await ctx.runAction(
+            // @ts-ignore - Type instantiation is excessively deep (known Convex type issue)
+            api.bots.generateDecision.generateDecision,
+            {
+              detectedEvent,
+              createdInThisBatch, // Passer le cache pour vérification
+            }
+          );
+          if (decisionId) {
+            generated.push(decisionId);
+            
+            // Récupérer les infos de la décision créée pour le cache
+            try {
+              const decision = await ctx.runQuery(api.decisions.getDecisionById, {
+                decisionId,
+              });
+              if (decision) {
+                createdInThisBatch.push({
+                  title: decision.title,
+                  sourceUrl: decision.sourceUrl,
+                  slug: decision.slug,
+                });
+              }
+            } catch (cacheError) {
+              // Ignorer les erreurs de récupération pour le cache
+              console.warn("Error fetching decision for cache:", cacheError);
+            }
+            
+            console.log(`✅ Generated Decision Card: ${decisionId}`);
+          } else {
+            console.log(`⚠️ Decision Card generation returned null (likely duplicate)`);
+          }
+        } catch (error) {
+          const errorMsg = error instanceof Error ? error.message : String(error);
+          errors.push(errorMsg);
+          console.error(`❌ Error generating Decision Card:`, errorMsg);
+        }
+      }
+
+      return {
+        success: true,
+        detected: result.detected,
+        generated: generated.length,
+        decisionIds: generated,
+        errors: errors.length > 0 ? errors : undefined,
+      };
+    } catch (error) {
+      console.error("Error in triggerDecisionGeneration:", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
     }
   },
 });
@@ -64,74 +199,5 @@ export const runDecisionTranslation = internalAction({
   },
 });
 
-/**
- * Cron jobs pour l'automatisation des Decision Cards
- * 
- * STRATÉGIE POUR L'ACTUALITÉ CHAUDE :
- * - Détection fréquente (15 min) pour capturer les nouvelles décisions rapidement
- * - Agrégation intensive pour les décisions récentes (< 24h) toutes les heures
- * - Agrégation complète toutes les 6h pour maintenir à jour toutes les décisions
- */
-const crons = cronJobs();
-
-// Détection automatique de nouvelles décisions - toutes les 15 minutes
-// Permet de capturer l'actualité chaude rapidement
-crons.interval(
-  "detectDecisionsFrequent",
-  { minutes: 15 },
-  internal.bots.scheduled.runDecisionDetection,
-  {}
-);
-
-// Agrégation d'actualités pour les décisions récentes (< 24h) - toutes les heures
-// Focus sur l'actualité chaude : les décisions récentes ont besoin d'actualités fraîches
-crons.interval(
-  "aggregateNewsRecent",
-  { hours: 1 },
-  api.bots.aggregateNews.aggregateNewsForRecentDecisions,
-  {}
-);
-
-// Agrégation d'actualités complète - toutes les 6 heures
-// Maintient à jour toutes les décisions en suivi (pas seulement les récentes)
-crons.interval(
-  "aggregateNewsScheduled",
-  { hours: 6 },
-  api.bots.aggregateNews.aggregateNewsForAllDecisions,
-  {}
-);
-
-// Traduction automatique - toutes les 6 heures
-crons.interval(
-  "translateDecisionsScheduled",
-  { hours: 6 },
-  internal.bots.scheduled.runDecisionTranslation,
-  {}
-);
-
-// Mise à jour des indicateurs - tous les jours à 23h UTC (avant la résolution)
-// Les indicateurs doivent être à jour avant la résolution des décisions
-crons.daily(
-  "updateIndicatorsDaily",
-  { hourUTC: 23, minuteUTC: 0 },
-  api.bots.trackIndicators.updateAllIndicators,
-  {}
-);
-
-// Résolution automatique des décisions - tous les jours à minuit UTC
-crons.daily(
-  "resolveDecisionsDaily",
-  { hourUTC: 0, minuteUTC: 0 },
-  api.bots.resolveDecisions.resolveAllEligibleDecisions,
-  {}
-);
-
-// Résolution des anticipations - tous les jours à 1h UTC (après la résolution des décisions)
-crons.daily(
-  "resolveAnticipationsDaily",
-  { hourUTC: 1, minuteUTC: 0 },
-  api.bots.resolveAnticipations.resolveAllAnticipations,
-  {}
-);
-
-export default crons;
+// Note: Les cron jobs sont maintenant définis dans convex/crons.ts
+// Ce fichier contient uniquement les fonctions utilisées par les cron jobs

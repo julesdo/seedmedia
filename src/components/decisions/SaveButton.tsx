@@ -23,7 +23,7 @@ export function SaveButton({
   decisionId,
   className,
   size = "default",
-  variant = "ghost",
+  variant = "outline",
 }: SaveButtonProps) {
   const t = useTranslations('decisions');
   const tErrors = useTranslations('errors');
@@ -73,23 +73,38 @@ export function SaveButton({
     }
   };
 
+  // Toujours afficher l'icône, même si isSaved est undefined (chargement)
+  // Utiliser false par défaut si undefined pour garantir le rendu
+  const saved = isSaved === true;
+  // Utiliser variant accent (bleu/primary) quand sauvegardé, sinon utiliser le variant passé en props
+  const buttonVariant = saved ? "accent" : variant;
+
   return (
     <Button
       onClick={handleClick}
-      variant={variant}
+      variant={buttonVariant}
       size={size}
-      className={cn("gap-2", className)}
+      className={cn(className)}
       disabled={isSaving}
     >
       <SolarIcon
-        icon={isSaved ? "bookmark-bold" : "bookmark"}
+        icon="bookmark-bold"
         className={cn(
-          "size-4",
-          isSaved && "text-primary fill-primary"
+          size === "icon" ? "size-5" : "size-4"
         )}
+        style={{
+          color: saved 
+            ? "hsl(var(--primary))" 
+            : "hsl(var(--muted-foreground))",
+          opacity: saved ? 1 : 0.7
+        }}
       />
       {size !== "icon" && (
-        <span>{isSaved ? t('save.saved') : t('save.save')}</span>
+        <span className={cn(
+          saved ? "text-primary" : "text-muted-foreground"
+        )}>
+          {saved ? t('save.saved') : t('save.save')}
+        </span>
       )}
     </Button>
   );

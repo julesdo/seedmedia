@@ -16,11 +16,6 @@ const navItems = [
     icon: "document-text-bold",
   },
   {
-    labelKey: "navigation.trending",
-    href: "/trending",
-    icon: "fire-bold",
-  },
-  {
     labelKey: "navigation.map",
     href: "/map",
     icon: "map-point-bold",

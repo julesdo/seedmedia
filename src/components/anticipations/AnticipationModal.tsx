@@ -104,7 +104,7 @@ export function AnticipationModal({
             <Button
               variant="outline"
               className={cn(
-                "w-full justify-start h-auto py-4 px-4 hover:bg-green-50 dark:hover:bg-green-950/20 hover:border-green-500 transition-all",
+                "w-full justify-start h-auto py-4 px-4 hover:bg-red-50 dark:hover:bg-red-950/20 hover:border-red-500 transition-all",
                 isSubmitting && "opacity-50 cursor-not-allowed"
               )}
               onClick={() => handleSelectIssue("works")}
@@ -112,7 +112,7 @@ export function AnticipationModal({
             >
               <SolarIcon
                 name="check-circle"
-                className="size-5 mr-3 text-green-600"
+                className="size-5 mr-3 text-red-600"
               />
               <div className="text-left flex-1">
                 <p className="font-medium">{t('modal.works')}</p>
@@ -148,7 +148,7 @@ export function AnticipationModal({
             <Button
               variant="outline"
               className={cn(
-                "w-full justify-start h-auto py-4 px-4 hover:bg-red-50 dark:hover:bg-red-950/20 hover:border-red-500 transition-all",
+                "w-full justify-start h-auto py-4 px-4 hover:bg-green-50 dark:hover:bg-green-950/20 hover:border-green-500 transition-all",
                 isSubmitting && "opacity-50 cursor-not-allowed"
               )}
               onClick={() => handleSelectIssue("fails")}
@@ -156,7 +156,7 @@ export function AnticipationModal({
             >
               <SolarIcon
                 name="close-circle"
-                className="size-5 mr-3 text-red-600"
+                className="size-5 mr-3 text-green-600"
               />
               <div className="text-left flex-1">
                 <p className="font-medium">{t('modal.fails')}</p>

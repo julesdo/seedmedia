@@ -36,9 +36,18 @@ export const generateDecision = action({
         content: v.optional(v.string()),
       }),
     }),
+    createdInThisBatch: v.optional(
+      v.array(
+        v.object({
+          title: v.string(),
+          sourceUrl: v.string(),
+          slug: v.string(),
+        })
+      )
+    ),
   },
   handler: async (ctx, args): Promise<Id<"decisions"> | null> => {
-    const { detectedEvent } = args;
+    const { detectedEvent, createdInThisBatch = [] } = args;
     const { articles, mainArticle } = detectedEvent;
 
     // Métadonnées de gamification (par défaut)
@@ -47,9 +56,22 @@ export const generateDecision = action({
     let emoji = "📰"; // Emoji par défaut
     let badgeColor = "#3b82f6"; // Bleu par défaut
 
-    // Vérifier les doublons
+    // Vérification initiale rapide : titre exact ou URL source (sans description)
+    // 1. Vérifier d'abord dans le cache de la batch actuelle
+    const duplicateInBatch = createdInThisBatch.find(
+      (d) =>
+        d.title.toLowerCase() === mainArticle.title.toLowerCase() ||
+        d.sourceUrl === mainArticle.url
+    );
+    
+    if (duplicateInBatch) {
+      console.log("Event duplicate detected (in current batch), skipping:", mainArticle.title);
+      return null;
+    }
+    
+    // 2. Vérifier dans la base de données
     try {
-      const duplicateCheck = await ctx.runAction(
+      const initialDuplicateCheck = await ctx.runAction(
         // @ts-ignore - Type instantiation is excessively deep (known Convex type issue)
         api.bots.detectDecisions.checkDuplicateDecision,
         {
@@ -58,13 +80,13 @@ export const generateDecision = action({
         }
       );
 
-      if (duplicateCheck?.isDuplicate) {
-        console.log("Event duplicate detected, skipping:", mainArticle.title);
+      if (initialDuplicateCheck?.isDuplicate) {
+        console.log("Event duplicate detected (initial check), skipping:", mainArticle.title);
         return null;
       }
     } catch (error) {
       // Si la vérification échoue, continuer quand même
-      console.warn("Error checking duplicates, continuing:", error);
+      console.warn("Error checking duplicates (initial), continuing:", error);
     }
 
     // Titre et description de l'événement majeur (à générer par IA)
@@ -143,7 +165,7 @@ Réponds UNIQUEMENT avec du JSON valide:
     // Extraire les informations avec IA (si disponible)
     let extracted: {
       decider: string;
-      deciderType: "country" | "institution" | "leader" | "organization";
+      deciderType: "country" | "institution" | "leader" | "organization" | "natural" | "economic";
       type: "law" | "sanction" | "tax" | "agreement" | "policy" | "regulation" | "crisis" | "disaster" | "conflict" | "discovery" | "election" | "economic_event" | "other";
       officialText: string;
       impactedDomains: string[];
@@ -201,7 +223,7 @@ INSTRUCTIONS:
 Réponds UNIQUEMENT avec du JSON valide (format json_object):
 {
   "decider": "nom exact du décideur",
-  "deciderType": "country|institution|leader|organization",
+  "deciderType": "country|institution|leader|organization|natural|economic",
   "type": "sanction|accord|intervention|loi|politique|réglementation|autre",
   "impactedDomains": ["domaine1", "domaine2", "domaine3"]
 }`;
@@ -224,7 +246,7 @@ Réponds UNIQUEMENT avec du JSON valide (format json_object):
             
             if (parsed.decider) extracted.decider = parsed.decider;
             if (parsed.deciderType && ["country", "institution", "leader", "organization", "natural", "economic"].includes(parsed.deciderType)) {
-              extracted.deciderType = parsed.deciderType as "country" | "institution" | "leader" | "organization";
+              extracted.deciderType = parsed.deciderType as "country" | "institution" | "leader" | "organization" | "natural" | "economic";
             }
             // Mapper les types français vers anglais (incluant les nouveaux types)
             const typeMap: Record<string, "law" | "sanction" | "tax" | "agreement" | "policy" | "regulation" | "crisis" | "disaster" | "conflict" | "discovery" | "election" | "economic_event" | "other"> = {
@@ -627,6 +649,41 @@ UNIQUEMENT la requête (2-4 mots-clés en anglais), sans texte avant ou après, 
       .replace(/^-+|-+$/g, "")
       .substring(0, 100);
 
+    // Vérification finale après génération du titre (plus précis)
+    // Cette vérification utilise le titre final généré par l'IA + description pour comparaison sémantique
+    // 1. Vérifier d'abord dans le cache de la batch actuelle (avec le titre généré)
+    const duplicateInBatchFinal = createdInThisBatch.find(
+      (d) =>
+        d.title.toLowerCase() === eventTitle.toLowerCase() ||
+        d.sourceUrl === mainArticle.url
+    );
+    
+    if (duplicateInBatchFinal) {
+      console.log("Event duplicate detected (in current batch, final check), skipping:", eventTitle);
+      return null;
+    }
+    
+    // 2. Vérifier dans la base de données
+    try {
+      const finalDuplicateCheck = await ctx.runAction(
+        // @ts-ignore - Type instantiation is excessively deep (known Convex type issue)
+        api.bots.detectDecisions.checkDuplicateDecision,
+        {
+          title: eventTitle, // Titre final généré
+          sourceUrl: mainArticle.url,
+          description: eventDescription || eventTitle, // Description pour comparaison sémantique
+        }
+      );
+
+      if (finalDuplicateCheck?.isDuplicate) {
+        console.log("Event duplicate detected (final check with generated title), skipping:", eventTitle);
+        return null;
+      }
+    } catch (error) {
+      // Si la vérification échoue, continuer quand même (ne pas bloquer la création)
+      console.warn("Error checking duplicates (final), continuing:", error);
+    }
+
     // Vérifier que le slug est unique
     const existing = await ctx.runQuery(api.decisions.getDecisionBySlug, {
       slug,
@@ -834,7 +891,7 @@ export const searchFreeImage = action({
  */
 function buildImageSearchQuery(
   decider: string,
-  deciderType: "country" | "institution" | "leader" | "organization",
+  deciderType: "country" | "institution" | "leader" | "organization" | "natural" | "economic",
   type: "law" | "sanction" | "tax" | "agreement" | "policy" | "regulation" | "crisis" | "disaster" | "conflict" | "discovery" | "election" | "economic_event" | "other",
   impactedDomains: string[],
   title: string

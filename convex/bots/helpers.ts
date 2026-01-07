@@ -16,7 +16,7 @@ export async function getBotIdBySlug(
   ctx: ActionCtx,
   slug: string
 ): Promise<Id<"bots"> | null> {
-  // @ts-expect-error - Type instantiation is excessively deep due to complex return type from getBotBySlug
+  // @ts-ignore - Type instantiation is excessively deep due to complex return type from getBotBySlug
   const bot = await ctx.runQuery(api.bots.getBotBySlug, { slug });
   return bot?._id || null;
 }

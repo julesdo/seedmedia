@@ -82,9 +82,9 @@
     }
   },
   "quiz": {
-    "works": "Werkt",
+    "works": "Mislukt",
     "partial": "Gedeeltelijk",
-    "fails": "Mislukt",
+    "fails": "Werkt",
     "confirm": "Bevestigen",
     "viewDetails": "Details bekijken",
     "hideDetails": "Details verbergen",
@@ -176,9 +176,9 @@
       "resolved": "Opgelost"
     },
     "issues": {
-      "works": "Het werkt",
+      "works": "Het werkt niet",
       "partial": "Gedeeltelijk",
-      "fails": "Het werkt niet"
+      "fails": "Het werkt"
     },
     "card": {
       "seedsEngaged": "Geëngageerde Seeds",
@@ -192,9 +192,9 @@
     },
     "modal": {
       "title": "Deze beslissing anticiperen",
-      "works": "Het werkt",
+      "works": "Het werkt niet",
       "partial": "Het werkt gedeeltelijk",
-      "fails": "Het werkt niet",
+      "fails": "Het werkt",
       "seedsInfo": "{count} Seeds worden automatisch geëngageerd",
       "cancel": "Annuleren",
       "success": {

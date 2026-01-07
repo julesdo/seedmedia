@@ -82,9 +82,9 @@
     }
   },
   "quiz": {
-    "works": "Działa",
+    "works": "Nie działa",
     "partial": "Częściowo",
-    "fails": "Nie działa",
+    "fails": "Działa",
     "confirm": "Potwierdź",
     "viewDetails": "Zobacz szczegóły",
     "hideDetails": "Ukryj szczegóły",
@@ -176,9 +176,9 @@
       "resolved": "Rozwiązane"
     },
     "issues": {
-      "works": "Działa",
+      "works": "Nie działa",
       "partial": "Częściowo",
-      "fails": "Nie działa"
+      "fails": "Działa"
     },
     "card": {
       "seedsEngaged": "Zaangażowane Seeds",
@@ -192,9 +192,9 @@
     },
     "modal": {
       "title": "Antycypuj tę decyzję",
-      "works": "Działa",
+      "works": "Nie działa",
       "partial": "Działa częściowo",
-      "fails": "Nie działa",
+      "fails": "Działa",
       "seedsInfo": "{count} Seeds zostanie automatycznie zaangażowanych",
       "cancel": "Anuluj",
       "success": {

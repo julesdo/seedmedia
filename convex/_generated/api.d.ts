@@ -34,6 +34,7 @@ import type * as comments from "../comments.js";
 import type * as configurableRules from "../configurableRules.js";
 import type * as content from "../content.js";
 import type * as credibility from "../credibility.js";
+import type * as crons from "../crons.js";
 import type * as debates from "../debates.js";
 import type * as decisionTranslations from "../decisionTranslations.js";
 import type * as decisions from "../decisions.js";
@@ -111,6 +112,7 @@ declare const fullApi: ApiFromModules<{
   configurableRules: typeof configurableRules;
   content: typeof content;
   credibility: typeof credibility;
+  crons: typeof crons;
   debates: typeof debates;
   decisionTranslations: typeof decisionTranslations;
   decisions: typeof decisions;

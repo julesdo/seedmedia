@@ -211,10 +211,15 @@ function AnticipationCard({ anticipation }: { anticipation: any }) {
               <Badge
                 variant={
                   anticipation.issue === "works"
-                    ? "default"
+                    ? "destructive"
                     : anticipation.issue === "partial"
                       ? "secondary"
-                      : "destructive"
+                      : "default"
+                }
+                className={
+                  anticipation.issue === "fails"
+                    ? "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/50"
+                    : undefined
                 }
               >
                 {anticipation.issue === "works"

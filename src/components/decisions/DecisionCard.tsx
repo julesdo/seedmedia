@@ -103,7 +103,7 @@ export function DecisionCard({
             {decision.decider}
           </span>
         </Link>
-        <SaveButton decisionId={decision._id} size="icon" variant="ghost" />
+        <SaveButton decisionId={decision._id} size="icon" />
       </div>
 
       {/* Image pleine largeur - Style Instagram */}

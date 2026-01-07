@@ -1,17 +1,26 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { SolarIcon } from "@/components/icons/SolarIcon";
 import Link from "next/link";
 import { useUser } from "@/contexts/UserContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTranslations } from 'next-intl';
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
 export function BottomNav() {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, isAuthenticated } = useUser();
   const t = useTranslations('navigation');
+
+  // Récupérer la dernière décision pour rediriger vers son détail
+  // @ts-ignore - Type instantiation is excessively deep (known Convex type issue)
+  const latestDecision = useQuery(api.decisions.getDecisions, { 
+    limit: 1
+  });
 
   const navItems = [
     {
@@ -21,7 +30,9 @@ export function BottomNav() {
     },
     {
       label: t('trending'),
-      href: "/trending",
+      href: latestDecision && latestDecision.length > 0 
+        ? `/${latestDecision[0].slug}` 
+        : "#",
       icon: "fire-bold",
     },
     {

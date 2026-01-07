@@ -42,10 +42,13 @@ Critères d'importance (score 0-10):
   Négatifs: "Trump décide d'envahir le Venezuela", "Séisme majeur au Japon", "Krach boursier", "Coup d'État"
   Positifs: "Accord de paix historique", "Découverte médicale majeure", "Accord climat ambitieux", "Innovation technologique révolutionnaire", "Élection démocratique majeure"
 - 5-7: Événement important avec impact mesurable
-  Négatifs: "Crise économique nationale", "Catastrophe naturelle régionale"
+  Négatifs: "Crise économique nationale", "Catastrophe naturelle régionale", "Intervention militaire", "Rupture diplomatique majeure"
   Positifs: "Accord commercial majeur", "Progrès scientifique significatif", "Réforme démocratique", "Transition énergétique"
-- 2-4: Événement notable mais impact limité (ex: "Sommet international prévu", "Crise diplomatique en cours", "Événement local")
-- 0-1: Article d'analyse, commentaire, ou événement mineur (ex: "Expert analyse la situation", "Article général", "Événement sans impact prévisible")
+- 3-4: Décision ou événement concret avec impact prévisible (ACCEPTER ces événements)
+  Négatifs: "Rupture diplomatique", "Sanction annoncée", "Crise diplomatique majeure", "Tentative de coup d'État", "Intervention militaire en cours"
+  Positifs: "Accord bilatéral", "Coopération internationale", "Réforme politique", "Décision gouvernementale majeure"
+  IMPORTANT: Si c'est une DÉCISION CONCRÈTE (rupture, sanction, accord, intervention), donner au moins 3/10 même si l'impact semble limité
+- 0-2: Article d'analyse, commentaire, ou événement mineur (ex: "Expert analyse la situation", "Article général", "Événement sans impact prévisible", "Commentaire de sportif")
 
 THÉMATIQUES COUVERTES (positifs ET négatifs):
 - Géopolitique: décisions, sanctions, accords, coups d'État, élections, conflits, accords de paix, coopération internationale
@@ -133,7 +136,7 @@ Réponds UNIQUEMENT avec du JSON valide:
                 if (jsonMatch) {
                   const parsed = JSON.parse(jsonMatch[0]);
                   return {
-                    isImportant: parsed.isImportant === true && parsed.score >= 4, // Seuil abaissé à 4/10 pour capturer plus d'événements
+                    isImportant: parsed.isImportant === true && parsed.score >= 3, // Seuil abaissé à 3/10 pour capturer les décisions concrètes
                     score: parsed.score || 0,
                     reason: parsed.reason || "Non évalué",
                   };
@@ -166,7 +169,7 @@ Réponds UNIQUEMENT avec du JSON valide:
     
     const parsed = JSON.parse(jsonString);
     return {
-      isImportant: parsed.isImportant === true && parsed.score >= 4, // Seuil abaissé à 4/10 pour capturer plus d'événements
+      isImportant: parsed.isImportant === true && parsed.score >= 3, // Seuil abaissé à 3/10 pour capturer les décisions concrètes
       score: parsed.score || 0,
       reason: parsed.reason || "Non évalué",
     };
@@ -619,8 +622,8 @@ export const detectDecisions = action({
               openaiKey
             );
             
-            // Ne garder que les décisions importantes (score >= 4 pour capturer plus d'événements)
-            if (!evaluation.isImportant || evaluation.score < 4) {
+            // Ne garder que les décisions importantes (score >= 3 pour capturer plus d'événements, y compris les décisions concrètes)
+            if (!evaluation.isImportant || evaluation.score < 3) {
               console.log(`Décision filtrée (score: ${evaluation.score}): ${item.title.substring(0, 60)}... - ${evaluation.reason}`);
               continue;
             }
@@ -713,8 +716,8 @@ export const detectDecisions = action({
               openaiKey
             );
 
-            // Ne garder que les événements importants (score >= 4 pour capturer plus d'événements)
-            if (!evaluation.isImportant || evaluation.score < 4) {
+            // Ne garder que les événements importants (score >= 3 pour capturer plus d'événements, y compris les décisions concrètes)
+            if (!evaluation.isImportant || evaluation.score < 3) {
               console.log(`Événement filtré (score: ${evaluation.score}): ${item.title.substring(0, 60)}... - ${evaluation.reason}`);
               continue;
             }
@@ -773,32 +776,220 @@ export const detectDecisions = action({
 });
 
 /**
- * Vérifie si une décision similaire existe déjà
+ * Extrait les mots-clés importants d'un titre (pour comparaison textuelle)
+ */
+function extractImportantKeywords(title: string): string[] {
+  const stopWords = new Set([
+    "le", "la", "les", "un", "une", "des", "de", "du", "dans", "pour", "avec", "sur", "par",
+    "et", "ou", "mais", "donc", "car", "que", "qui", "quoi", "où", "quand", "comment",
+    "announce", "annonce", "décision", "international", "monde", "pays", "gouvernement",
+    "the", "a", "an", "is", "are", "was", "were", "be", "been", "being", "have", "has", "had"
+  ]);
+
+  return title
+    .toLowerCase()
+    .replace(/[^\w\s]/g, " ")
+    .split(/\s+/)
+    .filter((w) => w.length > 3 && !stopWords.has(w))
+    .slice(0, 8); // Max 8 mots-clés
+}
+
+/**
+ * Calcule la similarité entre deux ensembles de mots-clés (0-1)
+ */
+function calculateKeywordSimilarity(keywords1: string[], keywords2: string[]): number {
+  if (keywords1.length === 0 || keywords2.length === 0) return 0;
+
+  const set1 = new Set(keywords1);
+  const set2 = new Set(keywords2);
+  
+  const intersection = [...set1].filter(k => set2.has(k));
+  const union = [...new Set([...keywords1, ...keywords2])];
+  
+  return intersection.length / union.length;
+}
+
+/**
+ * Compare sémantiquement deux décisions avec l'IA (avec timeout)
+ */
+async function checkSemanticSimilarity(
+  title1: string,
+  description1: string,
+  title2: string,
+  description2: string,
+  openaiKey: string
+): Promise<boolean> {
+  try {
+    const prompt = `Compare ces deux événements et détermine s'ils parlent du MÊME ÉVÉNEMENT RÉEL.
+
+ÉVÉNEMENT 1:
+Titre: ${title1}
+Description: ${description1 || ""}
+
+ÉVÉNEMENT 2:
+Titre: ${title2}
+Description: ${description2 || ""}
+
+Réponds UNIQUEMENT avec du JSON:
+{
+  "duplicate": true/false,
+  "reason": "explication courte"
+}`;
+
+    // Timeout de 5 secondes pour chaque appel IA
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    try {
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${openaiKey}`,
+        },
+        body: JSON.stringify({
+          model: "gpt-5-mini",
+          messages: [
+            {
+              role: "system",
+              content: "Tu es un expert en actualité internationale. Compare objectivement si deux événements sont identiques.",
+            },
+            { role: "user", content: prompt },
+          ],
+          reasoning_effort: "minimal",
+          max_completion_tokens: 150,
+        }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        return false; // En cas d'erreur, considérer comme non-duplicate pour ne pas bloquer
+      }
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content;
+      if (!content) return false;
+
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        return parsed.duplicate === true;
+      }
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error instanceof Error && error.name === "AbortError") {
+        console.warn("Semantic comparison timeout, skipping");
+      }
+      return false; // En cas d'erreur/timeout, considérer comme non-duplicate
+    }
+  } catch (error) {
+    console.warn("Error in semantic comparison:", error);
+    return false;
+  }
+
+  return false;
+}
+
+/**
+ * Vérifie si une décision similaire existe déjà (version optimisée)
+ * - Limite aux 7 derniers jours seulement (probabilité de doublon élevée)
+ * - Max 30 décisions récentes à comparer
+ * - Comparaison sémantique IA limitée (max 10 décisions, timeout 5s)
+ * - Fallback rapide sans IA (comparaison textuelle améliorée)
  */
 export const checkDuplicateDecision = action({
   args: {
     title: v.string(),
     sourceUrl: v.string(),
+    description: v.optional(v.string()), // Pour comparaison sémantique
   },
   handler: async (ctx, args): Promise<{
     isDuplicate: boolean;
     existingDecision: any | null;
   }> => {
-    // Récupérer toutes les décisions existantes
-    const existingDecisions = await ctx.runQuery(api.decisions.getDecisions, {
-      limit: 1000, // Limite élevée pour vérifier les doublons
+    const now = Date.now();
+    const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000; // 7 jours en millisecondes
+
+    // Récupérer seulement les décisions récentes (7 derniers jours)
+    // Utiliser getDecisions avec limite, puis filtrer par date
+    const allRecentDecisions = await ctx.runQuery(api.decisions.getDecisions, {
+      limit: 50, // Limite raisonnable pour récupérer les récentes
     });
 
-    // Vérifier les doublons par titre ou URL source
-    const duplicate = existingDecisions.find(
+    // Filtrer par date (7 derniers jours) et limiter à 30
+    const recentDecisions = allRecentDecisions
+      .filter((d: any) => d.date >= sevenDaysAgo)
+      .slice(0, 30); // Max 30 décisions récentes à comparer
+
+    // 1. Vérification rapide : titre exact ou URL source (sans IA)
+    const exactDuplicate = recentDecisions.find(
       (d: any) =>
         d.title.toLowerCase() === args.title.toLowerCase() ||
         d.sourceUrl === args.sourceUrl
     );
 
+    if (exactDuplicate) {
+      return {
+        isDuplicate: true,
+        existingDecision: exactDuplicate,
+      };
+    }
+
+    // 2. Comparaison textuelle améliorée (fallback sans IA)
+    const newKeywords = extractImportantKeywords(args.title);
+    for (const decision of recentDecisions.slice(0, 20)) {
+      const existingKeywords = extractImportantKeywords(decision.title);
+      const similarity = calculateKeywordSimilarity(newKeywords, existingKeywords);
+      
+      // Si similarité > 70%, considérer comme doublon potentiel
+      if (similarity > 0.7) {
+        return {
+          isDuplicate: true,
+          existingDecision: decision,
+        };
+      }
+    }
+
+    // 3. Comparaison sémantique avec IA (seulement si description fournie et IA disponible)
+    const openaiKey = process.env.OPENAI_API_KEY;
+    if (openaiKey && args.description) {
+      // Limiter à 10 décisions les plus récentes pour comparaison IA (performance)
+      const topRecentDecisions = recentDecisions.slice(0, 10);
+      
+      // Comparer en parallèle avec timeout (max 5s par comparaison)
+      const comparisons = topRecentDecisions.map(async (decision: any) => {
+        try {
+          const isDuplicate = await checkSemanticSimilarity(
+            args.title,
+            args.description || "",
+            decision.title,
+            decision.description || "",
+            openaiKey
+          );
+          return isDuplicate ? decision : null;
+        } catch (error) {
+          // En cas d'erreur, ignorer cette comparaison
+          return null;
+        }
+      });
+
+      // Attendre les comparaisons (avec timeout global de 30s pour toutes)
+      const results = await Promise.allSettled(comparisons);
+      for (const result of results) {
+        if (result.status === "fulfilled" && result.value) {
+          return {
+            isDuplicate: true,
+            existingDecision: result.value,
+          };
+        }
+      }
+    }
+
     return {
-      isDuplicate: !!duplicate,
-      existingDecision: duplicate || null,
+      isDuplicate: false,
+      existingDecision: null,
     };
   },
 });

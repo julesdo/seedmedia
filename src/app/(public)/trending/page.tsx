@@ -2,6 +2,7 @@
 
 import { Suspense } from "react";
 import { DecisionCard } from "@/components/decisions/DecisionCard";
+import { DecisionStories } from "@/components/decisions/DecisionStories";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -61,8 +62,13 @@ function TrendingContent() {
         </div>
       </div>
 
-      {/* Liste des décisions tendances */}
-      <div className="max-w-[614px] mx-auto px-4 py-6">
+      {/* Stories horizontales - Style Instagram (seulement sur mobile) */}
+      <div className="lg:hidden">
+        <DecisionStories />
+      </div>
+
+      {/* Liste des décisions tendances - Mode feed */}
+      <div className="max-w-[614px] mx-auto">
         {hotDecisions === undefined ? (
           <div className="flex flex-col">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -70,7 +76,7 @@ function TrendingContent() {
             ))}
           </div>
         ) : hotDecisions.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="flex flex-col items-center justify-center py-12 text-center px-4">
             <SolarIcon icon="fire-bold" className="size-16 text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">{t('empty.title')}</h3>
             <p className="text-sm text-muted-foreground">

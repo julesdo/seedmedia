@@ -1289,7 +1289,9 @@ export default defineSchema({
       v.literal("country"),
       v.literal("institution"),
       v.literal("leader"),
-      v.literal("organization")
+      v.literal("organization"),
+      v.literal("natural"),
+      v.literal("economic")
     ),
 
     // Date

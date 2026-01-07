@@ -348,7 +348,9 @@ export const createDecision = mutation({
       v.literal("country"),
       v.literal("institution"),
       v.literal("leader"),
-      v.literal("organization")
+      v.literal("organization"),
+      v.literal("natural"),
+      v.literal("economic")
     ),
     date: v.number(),
     type: v.union(
@@ -445,7 +447,9 @@ export const updateDecision = mutation({
         v.literal("country"),
         v.literal("institution"),
         v.literal("leader"),
-        v.literal("organization")
+        v.literal("organization"),
+        v.literal("natural"),
+        v.literal("economic")
       )
     ),
     date: v.optional(v.number()),
