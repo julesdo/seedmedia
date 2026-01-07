@@ -162,12 +162,131 @@ export function DecisionReelFeed({
     };
   }, [allLoadedDecisions.length, decisions, displayLimit, enrichedDecisions]);
 
+  // Skeleton pour le feed reel qui ressemble exactement à l'UI finale (sans texte)
+  function ReelCardSkeleton() {
+    return (
+      <div className="relative h-screen w-full snap-start snap-always flex flex-col">
+        {/* Image de fond skeleton */}
+        <div className="absolute inset-0">
+          <Skeleton className="w-full h-full rounded-none" />
+          {/* Overlay gradient comme dans l'UI réelle */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/20" />
+        </div>
+
+        {/* Contenu superposé */}
+        <div className="relative h-full flex flex-col">
+          {/* Header skeleton - Exactement comme l'UI */}
+          <header className="sticky top-0 z-20 flex items-center justify-between p-4 bg-gradient-to-b from-black/60 via-black/40 to-transparent backdrop-blur-sm">
+            {/* Bouton retour */}
+            <Skeleton className="h-10 w-10 rounded-full bg-black/40" />
+            
+            {/* Badges au centre - Deux badges orange + badge gris */}
+            <div className="flex items-center gap-2">
+              {/* Badge orange avec icône */}
+              <Skeleton className="h-6 w-12 rounded-full bg-orange-500/30" />
+              {/* Badge orange avec icône */}
+              <Skeleton className="h-6 w-12 rounded-full bg-orange-500/30" />
+              {/* Badge gris "Annoncée" */}
+              <Skeleton className="h-5 w-16 rounded-full bg-gray-500/30" />
+            </div>
+            
+            {/* Save button */}
+            <Skeleton className="h-10 w-10 rounded-full bg-black/40" />
+          </header>
+
+          {/* Contenu principal skeleton */}
+          <main className="flex-1 overflow-y-auto p-4 space-y-4 pb-20 min-h-0">
+            {/* Titre + métadonnées */}
+            <div className="space-y-3">
+              {/* Titre principal - 2-3 lignes */}
+              <div className="space-y-2">
+                <Skeleton className="h-7 w-full rounded bg-white/20" />
+                <Skeleton className="h-7 w-4/5 rounded bg-white/20" />
+              </div>
+              {/* Métadonnées (décideur • temps) */}
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-4 w-20 rounded bg-white/20" />
+                <Skeleton className="h-4 w-1 rounded bg-white/20" />
+                <Skeleton className="h-4 w-24 rounded bg-white/20" />
+              </div>
+            </div>
+
+            {/* Card Quiz - Semi-transparente avec bordure */}
+            <div className="bg-black/30 backdrop-blur-md rounded-xl p-4 border border-white/10 space-y-4">
+              {/* Icône bleue circulaire en haut centre */}
+              <div className="flex justify-center">
+                <Skeleton className="h-8 w-8 rounded-full bg-blue-500/30" />
+              </div>
+              
+              {/* Question skeleton */}
+              <Skeleton className="h-5 w-full rounded bg-white/20" />
+              <Skeleton className="h-5 w-5/6 rounded bg-white/20" />
+              
+              {/* Trois sections de réponses */}
+              <div className="space-y-3">
+                {/* Section Rouge (en haut) */}
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-red-500/20 border border-red-500/30">
+                  <Skeleton className="h-8 w-8 rounded-full bg-red-500/40" />
+                  <div className="flex-1 space-y-1.5">
+                    <Skeleton className="h-5 w-24 rounded bg-white/20" />
+                    <Skeleton className="h-3.5 w-full rounded bg-white/15" />
+                    <Skeleton className="h-3.5 w-4/5 rounded bg-white/15" />
+                  </div>
+                  <Skeleton className="h-5 w-5 rounded bg-white/20" />
+                </div>
+                
+                {/* Section Jaune (milieu) */}
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-yellow-500/20 border border-yellow-500/30">
+                  <Skeleton className="h-8 w-8 rounded-full bg-yellow-500/40" />
+                  <div className="flex-1 space-y-1.5">
+                    <Skeleton className="h-5 w-28 rounded bg-white/20" />
+                    <Skeleton className="h-3.5 w-full rounded bg-white/15" />
+                    <Skeleton className="h-3.5 w-3/4 rounded bg-white/15" />
+                  </div>
+                  <Skeleton className="h-5 w-5 rounded bg-white/20" />
+                </div>
+                
+                {/* Section Verte (en bas) */}
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-green-500/20 border border-green-500/30">
+                  <Skeleton className="h-8 w-8 rounded-full bg-green-500/40" />
+                  <div className="flex-1 space-y-1.5">
+                    <Skeleton className="h-5 w-20 rounded bg-white/20" />
+                    <Skeleton className="h-3.5 w-full rounded bg-white/15" />
+                    <Skeleton className="h-3.5 w-5/6 rounded bg-white/15" />
+                  </div>
+                  <Skeleton className="h-5 w-5 rounded bg-white/20" />
+                </div>
+              </div>
+            </div>
+
+            {/* Texte descriptif en dessous */}
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full rounded bg-white/20" />
+              <Skeleton className="h-4 w-full rounded bg-white/20" />
+              <Skeleton className="h-4 w-3/4 rounded bg-white/20" />
+            </div>
+          </main>
+
+          {/* Footer skeleton - Exactement comme l'UI */}
+          <footer className="sticky bottom-0 z-20 flex items-center justify-between p-4 bg-gradient-to-t from-black/80 via-black/60 to-transparent backdrop-blur-md">
+            <div className="flex items-center gap-4">
+              {/* Logo 'N' */}
+              <Skeleton className="h-10 w-10 rounded-full bg-black/40" />
+              {/* Icône share */}
+              <Skeleton className="h-10 w-10 rounded-full bg-black/40" />
+            </div>
+            {/* Compteur anticipations */}
+            <Skeleton className="h-4 w-28 rounded bg-white/20" />
+          </footer>
+        </div>
+      </div>
+    );
+  }
+
   if (decisions === undefined) {
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-background">
-        <div className="space-y-4 w-full max-w-md px-4">
-          <Skeleton className="h-screen w-full rounded-none" />
-        </div>
+      <div className="h-screen w-full overflow-y-scroll snap-y snap-mandatory">
+        <ReelCardSkeleton />
       </div>
     );
   }
@@ -215,11 +334,7 @@ export function DecisionReelFeed({
       ))}
 
       {/* Loading indicator - Toujours afficher pour permettre le chargement infini */}
-      {allLoadedDecisions.length > 0 && (
-        <div className="h-screen snap-start flex items-center justify-center">
-          <Skeleton className="h-screen w-full rounded-none" />
-        </div>
-      )}
+      {allLoadedDecisions.length > 0 && <ReelCardSkeleton />}
     </div>
   );
 }

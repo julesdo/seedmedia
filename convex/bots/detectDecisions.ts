@@ -302,10 +302,12 @@ function groupArticlesByEvent(
     content?: string;
   }>;
   keywords: string[];
+  mainTopic?: string; // Sujet principal identifié pour diversité
 }> {
   const groups: Array<{
     articles: typeof articles;
     keywords: string[];
+    mainTopic?: string;
   }> = [];
 
   for (const article of articles) {
@@ -317,6 +319,9 @@ function groupArticlesByEvent(
       .filter((w) => w.length > 4 && !["décision", "international", "monde", "pays", "gouvernement"].includes(w))
       .slice(0, 5);
 
+    // Identifier le sujet principal (pays, organisation, ou entité principale)
+    const mainTopic = identifyMainTopic(article.title, titleWords);
+
     // Chercher un groupe existant avec des mots-clés similaires
     let foundGroup = false;
     for (const group of groups) {
@@ -324,10 +329,15 @@ function groupArticlesByEvent(
         group.keywords.some((gk) => gk.includes(kw) || kw.includes(gk))
       );
       
-      // Si au moins 1 mot-clé en commun, ajouter à ce groupe (assoupli pour capturer plus d'événements)
-      if (commonKeywords.length >= 1) {
+      // Exiger au moins 2 mots-clés en commun pour éviter les regroupements trop larges
+      // Cela permet de mieux séparer les différents aspects d'un même sujet
+      if (commonKeywords.length >= 2) {
         group.articles.push(article);
         group.keywords = [...new Set([...group.keywords, ...titleWords])];
+        // Mettre à jour le sujet principal si plus spécifique
+        if (mainTopic && (!group.mainTopic || mainTopic.length < group.mainTopic.length)) {
+          group.mainTopic = mainTopic;
+        }
         foundGroup = true;
         break;
       }
@@ -338,6 +348,7 @@ function groupArticlesByEvent(
       groups.push({
         articles: [article],
         keywords: titleWords,
+        mainTopic,
       });
     }
   }
@@ -345,6 +356,35 @@ function groupArticlesByEvent(
   // Filtrer les groupes : accepter événements avec 1 article si très important, sinon minimum 2 articles
   // Cela permet de capturer plus d'événements majeurs même s'ils sont moins couverts médiatiquement
   return groups.filter((g) => g.articles.length >= 1);
+}
+
+/**
+ * Identifie le sujet principal d'un article (pays, organisation, etc.)
+ * Utilisé pour la diversité thématique
+ */
+function identifyMainTopic(title: string, keywords: string[]): string | undefined {
+  // Liste de pays et organisations majeurs (non exhaustive, peut être étendue)
+  const majorEntities = [
+    "venezuela", "maduro", "trump", "usa", "états-unis", "syrie", "assad",
+    "ukraine", "russie", "poutine", "chine", "iran", "israël", "palestine",
+    "france", "macron", "allemagne", "europe", "otan", "onu", "ue"
+  ];
+
+  const titleLower = title.toLowerCase();
+  
+  // Chercher une entité majeure dans le titre
+  for (const entity of majorEntities) {
+    if (titleLower.includes(entity)) {
+      return entity;
+    }
+  }
+
+  // Sinon, utiliser le premier mot-clé significatif
+  if (keywords.length > 0) {
+    return keywords[0];
+  }
+
+  return undefined;
 }
 
 /**
@@ -748,14 +788,56 @@ export const detectDecisions = action({
     const eventGroups = groupArticlesByEvent(allArticles);
     console.log(`🔗 Groupes d'événements formés: ${eventGroups.length}`);
     
-    // Trier par nombre d'articles (plus d'articles = événement plus majeur)
-    eventGroups.sort((a, b) => b.articles.length - a.articles.length);
+    // Récupérer les sujets récemment traités (24 dernières heures) pour favoriser la diversité
+    const recentDecisions = await ctx.runQuery(api.decisions.getDecisions, {
+      limit: 20, // Récupérer les 20 dernières décisions
+    });
     
-    // Prendre les N premiers événements majeurs
-    const majorEvents = eventGroups.slice(0, limit).map((group) => ({
-      articles: group.articles,
+    const twentyFourHoursAgo = now - 24 * 60 * 60 * 1000;
+    const recentlyTreatedTopics = new Set<string>();
+    
+    // Extraire les sujets principaux des décisions récentes (24h)
+    for (const decision of recentDecisions) {
+      if (decision.date >= twentyFourHoursAgo) {
+        const topic = identifyMainTopic(decision.title, extractImportantKeywords(decision.title));
+        if (topic) {
+          recentlyTreatedTopics.add(topic.toLowerCase());
+        }
+      }
+    }
+    
+    console.log(`📌 Sujets récemment traités (24h): ${Array.from(recentlyTreatedTopics).join(", ") || "aucun"}`);
+    
+    // Calculer un score combinant popularité et diversité
+    const scoredEvents = eventGroups.map((group) => {
+      const popularityScore = group.articles.length; // Score basé sur le nombre d'articles
+      const diversityPenalty = group.mainTopic && recentlyTreatedTopics.has(group.mainTopic.toLowerCase()) ? 0.3 : 1.0; // Pénalité de 70% si sujet récent
+      const recencyBonus = Math.max(0, group.articles.reduce((max, a) => Math.max(max, a.publishedAt), 0) - (now - 7 * 24 * 60 * 60 * 1000)) / (7 * 24 * 60 * 60 * 1000); // Bonus pour articles récents
+      
+      // Score final = popularité × diversité × (1 + bonus récence)
+      const finalScore = popularityScore * diversityPenalty * (1 + recencyBonus * 0.2);
+      
+      return {
+        group,
+        score: finalScore,
+        popularityScore,
+        diversityPenalty,
+      };
+    });
+    
+    // Trier par score final (diversité + popularité)
+    scoredEvents.sort((a, b) => b.score - a.score);
+    
+    console.log(`📊 Top 5 événements par score (popularité × diversité):`);
+    scoredEvents.slice(0, 5).forEach((event, i) => {
+      console.log(`  ${i + 1}. Score: ${event.score.toFixed(2)} (pop: ${event.popularityScore}, div: ${event.diversityPenalty.toFixed(2)}) - ${event.group.mainTopic || "sujet inconnu"}`);
+    });
+    
+    // Prendre les N premiers événements majeurs (après tri par diversité)
+    const majorEvents = scoredEvents.slice(0, limit).map((scored) => ({
+      articles: scored.group.articles,
       // Utiliser l'article le plus récent comme référence principale
-      mainArticle: group.articles.sort((a, b) => b.publishedAt - a.publishedAt)[0],
+      mainArticle: scored.group.articles.sort((a, b) => b.publishedAt - a.publishedAt)[0],
     }));
 
     console.log(`✅ Événements majeurs retenus: ${majorEvents.length}`);
@@ -939,11 +1021,22 @@ export const checkDuplicateDecision = action({
 
     // 2. Comparaison textuelle améliorée (fallback sans IA)
     const newKeywords = extractImportantKeywords(args.title);
+    const newTopic = identifyMainTopic(args.title, newKeywords);
+    
     for (const decision of recentDecisions.slice(0, 20)) {
       const existingKeywords = extractImportantKeywords(decision.title);
+      const existingTopic = identifyMainTopic(decision.title, existingKeywords);
       const similarity = calculateKeywordSimilarity(newKeywords, existingKeywords);
       
-      // Si similarité > 70%, considérer comme doublon potentiel
+      // Si même sujet principal ET similarité élevée, considérer comme doublon
+      if (newTopic && existingTopic && newTopic.toLowerCase() === existingTopic.toLowerCase() && similarity > 0.5) {
+        return {
+          isDuplicate: true,
+          existingDecision: decision,
+        };
+      }
+      
+      // Si similarité > 70% (même sans même sujet), considérer comme doublon potentiel
       if (similarity > 0.7) {
         return {
           isDuplicate: true,

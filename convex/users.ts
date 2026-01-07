@@ -339,3 +339,58 @@ export const getUserProfile = query({
     };
   },
 });
+
+/**
+ * Récupère les usernames des utilisateurs populaires (pour generateStaticParams)
+ * Utilisé pour pré-générer les pages de profil les plus visitées
+ */
+export const getPopularUserUsernames = query({
+  args: {
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit || 50;
+    
+    // Récupérer tous les utilisateurs avec username et profil public
+    const allUsers = await ctx.db
+      .query("users")
+      .filter((q) => 
+        q.and(
+          q.neq(q.field("username"), undefined),
+          q.eq(q.field("isPublic"), true)
+        )
+      )
+      .collect();
+    
+    // Calculer un score de popularité basé sur :
+    // - Nombre d'anticipations
+    // - Niveau de l'utilisateur
+    // - Date de dernière activité
+    const usersWithScore = await Promise.all(
+      allUsers.map(async (user) => {
+        const anticipations = await ctx.db
+          .query("anticipations")
+          .withIndex("userId", (q) => q.eq("userId", user._id))
+          .collect();
+        
+        const score = 
+          (anticipations.length * 10) + // 10 points par anticipation
+          (user.level * 5) + // 5 points par niveau
+          (user.updatedAt ? 1 : 0); // 1 point si profil mis à jour
+        
+        return {
+          username: user.username!,
+          score,
+        };
+      })
+    );
+    
+    // Trier par score décroissant et limiter
+    usersWithScore.sort((a, b) => b.score - a.score);
+    const topUsers = usersWithScore.slice(0, limit);
+    
+    return topUsers.map((user) => ({
+      username: user.username,
+    }));
+  },
+});

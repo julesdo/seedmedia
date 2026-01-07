@@ -13,6 +13,17 @@ const nextConfig: NextConfig = {
     // Désactive la vérification ESLint lors du build
     ignoreDuringBuilds: true,
   },
+  // Optimisations de performance
+  compress: true,
+  experimental: {
+    // Optimiser les imports de packages volumineux
+    optimizePackageImports: [
+      '@radix-ui/react-icons',
+      'lucide-react',
+      '@iconify/react',
+      '@iconify-json/solar',
+    ],
+  },
   images: {
     dangerouslyAllowSVG: true, // This allows SVG usage
     remotePatterns: [

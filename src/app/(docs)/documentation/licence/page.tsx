@@ -5,6 +5,9 @@ import Link from "next/link";
 import { readFileSync } from "fs";
 import { join } from "path";
 
+// ISR: Régénérer toutes les heures (contenu statique qui change rarement)
+export const revalidate = 3600;
+
 async function getLicenseContent() {
   try {
     const licensePath = join(process.cwd(), "LICENSE");

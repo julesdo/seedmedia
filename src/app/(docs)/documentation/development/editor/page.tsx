@@ -2,6 +2,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { SolarIcon } from "@/components/icons/SolarIcon";
 
+// ISR: Régénérer toutes les heures (contenu statique qui change rarement)
+export const revalidate = 3600;
+
 /**
  * Page de documentation de l'éditeur
  * L'éditeur a été supprimé dans la refonte, cette page est conservée pour la documentation

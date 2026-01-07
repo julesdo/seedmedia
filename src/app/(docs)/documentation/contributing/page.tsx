@@ -4,6 +4,9 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
+// ISR: Régénérer toutes les heures (contenu statique qui change rarement)
+export const revalidate = 3600;
+
 export default function ContributingPage() {
   return (
     <div className="container mx-auto px-4 py-8 md:py-12 max-w-4xl">

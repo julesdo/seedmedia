@@ -5,12 +5,20 @@ import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
-import { AnticipationModal } from "./AnticipationModal";
 import { SolarIcon } from "@/components/icons/SolarIcon";
 import { useConvexAuth } from "convex/react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useTranslations } from 'next-intl';
+import dynamic from "next/dynamic";
+
+// Lazy load AnticipationModal (modal, pas besoin au chargement initial)
+const AnticipationModal = dynamic(
+  () => import("./AnticipationModal").then((mod) => ({ default: mod.AnticipationModal })),
+  {
+    ssr: false, // Modal, pas besoin de SSR
+  }
+);
 
 interface AnticipationButtonProps {
   decisionId: Id<"decisions">;

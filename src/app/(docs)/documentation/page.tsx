@@ -4,6 +4,9 @@ import { SolarIcon } from "@/components/icons/SolarIcon";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 
+// ISR: Régénérer toutes les heures (contenu statique qui change rarement)
+export const revalidate = 3600;
+
 export default function DocumentationPage() {
   return (
     <div className="container mx-auto px-4 py-8 md:py-12 max-w-5xl">

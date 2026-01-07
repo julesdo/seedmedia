@@ -199,12 +199,12 @@ function PublicProfileView({ user, userId }: { user: any; userId: string }) {
       <div className="max-w-[614px] mx-auto">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         {/* Header Profil - COMPACT avec toutes les infos + Tabs */}
-        {/* Mobile: top-14 (3.5rem) pour SimplifiedHeader h-14 */}
+        {/* Mobile: sticky en dessous du MobileSubPageHeader (56px) + SimplifiedHeader (56px) + breaking news */}
         {/* Desktop: top-14 (3.5rem) pour DesktopTopBar h-14 (fixed) + breaking news height */}
         <div 
           className="sticky z-20 bg-background/95 backdrop-blur-xl border-b border-border/50"
           style={{
-            top: "calc(56px + var(--breaking-news-height, 0px))"
+            top: "calc(var(--breaking-news-height, 0px) + var(--header-height, 56px) + 56px)"
           }}
         >
             <div className="px-4 py-4">
@@ -288,51 +288,51 @@ function PublicProfileView({ user, userId }: { user: any; userId: string }) {
                     <Skeleton className="h-5 w-16" />
                   </div>
                 ) : (
-                  <div className="flex items-center gap-4 flex-wrap">
+                  <div className="flex items-center gap-2 sm:gap-4 flex-nowrap overflow-x-auto scrollbar-hide">
                     {/* Stats principales - Avec séparateurs visuels */}
-                    <div className="flex flex-col items-center gap-0.5">
+                    <div className="flex flex-col items-center gap-0.5 shrink-0">
                       <span className="text-base font-bold text-foreground">{stats.resolvedAnticipations}</span>
-                      <span className="text-[10px] text-muted-foreground uppercase tracking-wide">{t('stats.inProgress')}</span>
+                      <span className="text-[10px] text-muted-foreground uppercase tracking-wide whitespace-nowrap">{t('stats.inProgress')}</span>
                     </div>
-                    <div className="h-8 w-px bg-border/50" />
-                    <div className="flex flex-col items-center gap-0.5">
+                    <div className="h-8 w-px bg-border/50 shrink-0" />
+                    <div className="flex flex-col items-center gap-0.5 shrink-0">
                       <span className="text-base font-bold text-foreground">{stats.correctAnticipations}</span>
-                      <span className="text-[10px] text-muted-foreground uppercase tracking-wide">{t('stats.correct')}</span>
+                      <span className="text-[10px] text-muted-foreground uppercase tracking-wide whitespace-nowrap">{t('stats.correct')}</span>
                     </div>
                     {stats.resolvedAnticipations > 0 && (
                       <>
-                        <div className="h-8 w-px bg-border/50" />
-                        <div className="flex flex-col items-center gap-0.5">
+                        <div className="h-8 w-px bg-border/50 shrink-0" />
+                        <div className="flex flex-col items-center gap-0.5 shrink-0">
                           <span className="text-base font-bold text-foreground">{stats.accuracy}%</span>
-                          <span className="text-[10px] text-muted-foreground uppercase tracking-wide">{t('stats.accuracy')}</span>
+                          <span className="text-[10px] text-muted-foreground uppercase tracking-wide whitespace-nowrap">{t('stats.accuracy')}</span>
                         </div>
                       </>
                     )}
-                    <div className="h-8 w-px bg-border/50" />
-                    <div className="flex flex-col items-center gap-0.5">
+                    <div className="h-8 w-px bg-border/50 shrink-0" />
+                    <div className="flex flex-col items-center gap-0.5 shrink-0">
                       <div className="flex items-center gap-1">
                         <SolarIcon icon="leaf-bold" className="size-3.5 text-primary" />
                         <span className="text-base font-bold text-foreground">{user.seedsBalance || 0}</span>
                       </div>
-                      <span className="text-[10px] text-muted-foreground uppercase tracking-wide">{t('stats.seeds')}</span>
+                      <span className="text-[10px] text-muted-foreground uppercase tracking-wide whitespace-nowrap">{t('stats.seeds')}</span>
                     </div>
                     
                     {/* Stats sociales - Sur la même ligne */}
                     {followersCount !== undefined && (
                       <>
-                        <div className="h-8 w-px bg-border/50" />
-                        <div className="flex flex-col items-center gap-0.5">
+                        <div className="h-8 w-px bg-border/50 shrink-0" />
+                        <div className="flex flex-col items-center gap-0.5 shrink-0">
                           <span className="text-base font-bold text-foreground">{followersCount}</span>
-                          <span className="text-[10px] text-muted-foreground uppercase tracking-wide">{t('stats.followers')}</span>
+                          <span className="text-[10px] text-muted-foreground uppercase tracking-wide whitespace-nowrap">{t('stats.followers')}</span>
                         </div>
                       </>
                     )}
                     {followingCount !== undefined && (
                       <>
-                        <div className="h-8 w-px bg-border/50" />
-                        <div className="flex flex-col items-center gap-0.5">
+                        <div className="h-8 w-px bg-border/50 shrink-0" />
+                        <div className="flex flex-col items-center gap-0.5 shrink-0">
                           <span className="text-base font-bold text-foreground">{followingCount}</span>
-                          <span className="text-[10px] text-muted-foreground uppercase tracking-wide">{t('stats.following')}</span>
+                          <span className="text-[10px] text-muted-foreground uppercase tracking-wide whitespace-nowrap">{t('stats.following')}</span>
                         </div>
                       </>
                     )}

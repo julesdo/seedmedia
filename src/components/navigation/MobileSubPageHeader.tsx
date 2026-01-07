@@ -103,7 +103,10 @@ export function MobileSubPageHeader() {
   const isOwnProfile = isAuthenticated && currentUser?._id === profileUser?._id;
 
   return (
-    <header className="sticky top-0 z-50 lg:hidden border-b border-border/60 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header 
+      className="sticky z-30 lg:hidden border-b border-border/60 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+      style={{ top: "calc(var(--breaking-news-height, 0px) + var(--header-height, 56px))" }}
+    >
       <div className="flex items-center gap-3 px-4 h-14">
         {/* Bouton Retour */}
         <Button
@@ -148,7 +151,7 @@ export function MobileSubPageHeader() {
                 onClick={handleEdit}
                 className="h-9 w-9 rounded-lg hover:bg-muted/50"
               >
-                <SolarIcon icon="settings-bold" className="size-5 text-foreground" />
+                <SolarIcon icon="pen-bold" className="size-5 text-foreground" />
               </Button>
             )}
           </div>

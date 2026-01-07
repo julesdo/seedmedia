@@ -33,6 +33,7 @@ export function DecisionStories() {
             <CarouselItem key={decision._id} className="pl-2 md:pl-4 basis-auto">
               <Link
                 href={`/${decision.slug}`}
+                prefetch={true}
                 className="group flex flex-col items-center gap-2 w-20 md:w-24"
               >
                 {/* Cercle avec image (comme Instagram Stories) */}

@@ -11,6 +11,8 @@ import { SolarIcon } from "@/components/icons/SolarIcon";
 import { SaveButton } from "./SaveButton";
 import { EventBadge } from "./EventBadge";
 import { useTranslations } from 'next-intl';
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 interface DecisionCardProps {
   decision: {
@@ -50,8 +52,25 @@ export function DecisionCard({
   isSaved: isSavedProp,
 }: DecisionCardProps) {
   const t = useTranslations('decisions');
+  const router = useRouter();
   const decisionDate = new Date(decision.date);
   const timeAgo = formatDistanceToNow(decisionDate, { addSuffix: true });
+  const [isMobile, setIsMobile] = useState(false);
+  
+  // Détecter si on est sur mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024); // lg breakpoint
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  // Prefetch intelligent : desktop au survol, mobile au clic
+  const handlePrefetch = () => {
+    router.prefetch(`/${decision.slug}`);
+  };
 
   const typeLabels: Record<DecisionCardProps["decision"]["type"], string> = {
     law: t('types.law'),
@@ -84,7 +103,13 @@ export function DecisionCard({
     >
       {/* Header simplifié */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
-        <Link href={`/${decision.slug}`} className="flex items-center gap-2 flex-1 min-w-0">
+        <Link 
+          href={`/${decision.slug}`} 
+          className="flex items-center gap-2 flex-1 min-w-0"
+          prefetch={false}
+          onMouseEnter={!isMobile ? handlePrefetch : undefined}
+          onClick={isMobile ? handlePrefetch : undefined}
+        >
           <EventBadge
             emoji={decision.emoji}
             heat={decision.heat}
@@ -110,7 +135,13 @@ export function DecisionCard({
 
       {/* Image pleine largeur - Style Instagram */}
       {decision.imageUrl && (
-        <Link href={`/${decision.slug}`} className="block relative">
+        <Link 
+          href={`/${decision.slug}`} 
+          className="block relative"
+          prefetch={false}
+          onMouseEnter={!isMobile ? handlePrefetch : undefined}
+          onClick={isMobile ? handlePrefetch : undefined}
+        >
           <div className="relative aspect-square w-full overflow-hidden bg-muted">
             <Image
               src={decision.imageUrl}
@@ -125,7 +156,13 @@ export function DecisionCard({
 
       {/* Contenu simplifié */}
       <div className="px-4 py-4 space-y-3">
-        <Link href={`/${decision.slug}`} className="block space-y-2">
+        <Link 
+          href={`/${decision.slug}`} 
+          className="block space-y-2"
+          prefetch={false}
+          onMouseEnter={!isMobile ? handlePrefetch : undefined}
+          onClick={isMobile ? handlePrefetch : undefined}
+        >
           <h3 className="text-base font-semibold text-foreground line-clamp-2">
             {decision.title}
           </h3>

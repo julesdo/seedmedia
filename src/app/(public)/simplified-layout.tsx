@@ -25,15 +25,9 @@ export function SimplifiedLayout({
   const pathname = usePathname();
   const isSubPage = pathname !== "/";
 
-  // Cacher la navigation mobile sur les sous-pages
-  useEffect(() => {
-    if (isSubPage) {
-      document.body.classList.add("hide-mobile-nav");
-      return () => {
-        document.body.classList.remove("hide-mobile-nav");
-      };
-    }
-  }, [isSubPage]);
+  // Note: Les barres de navigation sont cachées uniquement en mode feed reels
+  // Cette logique est gérée dans DecisionDetailClient.tsx
+  // Les barres restent visibles sur toutes les autres pages
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

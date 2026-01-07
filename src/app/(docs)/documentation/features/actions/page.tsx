@@ -1,5 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
+// ISR: Régénérer toutes les heures (contenu statique qui change rarement)
+export const revalidate = 3600;
+
 export default function ActionsFeaturePage() {
   return (
     <div className="container mx-auto px-4 py-8 md:py-12 max-w-4xl">

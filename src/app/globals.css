@@ -3,6 +3,27 @@
 @plugin "tailwind-scrollbar-hide";
 @import "tw-animate-css";
 
+/* View Transitions API - Optimisations pour la fluidité */
+@view-transition {
+  navigation: auto;
+}
+
+/* Animations fluides pour les transitions de pages */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.2s;
+  animation-timing-function: ease-in-out;
+}
+
+/* Réduire le flash lors des transitions */
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  z-index: 2;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

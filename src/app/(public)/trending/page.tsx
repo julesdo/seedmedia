@@ -11,6 +11,9 @@ import { SolarIcon } from "@/components/icons/SolarIcon";
 import { Card } from "@/components/ui/card";
 import { useTranslations } from 'next-intl';
 
+// Note: Cette page est client-side uniquement (utilise useQuery)
+// L'ISR ne s'applique pas directement, mais le contenu est optimisé avec Suspense
+
 function DecisionCardSkeleton() {
   return (
     <article className="flex flex-col overflow-hidden bg-background">

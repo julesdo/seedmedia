@@ -108,6 +108,7 @@ export function DesktopSidebar() {
         <div className="mt-4 pt-4 border-t border-border/50">
           <Link
             href="/bots"
+            prefetch={true}
             className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
               pathname === "/bots" || pathname?.startsWith("/bots/")

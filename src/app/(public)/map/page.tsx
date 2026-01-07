@@ -7,6 +7,9 @@ import { SolarIcon } from "@/components/icons/SolarIcon";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
+// Note: Cette page est client-side uniquement, l'ISR ne s'applique pas
+// Mais on peut optimiser avec Suspense et loading states
+
 function MapPageContent() {
   // Récupérer toutes les décisions pour la carte (limité à 100 pour la performance)
   const decisions = useQuery(api.decisions.getDecisions, {

@@ -244,6 +244,31 @@ export const getDecisionBySlug = query({
 });
 
 /**
+ * Récupère uniquement les slugs des décisions récentes
+ * Utilisé pour generateStaticParams (ISR)
+ */
+export const getRecentDecisionSlugs = query({
+  args: {
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit || 100;
+    
+    // Récupérer les décisions les plus récentes
+    const decisions = await ctx.db
+      .query("decisions")
+      .withIndex("date")
+      .order("desc")
+      .take(limit);
+    
+    // Retourner uniquement les slugs
+    return decisions.map((decision) => ({
+      slug: decision.slug,
+    }));
+  },
+});
+
+/**
  * Récupère les Decision Cards "hot" (les plus récentes et suivies)
  * Utilisé pour Instagram et page d'accueil
  */

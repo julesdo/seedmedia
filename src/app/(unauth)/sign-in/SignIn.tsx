@@ -490,10 +490,10 @@ export default function SignIn() {
   }
 
   return (
-    <Card className="max-w-md w-full bg-background/95 backdrop-blur-xl border-border/50 shadow-2xl">
-      <CardHeader className="pb-4">
+    <Card className="max-w-md w-full bg-background/95 backdrop-blur-xl border-border/50 shadow-2xl mx-4 sm:mx-auto">
+      <CardHeader className="pb-4 px-4 sm:px-6 pt-6 sm:pt-6">
         {/* Logo */}
-        <Link href="/" className="mb-6 flex justify-center">
+        <Link href="/" className="mb-4 sm:mb-6 flex justify-center">
           <div className="flex items-center gap-2">
             <div className="size-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
               <SolarIcon icon="leaf-bold" className="size-5 text-white" />
@@ -501,18 +501,18 @@ export default function SignIn() {
             <span className="text-xl font-bold text-foreground">Seed</span>
           </div>
         </Link>
-        <CardTitle className="text-xl md:text-2xl font-bold">{t('title')}</CardTitle>
-        <CardDescription className="text-sm md:text-base mt-2">
+        <CardTitle className="text-xl md:text-2xl font-bold text-center sm:text-left">{t('title')}</CardTitle>
+        <CardDescription className="text-sm md:text-base mt-2 text-center sm:text-left">
           {t('description')}
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-4 sm:px-6 pb-6 sm:pb-6">
         <form
           onSubmit={(e) => {
             e.preventDefault();
             handleSignIn();
           }}
-          className="grid gap-4"
+          className="grid gap-4 sm:gap-5"
         >
           <div className="grid gap-2">
             <Label htmlFor="email" className="text-sm font-medium">{t('email')}</Label>
@@ -521,7 +521,7 @@ export default function SignIn() {
               type="email"
               placeholder="m@example.com"
               required
-              className="h-11 text-base"
+              className="h-11 sm:h-12 text-base"
               onChange={(e) => {
                 setEmail(e.target.value);
               }}
@@ -530,14 +530,14 @@ export default function SignIn() {
           </div>
 
           <div className="grid gap-2">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
               <Label htmlFor="password" className="text-sm font-medium">{t('password')}</Label>
               <Button
                 variant="link"
                 size="sm"
                 type="button"
                 onClick={handleResetPassword}
-                className="cursor-pointer h-auto p-0 text-xs"
+                className="cursor-pointer h-auto p-0 text-xs sm:text-xs self-start sm:self-auto"
                 disabled={forgotLoading || !email}
               >
                 {forgotLoading ? (
@@ -552,22 +552,22 @@ export default function SignIn() {
               placeholder={t('password')}
               autoComplete="password"
               required
-              className="h-11 text-base"
+              className="h-11 sm:h-12 text-base"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
 
-          <Button type="submit" className="w-full h-11 text-base font-semibold" disabled={loading}>
+          <Button type="submit" className="w-full h-11 sm:h-12 text-base font-semibold mt-2" disabled={loading}>
             {loading ? (
               <Loader2 size={16} className="animate-spin mr-2" />
             ) : null}
             {t('signInWithPassword')}
           </Button>
 
-          <div className="relative">
+          <div className="relative my-2 sm:my-4">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-neutral-800" />
+              <span className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center text-xs">
               <span className="bg-background/95 backdrop-blur-sm px-2 text-muted-foreground">
@@ -579,7 +579,7 @@ export default function SignIn() {
           <Button
             type="button"
             variant="outline"
-            className="w-full gap-2 h-11"
+            className="w-full gap-2 h-11 sm:h-12"
             disabled={loading}
             onClick={handleGithubSignIn}
           >
@@ -600,7 +600,7 @@ export default function SignIn() {
           <Button
             type="button"
             variant="outline"
-            className="w-full gap-2 h-11"
+            className="w-full gap-2 h-11 sm:h-12"
             disabled={loading}
             onClick={handleGoogleSignIn}
           >
@@ -643,7 +643,7 @@ export default function SignIn() {
                   key={account.id}
                   type="button"
                   variant="outline"
-                  className="w-full justify-start gap-3 h-auto py-3"
+                  className="w-full justify-start gap-3 h-auto py-3 px-3 sm:px-4"
                   onClick={() => handleSelectAccount(account)}
                 >
                   {account.image ? (

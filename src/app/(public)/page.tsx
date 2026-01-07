@@ -5,6 +5,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SolarIcon } from "@/components/icons/SolarIcon";
 import { getTranslations } from 'next-intl/server';
 
+// ISR: Régénérer toutes les minutes (page très visitée, données qui changent fréquemment)
+export const revalidate = 60;
+
 async function HomePageHeader() {
   const t = await getTranslations('decisions');
   

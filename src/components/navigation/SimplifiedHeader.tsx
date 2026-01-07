@@ -7,9 +7,17 @@ import Link from "next/link";
 import { useUser } from "@/contexts/UserContext";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
-import { SearchModal } from "@/components/search/SearchModal";
 import { useRouter } from "next/navigation";
 import { useTranslations } from 'next-intl';
+import dynamic from "next/dynamic";
+
+// Lazy load SearchModal (modal, pas besoin au chargement initial)
+const SearchModal = dynamic(
+  () => import("@/components/search/SearchModal").then((mod) => ({ default: mod.SearchModal })),
+  {
+    ssr: false, // Modal, pas besoin de SSR
+  }
+);
 
 export function SimplifiedHeader() {
   const { isAuthenticated } = useUser();
@@ -39,7 +47,8 @@ export function SimplifiedHeader() {
 
   return (
     <header 
-      className="sticky z-40 border-b border-border/60 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 lg:hidden" 
+      className="sticky z-40 border-b border-border/60 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 lg:hidden"
+      style={{ top: "var(--breaking-news-height, 0px)" }} 
       style={{ 
         top: "var(--breaking-news-height, 0px)"
       }}
@@ -47,7 +56,7 @@ export function SimplifiedHeader() {
       <div className="container mx-auto px-4 md:px-6 max-w-7xl">
         <div className="flex items-center justify-between h-14">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
+          <Link href="/" prefetch={true} className="flex items-center gap-2 group">
             <div className="size-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
               <SolarIcon icon="leaf-bold" className="size-5 text-white" />
             </div>
@@ -60,6 +69,7 @@ export function SimplifiedHeader() {
               <Link
                 key={link.href}
                 href={link.href}
+                prefetch={true}
                 className="px-3 py-2 text-sm font-medium text-foreground/70 hover:text-foreground transition-colors rounded-md"
               >
                 {link.label}
@@ -83,6 +93,7 @@ export function SimplifiedHeader() {
             {/* Notifications */}
             <Link 
               href="/notifications"
+              prefetch={true}
               className="relative flex items-center justify-center h-10 w-10 hover:bg-muted/50 rounded-lg transition-colors"
             >
               <SolarIcon 
@@ -102,6 +113,7 @@ export function SimplifiedHeader() {
             {/* Paramètres */}
             <Link
               href="/settings"
+              prefetch={true}
               className="flex items-center justify-center h-10 w-10 hover:bg-muted/50 rounded-lg transition-colors"
             >
               <SolarIcon 
