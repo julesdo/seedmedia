@@ -16,8 +16,9 @@ const nextConfig: NextConfig = {
   // Optimisations de performance
   compress: true,
   // Conserver les console.log en production pour le debugging
+  // IMPORTANT: removeConsole doit être false ou omis pour garder les logs
   compiler: {
-    removeConsole: false, // Garder tous les console.log, console.error, etc.
+    removeConsole: process.env.NODE_ENV === "production" ? false : undefined,
   },
   experimental: {
     // Optimiser les imports de packages volumineux

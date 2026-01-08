@@ -56,7 +56,61 @@ export const betterAuthComponent = createClient(components.betterAuth, {
             userData.image = user.image;
           }
           
+          // Générer automatiquement un username à partir du name ou de l'email
+          const nameOrEmail = user.name || user.email.split("@")[0] || "user";
+          let baseUsername = nameOrEmail
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9_]/g, "")
+            .replace(/\s+/g, "_");
+          
+          if (baseUsername.length === 0) {
+            baseUsername = "user";
+          }
+          
+          if (baseUsername.length > 30) {
+            baseUsername = baseUsername.substring(0, 30);
+          }
+          
+          if (baseUsername.length < 3) {
+            baseUsername = baseUsername + "_" + Math.floor(Math.random() * 100).toString().padStart(2, "0");
+          }
+          
+          // Trouver un username unique
+          let username = baseUsername;
+          let attempts = 0;
+          while (attempts < 100) {
+            const existingUser = await ctx.db
+              .query("users")
+              .withIndex("username", (q) => q.eq("username", username))
+              .first();
+            
+            if (!existingUser) {
+              break; // Username disponible
+            }
+            
+            // Ajouter un suffixe numérique
+            const base = baseUsername.substring(0, Math.min(baseUsername.length, 25));
+            const suffix = Math.floor(Math.random() * 10000).toString().padStart(4, "0");
+            username = `${base}_${suffix}`;
+            
+            if (username.length > 30) {
+              username = username.substring(0, 30);
+            }
+            
+            attempts++;
+          }
+          
+          if (attempts >= 100) {
+            // Si on n'a pas trouvé après 100 tentatives, utiliser un timestamp
+            const timestamp = Date.now().toString().slice(-6);
+            username = `user_${timestamp}`;
+          }
+          
+          userData.username = username;
+          
           const userId = await ctx.db.insert("users", userData);
+          console.log(`Created user ${user.email} in Convex with ID: ${userId} and username: ${username}`);
           console.log(`Created user ${user.email} in Convex with ID: ${userId}`);
 
           // Initialize missions for new user (via internal mutation)

@@ -11,10 +11,21 @@ import { api } from "@/convex/_generated/api";
  * si on est en mode "ajouter un compte" via sessionStorage
  */
 function OAuthCallbackContent() {
+  // Log IMMÉDIAT au chargement du composant
+  if (typeof window !== "undefined") {
+    console.log("🔥🔥🔥 OAUTH CALLBACK PAGE LOADED - Component mounted", {
+      url: window.location.href,
+      pathname: window.location.pathname,
+      search: window.location.search,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
   const searchParams = useSearchParams();
   const ensureUserExists = useMutation(api.users.ensureUserExists);
 
   useEffect(() => {
+    console.log("🚀 OAuth Callback: useEffect started");
     const handleOAuthCallback = async () => {
       // Attendre que la session soit bien établie
       let attempts = 0;

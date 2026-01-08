@@ -11,6 +11,20 @@ import { api } from "@/convex/_generated/api";
  * et envoie un message à la fenêtre parente si c'est le cas
  */
 function CallbackContent() {
+  // Log IMMÉDIAT au chargement du composant (avant même useEffect)
+  // Utiliser window.console.log directement pour être sûr que ça fonctionne
+  if (typeof window !== "undefined") {
+    // Test multiple pour être sûr que les logs passent
+    window.console.log("🔥🔥🔥 CALLBACK PAGE LOADED - Component mounted");
+    window.console.log("URL:", window.location.href);
+    window.console.log("Pathname:", window.location.pathname);
+    window.console.log("Search:", window.location.search);
+    window.console.log("Timestamp:", new Date().toISOString());
+    
+    // Test avec alert pour vérifier que le code s'exécute
+    window.alert("🔥 CALLBACK PAGE LOADED - Check console for logs!");
+  }
+
   const searchParams = useSearchParams();
   const isAddingAccount = searchParams.get("add_account") === "true";
   const isSilent = searchParams.get("silent") === "true"; // Mode silencieux pour switch de compte
@@ -20,23 +34,34 @@ function CallbackContent() {
   const ensureUserExists = useMutation(api.users.ensureUserExists);
 
   useEffect(() => {
+    console.log("🚀 Callback: useEffect started", { isAddingAccount, isSilent, autoReconnect });
+    
     const handleCallback = async () => {
+      console.log("🔄 Callback: handleCallback started");
+      
       // Attendre que la session soit bien établie (plus de temps pour OAuth)
       let attempts = 0;
       let session = null;
       
+      console.log("⏳ Callback: Waiting for Better Auth session...");
       while (attempts < 15 && !session) {
         await new Promise((resolve) => setTimeout(resolve, 400));
         try {
           const result = await authClient.getSession();
           if (result?.data?.user) {
             session = result;
+            console.log("✅ Callback: Better Auth session found", { email: result.data.user.email, attempts });
             break;
           }
         } catch (error) {
-          console.log("Waiting for session...", attempts);
+          console.log("⏳ Callback: Waiting for session...", attempts);
         }
         attempts++;
+      }
+      
+      if (!session?.data?.user) {
+        console.error("❌ Callback: No Better Auth session found after max attempts");
+        return;
       }
 
       // Vérifier si on est en mode "ajouter un compte" (depuis URL ou sessionStorage)
@@ -110,8 +135,10 @@ function CallbackContent() {
         }
       } else if (!isAdding && !isSilent) {
         // Connexion normale (première connexion) - mettre à jour le provider dans localStorage
+        console.log("📝 Callback: Normal login flow (first login)");
         if (session?.data?.user) {
           const user = session.data.user;
+          console.log("👤 Callback: User from session", { email: user.email, name: user.name });
           const localStorageProvider = typeof window !== "undefined" ? localStorage.getItem("pendingOAuthProvider") : null;
           const sessionStorageProvider = typeof window !== "undefined" ? sessionStorage.getItem("oauthProvider") : null;
           const urlProvider = searchParams.get("provider");
@@ -172,24 +199,54 @@ function CallbackContent() {
           // NOUVEAU : S'assurer que l'utilisateur existe dans Convex avant de rediriger
           // On appelle directement ensureUserExists pour garantir la création, même si le trigger onCreate échoue
           // Cela résout la race condition en production où la latence réseau peut retarder le trigger
-          console.log('🔄 Callback: Ensuring user exists in Convex...', { email: user.email });
+          console.log('🔄 Callback: Ensuring user exists in Convex...', { 
+            email: user.email,
+            ensureUserExistsType: typeof ensureUserExists,
+            isFunction: typeof ensureUserExists === 'function'
+          });
+          
+          if (typeof ensureUserExists !== 'function') {
+            console.error('❌ Callback: ensureUserExists is not a function!', { ensureUserExists });
+            return;
+          }
+          
           try {
+            console.log('📞 Callback: Calling ensureUserExists mutation...', {
+              email: user.email,
+              ensureUserExists: ensureUserExists,
+              typeof: typeof ensureUserExists,
+            });
+            
+            // Appeler la mutation et attendre le résultat
             const userId = await ensureUserExists();
-            console.log('✅ Callback: User ensured in Convex via ensureUserExists', { userId, email: user.email });
+            
+            console.log('✅ Callback: User ensured in Convex via ensureUserExists', { 
+              userId, 
+              email: user.email,
+              userIdType: typeof userId,
+            });
+            
             // Attendre un peu pour que la création soit propagée dans la base de données
-            await new Promise((resolve) => setTimeout(resolve, 300));
+            await new Promise((resolve) => setTimeout(resolve, 500));
+            
+            console.log('✅ Callback: Waiting complete, ready to redirect');
           } catch (error: any) {
             console.error('❌ Callback: Failed to ensure user exists:', {
               error: error?.message || error,
               stack: error?.stack,
               email: user.email,
+              errorName: error?.name,
+              errorType: typeof error,
+              errorString: String(error),
             });
-            // Rediriger quand même pour éviter de bloquer l'utilisateur
+            // Ne pas rediriger immédiatement - laisser l'utilisateur voir l'erreur
             // Le trigger onCreate pourrait quand même créer l'utilisateur en arrière-plan
+            return; // Sortir sans rediriger pour voir l'erreur
           }
         }
         
         // Rediriger vers la page d'accueil
+        console.log("🏠 Callback: Redirecting to home page...");
         window.location.href = "/";
       } else if ((isSilent || autoReconnect) && typeof window !== "undefined" && !window.opener) {
         // Si on est en mode silencieux ou auto_reconnect mais pas dans une popup
@@ -246,10 +303,20 @@ function CallbackContent() {
     handleCallback();
   }, [isAddingAccount, isSilent, searchParams, ensureUserExists]);
 
+  // Log au render
+  if (typeof window !== "undefined") {
+    console.log("🎨 Callback: Component rendering", { timestamp: new Date().toISOString() });
+  }
+
   return (
     <div className="min-h-screen w-full flex items-center justify-center">
       <div className="text-center">
         <p className="text-sm text-muted-foreground">Connexion en cours...</p>
+        {typeof window !== "undefined" && (
+          <p className="text-xs text-muted-foreground mt-2">
+            URL: {window.location.href}
+          </p>
+        )}
       </div>
     </div>
   );

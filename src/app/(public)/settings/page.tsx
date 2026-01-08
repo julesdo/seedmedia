@@ -64,6 +64,7 @@ function SettingsContent() {
   useEffect(() => {
     if (user) {
       setName(user.name || "");
+      // S'assurer que le username est bien récupéré (peut être undefined au début)
       setUsername(user.username || "");
       setBio(user.bio || "");
     }

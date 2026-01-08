@@ -18,6 +18,8 @@ import { useTransitionRouter } from "next-view-transitions";
 import { useTranslations } from 'next-intl';
 import { SolarIcon } from "@/components/icons/SolarIcon";
 import Link from "next/link";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
 interface StoredAccount {
   id: string;
@@ -46,6 +48,9 @@ export default function SignIn() {
   const [forgotLoading, setForgotLoading] = useState(false);
   const [storedAccounts, setStoredAccounts] = useState<StoredAccount[]>([]);
   const [isAutoReconnecting, setIsAutoReconnecting] = useState(false);
+  
+  // Hook Convex pour créer l'utilisateur
+  const ensureUserExists = useMutation(api.users.ensureUserExists);
   
   // Fonctions de connexion OAuth (définies tôt pour être accessibles dans useEffect)
   const handleGithubSignIn = async () => {
@@ -137,6 +142,32 @@ export default function SignIn() {
         onSuccess: async (ctx) => {
           setLoading(false);
           
+          window.console.log("✅ SignIn: Google OAuth onSuccess callback triggered");
+          
+          // NOUVEAU : S'assurer que l'utilisateur existe dans Convex immédiatement après l'authentification
+          // C'est ici qu'on doit le faire car Better Auth redirige directement sans passer par /callback
+          try {
+            window.console.log("🔄 SignIn: Ensuring user exists in Convex...");
+            const session = await authClient.getSession();
+            if (session?.data?.user) {
+              window.console.log("👤 SignIn: User from session", { email: session.data.user.email });
+              
+              // Appeler ensureUserExists directement depuis le hook
+              window.console.log("📞 SignIn: Calling ensureUserExists mutation...");
+              const userId = await ensureUserExists();
+              window.console.log("✅ SignIn: User ensured in Convex", { userId, email: session.data.user.email });
+              
+              // Attendre un peu pour la propagation
+              await new Promise((resolve) => setTimeout(resolve, 300));
+            }
+          } catch (error: any) {
+            window.console.error("❌ SignIn: Failed to ensure user exists:", {
+              error: error?.message || error,
+              stack: error?.stack,
+            });
+            // Continuer quand même pour ne pas bloquer l'utilisateur
+          }
+          
           // Si on est en mode silencieux (switch de compte), envoyer un message au parent
           if (isSilent && typeof window !== "undefined" && window.opener) {
             const session = await authClient.getSession();
@@ -162,7 +193,7 @@ export default function SignIn() {
           
           // Si on est en mode auto_reconnect (reconnexion automatique après switch dans la fenêtre principale)
           if (autoReconnect && typeof window !== "undefined" && !window.opener) {
-            console.log("SignIn: Auto-reconnect successful (OAuth), redirecting to discover");
+            window.console.log("SignIn: Auto-reconnect successful (OAuth), redirecting to discover");
             // Pour OAuth, la redirection se fait automatiquement vers callbackURL
             // Le callback page gérera la redirection vers discover
             return;

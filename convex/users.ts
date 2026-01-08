@@ -34,6 +34,7 @@ export const getCurrentUser = query({
       ...appUser,
       ...betterAuthUser,
       name: displayName, // Utiliser le nom prioritaire
+      username: appUser.username, // S'assurer que le username de Convex est prioritaire
       _id: appUser._id,
     };
   },
@@ -46,9 +47,82 @@ export const getCurrentUser = query({
 export const ensureUserExists = mutation({
   args: {},
   handler: async (ctx) => {
-    return await ensureUserExistsHelper(ctx);
+    console.log("🚀 ensureUserExists MUTATION CALLED - Entry point");
+    try {
+      const result = await ensureUserExistsHelper(ctx);
+      console.log("✅ ensureUserExists MUTATION SUCCESS", { userId: result });
+      return result;
+    } catch (error) {
+      console.error("❌ ensureUserExists MUTATION ERROR", { error });
+      throw error;
+    }
   },
 });
+
+/**
+ * Génère un username unique à partir d'un nom ou d'un email
+ */
+function generateUsername(base: string): string {
+  // Nettoyer : minuscules, enlever espaces et caractères spéciaux, garder seulement lettres, chiffres et underscore
+  let clean = base
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, "") // Seulement lettres, chiffres et underscore
+    .replace(/\s+/g, "_"); // Remplacer les espaces par des underscores
+  
+  // Si vide après nettoyage, utiliser "user"
+  if (clean.length === 0) {
+    clean = "user";
+  }
+  
+  // Limiter à 30 caractères (limite du schéma)
+  if (clean.length > 30) {
+    clean = clean.substring(0, 30);
+  }
+  
+  // S'assurer qu'il fait au moins 3 caractères
+  if (clean.length < 3) {
+    clean = clean + "_" + Math.floor(Math.random() * 100).toString().padStart(2, "0");
+  }
+  
+  return clean;
+}
+
+/**
+ * Trouve un username unique en ajoutant un suffixe si nécessaire
+ */
+async function findUniqueUsername(ctx: any, baseUsername: string): Promise<string> {
+  let username = baseUsername;
+  let attempts = 0;
+  const maxAttempts = 100;
+  
+  while (attempts < maxAttempts) {
+    const existingUser = await ctx.db
+      .query("users")
+      .withIndex("username", (q: any) => q.eq("username", username))
+      .first();
+    
+    if (!existingUser) {
+      return username; // Username disponible
+    }
+    
+    // Ajouter un suffixe numérique
+    const base = baseUsername.substring(0, Math.min(baseUsername.length, 25)); // Laisser de la place pour le suffixe
+    const suffix = Math.floor(Math.random() * 10000).toString().padStart(4, "0");
+    username = `${base}_${suffix}`;
+    
+    // S'assurer qu'on ne dépasse pas 30 caractères
+    if (username.length > 30) {
+      username = username.substring(0, 30);
+    }
+    
+    attempts++;
+  }
+  
+  // Si on n'a pas trouvé après 100 tentatives, utiliser un timestamp
+  const timestamp = Date.now().toString().slice(-6);
+  return `user_${timestamp}`;
+}
 
 /**
  * Helper pour s'assurer qu'un utilisateur existe (utilisé par les mutations)
@@ -73,6 +147,18 @@ export async function ensureUserExistsHelper(ctx: any): Promise<Id<"users">> {
 
   if (appUser) {
     console.log(`✅ ensureUserExistsHelper: User ${betterAuthUser.email} already exists with ID: ${appUser._id}`);
+    
+    // Si l'utilisateur existe mais n'a pas de username, en générer un
+    if (!appUser.username) {
+      console.log(`🔄 ensureUserExistsHelper: User exists but has no username, generating one...`);
+      const nameOrEmail = appUser.name || betterAuthUser.name || betterAuthUser.email.split("@")[0] || "user";
+      const baseUsername = generateUsername(nameOrEmail);
+      const uniqueUsername = await findUniqueUsername(ctx, baseUsername);
+      
+      await ctx.db.patch(appUser._id, { username: uniqueUsername });
+      console.log(`✅ ensureUserExistsHelper: Generated username "${uniqueUsername}" for existing user`);
+    }
+    
     return appUser._id;
   }
 
@@ -80,22 +166,64 @@ export async function ensureUserExistsHelper(ctx: any): Promise<Id<"users">> {
   console.log(`🔄 ensureUserExistsHelper: Creating new user for ${betterAuthUser.email}...`);
   const now = Date.now();
   
+  // Valeurs initiales (alignées avec le trigger onCreate)
+  const initialLevel = 1;
+  const initialReachRadius = 10;
+  
   try {
-    const userId = await ctx.db.insert("users", {
+    const userData: any = {
       email: betterAuthUser.email,
-      name: betterAuthUser.name || null,
-      image: betterAuthUser.image || null,
-      level: 1,
+      level: initialLevel,
+      reachRadius: initialReachRadius,
+      tags: [],
+      links: [],
+      profileCompletion: 0,
+      premiumTier: "free",
+      boostCredits: 0,
+      credibilityScore: 0, // Score initial de crédibilité
+      role: "explorateur", // Rôle par défaut
+      expertiseDomains: [], // Domaines d'expertise (vide au départ)
       seedsBalance: 100, // Seeds de départ
       seedsToNextLevel: 100, // Seeds nécessaires pour passer au niveau 2
       preferredLanguage: "fr",
-      role: "explorateur",
       isPublic: false, // Profil privé par défaut
       lastLoginDate: undefined, // Sera défini au premier daily login
       loginStreak: 0, // Streak initialisé à 0
       createdAt: now,
       updatedAt: now,
+    };
+    
+    // Ajouter name et image seulement s'ils existent
+    if (betterAuthUser.name) {
+      userData.name = betterAuthUser.name;
+    }
+    if (betterAuthUser.image) {
+      userData.image = betterAuthUser.image;
+    }
+    
+    // Générer automatiquement un username à partir du name ou de l'email
+    const nameOrEmail = betterAuthUser.name || betterAuthUser.email.split("@")[0] || "user";
+    const baseUsername = generateUsername(nameOrEmail);
+    const uniqueUsername = await findUniqueUsername(ctx, baseUsername);
+    userData.username = uniqueUsername;
+    
+    console.log(`✅ ensureUserExistsHelper: Generated username "${uniqueUsername}" from "${nameOrEmail}"`);
+    
+    // Log pour déboguer - vérifier que tous les champs sont présents
+    console.log("📋 ensureUserExistsHelper: User data to insert:", JSON.stringify(userData, null, 2));
+    console.log("📋 ensureUserExistsHelper: Checking required fields:", {
+      boostCredits: userData.boostCredits,
+      credibilityScore: userData.credibilityScore,
+      profileCompletion: userData.profileCompletion,
+      reachRadius: userData.reachRadius,
+      premiumTier: userData.premiumTier,
+      tags: userData.tags,
+      links: userData.links,
+      expertiseDomains: userData.expertiseDomains,
+      username: userData.username,
     });
+    
+    const userId = await ctx.db.insert("users", userData);
     console.log(`✅ ensureUserExistsHelper: Successfully created user ${betterAuthUser.email} with ID: ${userId}`);
     return userId;
   } catch (error) {
