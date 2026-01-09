@@ -2,9 +2,11 @@
 
 import { cn } from "@/lib/utils";
 import { motion } from "motion/react";
+import { SolarIcon } from "@/components/icons/SolarIcon";
 
 interface EventBadgeProps {
-  emoji: string;
+  impactLevel?: 1 | 2 | 3 | 4 | 5; // ✅ Échelle d'impact décisionnel (remplace emoji)
+  emoji?: string; // ⚠️ Déprécié - utiliser impactLevel à la place (fallback pour compatibilité)
   heat: number; // 0-100
   sentiment: "positive" | "negative" | "neutral";
   badgeColor: string;
@@ -12,14 +14,28 @@ interface EventBadgeProps {
   size?: "sm" | "md" | "lg";
 }
 
+// ✅ Échelle d'Impact Décisionnel Combinée (EIDC)
+const impactLabels = {
+  1: { label: "Local", icon: "map-point-bold", color: "bg-gray-500" },
+  2: { label: "National", icon: "flag-bold", color: "bg-blue-500" },
+  3: { label: "Régional", icon: "global-bold", color: "bg-purple-500" },
+  4: { label: "International", icon: "planet-bold", color: "bg-orange-500" },
+  5: { label: "Global", icon: "earth-bold", color: "bg-red-500" },
+};
+
 export function EventBadge({
-  emoji,
+  impactLevel,
+  emoji, // ⚠️ Déprécié - fallback pour compatibilité
   heat,
   sentiment,
   badgeColor,
   className,
   size = "md",
 }: EventBadgeProps) {
+  // ✅ Utiliser impactLevel si disponible, sinon fallback sur emoji (compatibilité)
+  const finalImpactLevel = impactLevel || (emoji ? 3 : 3); // Défaut: Régional si non spécifié
+  const impact = impactLabels[finalImpactLevel];
+  
   // Déterminer l'intensité de l'animation selon le heat
   const isHot = heat >= 70;
   const isWarm = heat >= 40 && heat < 70;
@@ -76,24 +92,19 @@ export function EventBadge({
         ...glowAnimation,
       }}
     >
-      <motion.span
-        className="text-lg leading-none"
-        animate={
-          isHot
-            ? {
-                rotate: [0, 5, -5, 0],
-                transition: {
-                  duration: 0.5,
-                  repeat: Infinity,
-                  repeatDelay: 1,
-                },
-              }
-            : {}
-        }
-      >
-        {emoji}
-      </motion.span>
+      {/* ✅ Afficher l'icône d'impact au lieu de l'emoji */}
+      <SolarIcon 
+        icon={impact.icon} 
+        className={cn(
+          "leading-none",
+          size === "sm" ? "size-3" : size === "md" ? "size-4" : "size-5"
+        )}
+      />
       <span className="leading-none">
+        {impact.label}
+      </span>
+      {/* Indicateur de chaleur (conservé) */}
+      <span className="leading-none ml-1">
         {isHot ? "🔥" : isWarm ? "⚡" : "❄️"}
       </span>
     </motion.div>

@@ -30,7 +30,9 @@ export default defineSchema({
     username: v.optional(v.string()), // Nom d'utilisateur unique (ex: @johndoe)
     coverImage: v.optional(v.string()), // URL de l'image de couverture
     isPublic: v.optional(v.boolean()), // Profil public ou privé (défaut: false)
-    tags: v.array(v.string()), // Sujets suivis
+    tags: v.array(v.string()), // Sujets suivis (déprécié - utiliser interests)
+    // ✅ Centres d'intérêts (remplace/étend tags)
+    interests: v.optional(v.array(v.string())), // Ex: ["climat", "tech", "diplomatie", "économie"]
     links: v.array(
       v.object({
         type: v.string(), // "website", "github", "twitter", etc.
@@ -57,6 +59,18 @@ export default defineSchema({
     // Préférences
     preferredLanguage: v.optional(v.string()), // Langue préférée (ex: "fr", "en", "es")
     showBreakingNews: v.optional(v.boolean()), // Afficher le bandeau de breaking news (défaut: true)
+    // ✅ Préférences de filtrage
+    defaultFilters: v.optional(v.object({
+      impactLevels: v.optional(v.array(v.number())), // [1, 2, 3, 4, 5]
+      sentiments: v.optional(v.array(v.union(
+        v.literal("positive"),
+        v.literal("negative"),
+        v.literal("neutral")
+      ))),
+      regions: v.optional(v.array(v.string())), // ["EU", "US", "FR", etc.]
+      deciderTypes: v.optional(v.array(v.string())), // ["country", "enterprise", etc.]
+      types: v.optional(v.array(v.string())), // ["law", "sanction", etc.]
+    })),
     // Gamification - Daily Login & Streak
     lastLoginDate: v.optional(v.number()), // Date de dernière connexion (timestamp, jour à 00:00)
     loginStreak: v.optional(v.number()), // Nombre de jours consécutifs de connexion
@@ -1285,6 +1299,9 @@ export default defineSchema({
     title: v.string(), // Titre court expliquant l'événement majeur (généré par IA)
     description: v.string(), // Description courte de l'événement majeur (généré par IA)
     slug: v.string(), // Unique
+    
+    // ✅ Hash de contenu pour déduplication optimisée (O(1) lookup)
+    contentHash: v.string(), // Hash unique du contenu (titre + sourceUrl)
 
     // Décideur
     decider: v.string(), // Pays, institution, dirigeant
@@ -1362,7 +1379,15 @@ export default defineSchema({
       v.literal("neutral") // Événement neutre
     ),
     heat: v.number(), // Score de "chaleur" 0-100 (0 = froid/ancien, 100 = brûlant/urgent)
-    emoji: v.string(), // Emoji représentant l'événement (généré par IA)
+    emoji: v.optional(v.string()), // ⚠️ Déprécié - Emoji représentant l'événement (généré par IA) - Utiliser impactLevel à la place
+    // ✅ Échelle d'Impact Décisionnel Combinée (EIDC) - Remplace emoji
+    impactLevel: v.optional(v.union(
+      v.literal(1), // Local
+      v.literal(2), // National
+      v.literal(3), // Régional
+      v.literal(4), // International
+      v.literal(5)  // Global
+    )),
     badgeColor: v.string(), // Couleur du badge (hex) : bleu → vert → rouge selon heat
 
     // Timestamps
@@ -1375,7 +1400,8 @@ export default defineSchema({
     .index("status", ["status"])
     .index("decider", ["decider"])
     .index("type", ["type"])
-    .index("impactedDomains", ["impactedDomains"]),
+    .index("impactedDomains", ["impactedDomains"])
+    .index("contentHash", ["contentHash"]), // ✅ Index pour déduplication optimisée
 
   // ============================================
   // DECISION TRANSLATIONS (Traductions Decision Cards)

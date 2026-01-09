@@ -285,6 +285,19 @@ export const updateUserProfile = mutation({
     isPublic: v.optional(v.boolean()),
     showBreakingNews: v.optional(v.boolean()),
     preferredLanguage: v.optional(v.string()),
+    // ✅ Nouveaux champs
+    interests: v.optional(v.array(v.string())), // Centres d'intérêts
+    defaultFilters: v.optional(v.object({
+      impactLevels: v.optional(v.array(v.number())),
+      sentiments: v.optional(v.array(v.union(
+        v.literal("positive"),
+        v.literal("negative"),
+        v.literal("neutral")
+      ))),
+      regions: v.optional(v.array(v.string())),
+      deciderTypes: v.optional(v.array(v.string())),
+      types: v.optional(v.array(v.string())),
+    })),
   },
   handler: async (ctx, args) => {
     const betterAuthUser = await betterAuthComponent.safeGetAuthUser(ctx as any);

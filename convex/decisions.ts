@@ -35,6 +35,18 @@ export const getDecisions = query({
     ),
     decider: v.optional(v.string()),
     impactedDomain: v.optional(v.string()),
+    // ✅ Nouveaux filtres
+    impactLevels: v.optional(v.array(v.number())), // [1, 2, 3, 4, 5]
+    sentiments: v.optional(v.array(
+      v.union(
+        v.literal("positive"),
+        v.literal("negative"),
+        v.literal("neutral")
+      )
+    )),
+    regions: v.optional(v.array(v.string())), // ["EU", "US", "FR", etc.]
+    deciderTypes: v.optional(v.array(v.string())), // ["country", "enterprise", etc.]
+    types: v.optional(v.array(v.string())), // ["law", "sanction", etc.]
   },
   handler: async (ctx, args) => {
     let decisionsQuery;
@@ -69,6 +81,36 @@ export const getDecisions = query({
       );
     }
 
+    // ✅ Filtrer par niveaux d'impact si fourni
+    if (args.impactLevels && args.impactLevels.length > 0) {
+      decisions = decisions.filter((d) => {
+        // Si la décision n'a pas d'impactLevel, on l'inclut par défaut (compatibilité avec anciennes décisions)
+        if (!d.impactLevel) return true;
+        return args.impactLevels!.includes(d.impactLevel);
+      });
+    }
+
+    // ✅ Filtrer par sentiment si fourni
+    if (args.sentiments && args.sentiments.length > 0) {
+      decisions = decisions.filter((d) => 
+        args.sentiments!.includes(d.sentiment)
+      );
+    }
+
+    // ✅ Filtrer par types si fourni
+    if (args.types && args.types.length > 0) {
+      decisions = decisions.filter((d) => 
+        args.types!.includes(d.type)
+      );
+    }
+
+    // ✅ Filtrer par types de décideurs si fourni
+    if (args.deciderTypes && args.deciderTypes.length > 0) {
+      decisions = decisions.filter((d) => 
+        args.deciderTypes!.includes(d.deciderType)
+      );
+    }
+
     // Limiter les résultats
     decisions = decisions.slice(0, args.limit || 20);
 
@@ -87,6 +129,21 @@ export const getDecisions = query({
     );
 
     return enrichedDecisions;
+  },
+});
+
+/**
+ * ✅ Récupère une décision par son hash de contenu (pour déduplication optimisée)
+ */
+export const getDecisionByContentHash = query({
+  args: {
+    contentHash: v.string(),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("decisions")
+      .withIndex("contentHash", (q) => q.eq("contentHash", args.contentHash))
+      .first();
   },
 });
 
@@ -368,6 +425,7 @@ export const createDecision = mutation({
     title: v.string(),
     description: v.string(),
     slug: v.string(),
+    contentHash: v.string(), // ✅ Hash de contenu pour déduplication optimisée
     decider: v.string(),
     deciderType: v.union(
       v.literal("country"),
@@ -427,6 +485,7 @@ export const createDecision = mutation({
       title: args.title,
       description: args.description,
       slug: args.slug,
+      contentHash: args.contentHash, // ✅ Ajouter le hash
       decider: args.decider,
       deciderType: args.deciderType,
       date: args.date,

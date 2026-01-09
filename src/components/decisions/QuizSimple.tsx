@@ -179,45 +179,46 @@ export function QuizSimple({
 
   const t = useTranslations('quiz');
   
+  // ✅ Couleurs neutres (gris/bleu) pour éviter l'impression de vrai/faux
   const answers = [
     { 
       key: "works" as const, 
-      label: t('works'), 
+      label: t('works'), // Gardé pour les stats mais pas affiché
       text: answer1, 
-      icon: "check-circle-bold", 
-      color: "red",
-      bgColor: "bg-red-500/10 dark:bg-red-500/20",
-      borderColor: "border-red-500/50 dark:border-red-400/50",
-      textColor: "text-red-600 dark:text-red-400",
-      hoverBg: "hover:bg-red-500/20 dark:hover:bg-red-500/30",
-      activeBg: "active:bg-red-500/30 dark:active:bg-red-500/40",
-      gradient: "from-red-500/20 to-red-600/10"
+      number: 1, // ✅ Numérotation au lieu d'icône
+      color: "neutral",
+      bgColor: "bg-muted/50 dark:bg-muted/30",
+      borderColor: "border-border/50 dark:border-border/50",
+      textColor: "text-foreground",
+      hoverBg: "hover:bg-muted dark:hover:bg-muted/50",
+      activeBg: "active:bg-muted dark:active:bg-muted/70",
+      gradient: "from-muted/30 to-muted/10"
     },
     { 
       key: "partial" as const, 
-      label: t('partial'), 
+      label: t('partial'), // Gardé pour les stats mais pas affiché
       text: answer2, 
-      icon: "minus-circle-bold", 
-      color: "yellow",
-      bgColor: "bg-yellow-500/10 dark:bg-yellow-500/20",
-      borderColor: "border-yellow-500/50 dark:border-yellow-400/50",
-      textColor: "text-yellow-600 dark:text-yellow-400",
-      hoverBg: "hover:bg-yellow-500/20 dark:hover:bg-yellow-500/30",
-      activeBg: "active:bg-yellow-500/30 dark:active:bg-yellow-500/40",
-      gradient: "from-yellow-500/20 to-yellow-600/10"
+      number: 2, // ✅ Numérotation au lieu d'icône
+      color: "neutral",
+      bgColor: "bg-muted/50 dark:bg-muted/30",
+      borderColor: "border-border/50 dark:border-border/50",
+      textColor: "text-foreground",
+      hoverBg: "hover:bg-muted dark:hover:bg-muted/50",
+      activeBg: "active:bg-muted dark:active:bg-muted/70",
+      gradient: "from-muted/30 to-muted/10"
     },
     { 
       key: "fails" as const, 
-      label: t('fails'), 
+      label: t('fails'), // Gardé pour les stats mais pas affiché
       text: answer3, 
-      icon: "close-circle-bold", 
-      color: "green",
-      bgColor: "bg-green-500/10 dark:bg-green-500/20",
-      borderColor: "border-green-500/50 dark:border-green-400/50",
-      textColor: "text-green-600 dark:text-green-400",
-      hoverBg: "hover:bg-green-500/20 dark:hover:bg-green-500/30",
-      activeBg: "active:bg-green-500/30 dark:active:bg-green-500/40",
-      gradient: "from-green-500/20 to-green-600/10"
+      number: 3, // ✅ Numérotation au lieu d'icône
+      color: "neutral",
+      bgColor: "bg-muted/50 dark:bg-muted/30",
+      borderColor: "border-border/50 dark:border-border/50",
+      textColor: "text-foreground",
+      hoverBg: "hover:bg-muted dark:hover:bg-muted/50",
+      activeBg: "active:bg-muted dark:active:bg-muted/70",
+      gradient: "from-muted/30 to-muted/10"
     },
   ];
 
@@ -271,7 +272,7 @@ export function QuizSimple({
                   isExpanded && "ring-1 ring-primary/50",
                   isSelected && "ring-1 ring-primary",
                   isSubmitting && "opacity-60 cursor-not-allowed",
-                  userAnticipation && isUserAnswer && "ring-1 ring-green-500/50"
+                  userAnticipation && isUserAnswer && "ring-1 ring-primary/50" // ✅ Couleur neutre
                 )}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -279,33 +280,30 @@ export function QuizSimple({
                 whileTap={!isSubmitting ? { scale: 0.98 } : {}}
               >
                 <div className="flex items-start gap-3 relative z-10">
-                  {/* Icône compacte */}
+                  {/* ✅ Numérotation au lieu d'icône */}
                   <div className={cn(
-                    "size-10 rounded-lg flex items-center justify-center shrink-0 border",
+                    "size-10 rounded-lg flex items-center justify-center shrink-0 border font-bold text-base",
                     answer.bgColor,
                     answer.borderColor,
                     isExpanded && "scale-105"
                   )}>
-                    <SolarIcon 
-                      icon={answer.icon} 
-                      className={cn("size-5", answer.textColor)} 
-                    />
+                    <span className="text-foreground">
+                      {answer.number}
+                    </span>
                   </div>
 
                   {/* Contenu principal */}
                   <div className="flex-1 min-w-0 space-y-1.5">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1">
-                        <p className={cn("font-semibold text-sm mb-0.5", answer.textColor)}>
-                          {answer.label}
-                        </p>
-                        <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+                        {/* ✅ Retirer le label, garder juste le texte */}
+                        <p className="text-sm text-foreground leading-relaxed line-clamp-2">
                           {answer.text}
                         </p>
                       </div>
                       {totalAnticipations > 0 && (
                         <div className="flex flex-col items-end gap-0.5 shrink-0">
-                          <span className={cn("text-sm font-bold", answer.textColor)}>
+                          <span className="text-sm font-bold text-foreground">
                             {percentage}%
                           </span>
                           <span className="text-[10px] text-muted-foreground">
@@ -315,16 +313,11 @@ export function QuizSimple({
                       )}
                     </div>
 
-                    {/* Barre de progression compacte */}
+                    {/* Barre de progression compacte - Couleur neutre */}
                     {totalAnticipations > 0 && (
                       <div className="w-full h-1 bg-muted/50 rounded-full overflow-hidden">
                         <motion.div
-                          className={cn(
-                            "h-full rounded-full",
-                            answer.color === "green" && "bg-green-500",
-                            answer.color === "yellow" && "bg-yellow-500",
-                            answer.color === "red" && "bg-red-500"
-                          )}
+                          className="h-full rounded-full bg-primary/60" // ✅ Couleur neutre (primary au lieu de rouge/vert/jaune)
                           initial={{ width: 0 }}
                           animate={{ width: `${percentage}%` }}
                           transition={{ duration: 0.6, ease: "easeOut", delay: index * 0.1 }}
@@ -333,10 +326,10 @@ export function QuizSimple({
                     )}
                   </div>
 
-                  {/* Indicateur expand/collapse avec check intégré si déjà répondu */}
+                  {/* Indicateur expand/collapse avec check intégré si déjà répondu - Couleur neutre */}
                   <div className="shrink-0 pt-0.5 relative">
                     {userAnticipation && isUserAnswer && (
-                      <div className="absolute -top-1 -right-1 size-3 rounded-full bg-green-500 border-2 border-background z-10" />
+                      <div className="absolute -top-1 -right-1 size-3 rounded-full bg-primary border-2 border-background z-10" />
                     )}
                     <motion.div
                       animate={{ rotate: isExpanded ? 180 : 0 }}
@@ -389,25 +382,20 @@ export function QuizSimple({
                                 {count} personne{count > 1 ? "s" : ""}
                               </span>
                             </div>
-                            <span className={cn("text-sm font-bold", answer.textColor)}>
+                            <span className="text-sm font-bold text-foreground">
                               {percentage}%
                             </span>
                           </div>
                         </div>
                       )}
 
-                      {/* Bouton de confirmation (seulement si pas encore répondu) */}
+                      {/* Bouton de confirmation (seulement si pas encore répondu) - Couleur neutre */}
                       {!userAnticipation && (
                         <Button
                           onClick={() => handleConfirmSelection(answer.key)}
                           disabled={isSubmitting}
                           size="default"
-                          className={cn(
-                            "w-full h-10 text-sm font-semibold",
-                            answer.color === "green" && "bg-green-600 hover:bg-green-700",
-                            answer.color === "yellow" && "bg-yellow-600 hover:bg-yellow-700",
-                            answer.color === "red" && "bg-red-600 hover:bg-red-700"
-                          )}
+                          className="w-full h-10 text-sm font-semibold bg-primary hover:bg-primary/90" // ✅ Couleur neutre (primary)
                         >
                           {isSubmitting && selectedAnswer === answer.key ? (
                             <>
@@ -450,8 +438,8 @@ export function QuizSimple({
                   )}
                 >
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="size-7 rounded-full bg-green-500 flex items-center justify-center">
-                      <SolarIcon icon="check-bold" className="size-3.5 text-white" />
+                    <div className="size-7 rounded-full bg-primary flex items-center justify-center">
+                      <SolarIcon icon="check-bold" className="size-3.5 text-primary-foreground" />
                     </div>
                     <div>
                       <p className="font-semibold text-sm">Réponse enregistrée !</p>

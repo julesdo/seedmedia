@@ -3,6 +3,7 @@
 import { useQuery, useConvexAuth } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
+import { useUser } from "@/contexts/UserContext"; // ✅ Pour récupérer les filtres utilisateur
 import { DecisionCard } from "./DecisionCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
@@ -69,6 +70,10 @@ export function DecisionList({
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const { isAuthenticated } = useConvexAuth();
+  const { user } = useUser(); // ✅ Récupérer l'utilisateur pour les filtres
+
+  // ✅ Appliquer les filtres par défaut de l'utilisateur
+  const userFilters = user?.defaultFilters;
 
   // Si on a des données préchargées, on commence avec elles
   // Sinon, on charge depuis Convex
@@ -83,6 +88,12 @@ export function DecisionList({
       type,
       decider,
       impactedDomain,
+      // ✅ Appliquer les filtres utilisateur si disponibles
+      impactLevels: userFilters?.impactLevels,
+      sentiments: userFilters?.sentiments,
+      regions: userFilters?.regions,
+      deciderTypes: userFilters?.deciderTypes,
+      types: userFilters?.types,
     }
   );
 

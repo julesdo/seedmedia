@@ -13,6 +13,15 @@ import { fr } from "date-fns/locale";
 import { EventBadge } from "@/components/decisions/EventBadge";
 import { useTranslations } from 'next-intl';
 
+// ✅ Échelle d'Impact Décisionnel Combinée (EIDC)
+const impactLabels = {
+  1: { label: "Local", icon: "map-point-bold" },
+  2: { label: "National", icon: "flag-bold" },
+  3: { label: "Régional", icon: "global-bold" },
+  4: { label: "International", icon: "planet-bold" },
+  5: { label: "Global", icon: "earth-bold" },
+};
+
 interface Decision {
   _id: Id<"decisions">;
   title: string;
@@ -21,7 +30,8 @@ interface Decision {
   date: number;
   type: string;
   status: "announced" | "tracking" | "resolved";
-  emoji: string;
+  impactLevel?: 1 | 2 | 3 | 4 | 5; // ✅ Échelle d'impact décisionnel
+  emoji?: string; // ⚠️ Déprécié - fallback pour compatibilité
   badgeColor: string;
   imageUrl?: string;
   sentiment?: "positive" | "negative" | "neutral";
@@ -208,7 +218,15 @@ export function MapDecisionCard({
             className="relative w-24 sm:w-28 shrink-0 flex items-center justify-center self-stretch"
             style={{ backgroundColor: decision.badgeColor }}
           >
-            <span className="text-3xl">{decision.emoji}</span>
+            {/* ✅ Afficher l'icône d'impact au lieu de l'emoji */}
+            {decision.impactLevel ? (
+              <SolarIcon 
+                icon={impactLabels[decision.impactLevel]?.icon || "document-bold"} 
+                className="size-8 text-white"
+              />
+            ) : decision.emoji ? (
+              <span className="text-3xl">{decision.emoji}</span>
+            ) : null}
           </div>
         )}
 
@@ -217,7 +235,8 @@ export function MapDecisionCard({
           {/* Header avec EventBadge et status */}
           <div className="flex items-center gap-2 mb-1.5">
             <EventBadge
-              emoji={decision.emoji}
+              impactLevel={decision.impactLevel}
+              emoji={decision.emoji} // Fallback pour compatibilité
               heat={decision.heat || 50}
               sentiment={decision.sentiment || "neutral"}
               badgeColor={decision.badgeColor}

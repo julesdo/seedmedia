@@ -32,7 +32,8 @@ interface DecisionReelCardProps {
     answer3: string;
     sentiment: "positive" | "negative" | "neutral";
     heat: number;
-    emoji: string;
+    impactLevel?: 1 | 2 | 3 | 4 | 5; // ✅ Échelle d'impact décisionnel
+    emoji?: string; // ⚠️ Déprécié - fallback pour compatibilité
     badgeColor: string;
     description?: string;
   };
@@ -136,7 +137,8 @@ export function DecisionReelCard({
           {/* Badge Statut */}
           <div className="flex items-center gap-2 pointer-events-auto">
             <EventBadge
-              emoji={decision.emoji}
+              impactLevel={decision.impactLevel}
+              emoji={decision.emoji} // Fallback pour compatibilité
               heat={decision.heat}
               sentiment={decision.sentiment}
               badgeColor={decision.badgeColor}

@@ -5,17 +5,19 @@ import { api, internal } from "./_generated/api";
  * Cron jobs pour l'automatisation des Decision Cards
  * 
  * STRATÉGIE POUR L'ACTUALITÉ CHAUDE :
- * - Détection optimale (30 min) pour capturer les nouvelles décisions sans être excessif
+ * - Détection optimale (1h) pour capturer les nouvelles décisions sans être excessif
+ * - Équilibrage automatique 50/50 positif/négatif pour éviter l'effet anxiogène
  * - Agrégation intensive pour les décisions récentes (< 24h) toutes les heures
  * - Agrégation complète toutes les 6h pour maintenir à jour toutes les décisions
  */
 const crons = cronJobs();
 
-// Détection automatique de nouvelles décisions - toutes les 30 minutes
-// Équilibre optimal entre réactivité et coûts (48 exécutions/jour)
+// Détection automatique de nouvelles décisions - toutes les heures
+// Équilibre optimal entre réactivité et coûts (24 exécutions/jour)
+// Équilibrage automatique 50/50 positif/négatif
 crons.interval(
   "detectDecisionsFrequent",
-  { minutes: 30 },
+  { hours: 1 },
   internal.bots.scheduled.runDecisionDetection,
   {}
 );

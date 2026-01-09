@@ -20,6 +20,243 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { cn } from "@/lib/utils";
 import { useTranslations } from 'next-intl';
 
+// ✅ Composant pour sélectionner les centres d'intérêts
+function InterestsSelector({ 
+  user, 
+  updateProfile,
+  t 
+}: { 
+  user: any; 
+  updateProfile: any;
+  t: any;
+}) {
+  const availableInterests = [
+    "Climat",
+    "Technologie",
+    "Diplomatie",
+    "Économie",
+    "Santé",
+    "Éducation",
+    "Sécurité",
+    "Culture",
+    "Environnement",
+    "Innovation",
+    "Politique",
+    "Social",
+  ];
+
+  // ✅ État local pour feedback immédiat
+  const [localInterests, setLocalInterests] = useState<string[]>(user?.interests || []);
+  
+  // ✅ Synchroniser avec les données utilisateur quand elles changent
+  useEffect(() => {
+    if (user?.interests) {
+      setLocalInterests(user.interests);
+    }
+  }, [user?.interests]);
+
+  const handleInterestToggle = async (interest: string) => {
+    // ✅ Mise à jour immédiate de l'état local pour feedback visuel
+    const newInterests = localInterests.includes(interest)
+      ? localInterests.filter((i: string) => i !== interest)
+      : [...localInterests, interest];
+    
+    // ✅ Mettre à jour l'état local immédiatement
+    setLocalInterests(newInterests);
+    
+    try {
+      await updateProfile({ interests: newInterests });
+      toast.success("Centres d'intérêts mis à jour");
+    } catch (error) {
+      console.error("Error updating interests:", error);
+      // ✅ Revenir à l'état précédent en cas d'erreur
+      setLocalInterests(user?.interests || []);
+      toast.error("Erreur lors de la mise à jour");
+    }
+  };
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {availableInterests.map((interest) => {
+        const isSelected = localInterests.includes(interest);
+        return (
+          <Button
+            key={interest}
+            variant={isSelected ? "default" : "outline"}
+            size="sm"
+            onClick={() => handleInterestToggle(interest)}
+            className={cn(
+              "cursor-pointer transition-all",
+              isSelected && "bg-primary text-primary-foreground"
+            )}
+          >
+            {interest}
+          </Button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ✅ Composant pour sélectionner les filtres par défaut
+function DefaultFiltersSelector({ 
+  user, 
+  updateProfile,
+  t 
+}: { 
+  user: any; 
+  updateProfile: any;
+  t: any;
+}) {
+  const impactLabels = {
+    1: { label: "Local", icon: "map-point-bold" },
+    2: { label: "National", icon: "flag-bold" },
+    3: { label: "Régional", icon: "global-bold" },
+    4: { label: "International", icon: "planet-bold" },
+    5: { label: "Global", icon: "earth-bold" },
+  };
+
+  const sentimentLabels = {
+    positive: "Positif",
+    negative: "Négatif",
+    neutral: "Neutre",
+  };
+
+  const defaultFiltersFromUser = user?.defaultFilters || {
+    impactLevels: [1, 2, 3, 4, 5], // Tous par défaut
+    sentiments: ["positive", "negative", "neutral"], // Tous par défaut
+    regions: [],
+    deciderTypes: [],
+    types: [],
+  };
+
+  // ✅ État local pour feedback immédiat
+  const [localFilters, setLocalFilters] = useState(defaultFiltersFromUser);
+  
+  // ✅ Synchroniser avec les données utilisateur quand elles changent
+  useEffect(() => {
+    if (user?.defaultFilters) {
+      setLocalFilters(user.defaultFilters);
+    } else {
+      setLocalFilters({
+        impactLevels: [1, 2, 3, 4, 5],
+        sentiments: ["positive", "negative", "neutral"],
+        regions: [],
+        deciderTypes: [],
+        types: [],
+      });
+    }
+  }, [user?.defaultFilters]);
+
+  const toggleImpactLevel = async (level: number) => {
+    const currentLevels = localFilters.impactLevels || [1, 2, 3, 4, 5];
+    const newLevels = currentLevels.includes(level)
+      ? currentLevels.filter((l: number) => l !== level)
+      : [...currentLevels, level];
+    
+    // ✅ Mise à jour immédiate de l'état local
+    const updatedFilters = {
+      ...localFilters,
+      impactLevels: newLevels.length > 0 ? newLevels : [1, 2, 3, 4, 5] // Au moins un niveau
+    };
+    setLocalFilters(updatedFilters);
+    
+    try {
+      await updateProfile({ 
+        defaultFilters: updatedFilters
+      });
+      toast.success("Filtre mis à jour");
+    } catch (error) {
+      console.error("Error updating filter:", error);
+      // ✅ Revenir à l'état précédent en cas d'erreur
+      setLocalFilters(defaultFiltersFromUser);
+      toast.error("Erreur lors de la mise à jour");
+    }
+  };
+
+  const toggleSentiment = async (sentiment: "positive" | "negative" | "neutral") => {
+    const currentSentiments = localFilters.sentiments || ["positive", "negative", "neutral"];
+    const newSentiments = currentSentiments.includes(sentiment)
+      ? currentSentiments.filter((s: string) => s !== sentiment)
+      : [...currentSentiments, sentiment];
+    
+    // ✅ Mise à jour immédiate de l'état local
+    const updatedFilters = {
+      ...localFilters,
+      sentiments: newSentiments.length > 0 ? newSentiments : ["positive", "negative", "neutral"] // Au moins un sentiment
+    };
+    setLocalFilters(updatedFilters);
+    
+    try {
+      await updateProfile({ 
+        defaultFilters: updatedFilters
+      });
+      toast.success("Filtre mis à jour");
+    } catch (error) {
+      console.error("Error updating filter:", error);
+      // ✅ Revenir à l'état précédent en cas d'erreur
+      setLocalFilters(defaultFiltersFromUser);
+      toast.error("Erreur lors de la mise à jour");
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Filtre par impact */}
+      <div>
+        <Label className="mb-2">Niveaux d'impact</Label>
+        <div className="flex flex-wrap gap-2 mt-2">
+          {[1, 2, 3, 4, 5].map((level) => {
+            const impact = impactLabels[level as keyof typeof impactLabels];
+            const isSelected = (localFilters.impactLevels || []).includes(level);
+            return (
+              <Button
+                key={level}
+                variant={isSelected ? "default" : "outline"}
+                size="sm"
+                onClick={() => toggleImpactLevel(level)}
+                className={cn(
+                  "cursor-pointer transition-all",
+                  isSelected && "bg-primary text-primary-foreground"
+                )}
+              >
+                <SolarIcon icon={impact.icon} className="size-3 mr-1" />
+                {impact.label}
+              </Button>
+            );
+          })}
+        </div>
+      </div>
+      
+      <Separator />
+      
+      {/* Filtre par sentiment */}
+      <div>
+        <Label className="mb-2">Sentiment</Label>
+        <div className="flex flex-wrap gap-2 mt-2">
+          {(["positive", "negative", "neutral"] as const).map((sentiment) => {
+            const isSelected = (localFilters.sentiments || []).includes(sentiment);
+            return (
+              <Button
+                key={sentiment}
+                variant={isSelected ? "default" : "outline"}
+                size="sm"
+                onClick={() => toggleSentiment(sentiment)}
+                className={cn(
+                  "cursor-pointer transition-all",
+                  isSelected && "bg-primary text-primary-foreground"
+                )}
+              >
+                {sentimentLabels[sentiment]}
+              </Button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SettingsContent() {
   const { user, isAuthenticated } = useUser();
   const router = useRouter();
@@ -486,6 +723,40 @@ function SettingsContent() {
                   onCheckedChange={setNotificationsEnabled}
                 />
               </div>
+            </CardContent>
+          </Card>
+
+          {/* ✅ Centres d'intérêts */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Centres d'intérêts</CardTitle>
+              <CardDescription>
+                Sélectionnez vos domaines d'intérêt pour personnaliser votre fil d'actualité
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <InterestsSelector 
+                user={user} 
+                updateProfile={updateProfile}
+                t={t}
+              />
+            </CardContent>
+          </Card>
+
+          {/* ✅ Filtres par défaut */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Filtres par défaut</CardTitle>
+              <CardDescription>
+                Définissez vos préférences de filtrage pour le fil d'actualité
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <DefaultFiltersSelector 
+                user={user} 
+                updateProfile={updateProfile}
+                t={t}
+              />
             </CardContent>
           </Card>
 

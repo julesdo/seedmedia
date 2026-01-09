@@ -116,7 +116,8 @@ export function DecisionDetail({
           <div className="flex-1 space-y-3">
             <div className="flex flex-wrap items-center gap-2">
               <EventBadge
-                emoji={decision.emoji}
+                impactLevel={decision.impactLevel}
+                emoji={decision.emoji} // Fallback pour compatibilité
                 heat={decision.heat}
                 sentiment={decision.sentiment}
                 badgeColor={decision.badgeColor}

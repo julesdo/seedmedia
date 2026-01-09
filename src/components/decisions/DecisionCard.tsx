@@ -33,7 +33,7 @@ interface DecisionCardProps {
     answer3: string;
     sentiment: "positive" | "negative" | "neutral";
     heat: number;
-    emoji: string;
+    impactLevel: 1 | 2 | 3 | 4 | 5; // ✅ Échelle d'impact décisionnel (remplace emoji)
     badgeColor: string;
   };
   className?: string;
@@ -120,7 +120,7 @@ export function DecisionCard({
           onClick={isMobile ? handlePrefetch : undefined}
         >
           <EventBadge
-            emoji={decision.emoji}
+            impactLevel={decision.impactLevel}
             heat={decision.heat}
             sentiment={decision.sentiment}
             badgeColor={decision.badgeColor}

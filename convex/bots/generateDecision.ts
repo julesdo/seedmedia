@@ -180,10 +180,11 @@ Réponds UNIQUEMENT avec du JSON valide:
     };
 
     // Questions prédictives par défaut (seront améliorées par l'IA)
+    // ✅ SANS labels "Scénario" - juste le texte descriptif
     let question = `Dans les 3 prochains mois, quelles seront les conséquences de cette décision ?`;
-    let answer1 = `Scénario optimiste : Les objectifs sont atteints rapidement avec des effets positifs mesurables.`;
-    let answer2 = `Scénario mitigé : Résultats partiels avec des effets positifs et négatifs qui s'équilibrent.`;
-    let answer3 = `Scénario pessimiste : Les objectifs ne sont pas atteints, avec des conséquences négatives significatives.`;
+    let answer1 = `Les objectifs sont atteints rapidement avec des effets positifs mesurables.`;
+    let answer2 = `Résultats partiels avec des effets positifs et négatifs qui s'équilibrent.`;
+    let answer3 = `Les objectifs ne sont pas atteints, avec des conséquences négatives significatives.`;
 
     // Utiliser l'IA si disponible (OpenAI)
     try {
@@ -328,43 +329,44 @@ INSTRUCTIONS STRICTES:
    - "Que va-t-il se passer ?"
    - "Quels seront les impacts ?"
 
-2. TROIS SCÉNARIOS ACCESSIBLES AU GRAND PUBLIC:
+2. TROIS RÉPONSES ACCESSIBLES AU GRAND PUBLIC:
 
-   IMPORTANT: Les scénarios doivent être COMPRÉHENSIBLES par tous, sans jargon technique ou économique complexe.
+   IMPORTANT: Les réponses doivent être COMPRÉHENSIBLES par tous, sans jargon technique ou économique complexe.
+   ⚠️ CRITIQUE: Ne JAMAIS inclure de labels comme "Scénario A", "Scénario B", "(pessimiste)", "(optimiste)", etc. Juste le texte descriptif pur.
    
    Pour événements NÉGATIFS (crises, catastrophes, conflits):
-   Scénario A (PESSIMISTE) - Conséquences négatives probables:
+   Réponse 1 (conséquences négatives probables):
    ✓ Langage simple et accessible (ex: "les prix augmentent" plutôt que "inflation de X%")
    ✓ Conséquences concrètes pour les populations (ex: "difficultés à se nourrir", "services publics perturbés")
    ✓ Mention des pays/régions concernés de manière claire
    ✓ 2-3 phrases maximum, style journalistique simple
    ✓ Exemple: "La situation se détériore. Les prix des produits de base augmentent fortement, les services publics fonctionnent mal et la population rencontre des difficultés quotidiennes."
    
-   Scénario B (NEUTRE/MITIGÉ) - Scénario intermédiaire réaliste:
+   Réponse 2 (scénario intermédiaire réaliste):
    ✓ Situation stabilisée mais sans amélioration majeure
    ✓ Langage simple, conséquences équilibrées (du bon et du moins bon)
    ✓ 2-3 phrases maximum
    ✓ Exemple: "La situation reste tendue mais se stabilise progressivement. Certains secteurs s'améliorent tandis que d'autres continuent de rencontrer des difficultés."
    
-   Scénario C (OPTIMISTE/INTERVENTION) - Stabilisation ou amélioration:
+   Réponse 3 (stabilisation ou amélioration):
    ✓ Intervention ou résolution positive expliquée simplement
    ✓ Améliorations concrètes pour les populations
    ✓ 2-3 phrases maximum
    ✓ Exemple: "La situation s'améliore grâce à une intervention internationale. Les conditions de vie de la population commencent à se normaliser et les services essentiels reprennent progressivement."
    
    Pour événements POSITIFS (découvertes, accords, innovations):
-   Scénario A (LIMITÉ) - Impact positif mais limité:
+   Réponse 1 (impact positif mais limité):
    ✓ Progrès réels mais avec des limites expliquées simplement
    ✓ 2-3 phrases maximum
    ✓ Exemple: "Des progrès sont réalisés mais restent limités. Certaines améliorations sont visibles mais des défis importants persistent."
    
-   Scénario B (MODÉRÉ) - Impact positif significatif:
+   Réponse 2 (impact positif significatif):
    ✓ Progrès concrets et bénéfices pour les populations
    ✓ Langage simple et accessible
    ✓ 2-3 phrases maximum
    ✓ Exemple: "Des améliorations significatives sont observées. Les populations concernées bénéficient de changements positifs dans leur quotidien."
    
-   Scénario C (MAJEUR) - Impact positif transformateur:
+   Réponse 3 (impact positif transformateur):
    ✓ Transformation majeure expliquée simplement
    ✓ Bénéfices larges et durables
    ✓ 2-3 phrases maximum
@@ -384,10 +386,12 @@ RÈGLES ABSOLUES:
 Réponds UNIQUEMENT avec du JSON valide (format json_object):
 {
   "question": "question prédictive COURTE (max 12-15 mots), directe et simple, avec horizon temporel",
-  "answer1": "Scénario A (pessimiste) - 2-3 phrases courtes, langage simple, conséquences concrètes pour les populations",
-  "answer2": "Scénario B (neutre/mitigé) - 2-3 phrases courtes, langage simple, situation équilibrée",
-  "answer3": "Scénario C (optimiste/intervention) - 2-3 phrases courtes, langage simple, améliorations concrètes"
-}`;
+  "answer1": "2-3 phrases courtes, langage simple, conséquences concrètes pour les populations. SANS label 'Scénario A' ou 'pessimiste', juste le texte descriptif.",
+  "answer2": "2-3 phrases courtes, langage simple, situation équilibrée. SANS label 'Scénario B' ou 'neutre/mitigé', juste le texte descriptif.",
+  "answer3": "2-3 phrases courtes, langage simple, améliorations concrètes. SANS label 'Scénario C' ou 'optimiste', juste le texte descriptif."
+}
+
+IMPORTANT: Les réponses (answer1, answer2, answer3) doivent être UNIQUEMENT le texte descriptif, SANS aucun préfixe comme "Scénario A", "Scénario B", "Scénario C", "(pessimiste)", "(optimiste)", etc.`;
 
         const questionResult = await callOpenAI(openaiKeyForSynthesis, questionPrompt, {
           maxTokens: 4000,
@@ -404,24 +408,49 @@ Réponds UNIQUEMENT avec du JSON valide (format json_object):
             const parsed = JSON.parse(jsonString);
             
             if (parsed.question) question = parsed.question;
-            if (parsed.answer1) answer1 = parsed.answer1;
-            if (parsed.answer2) answer2 = parsed.answer2;
-            if (parsed.answer3) answer3 = parsed.answer3;
+            // ✅ Nettoyer les réponses pour retirer les labels "Scénario" si présents
+            if (parsed.answer1) {
+              answer1 = parsed.answer1
+                .replace(/^Scénario\s+[ABC]\s*[-:]?\s*/i, '')
+                .replace(/^Scénario\s+(pessimiste|optimiste|mitigé|neutre|limité|modéré|majeur)\s*[-:]?\s*/i, '')
+                .replace(/^\(pessimiste\)\s*[-:]?\s*/i, '')
+                .replace(/^\(optimiste\)\s*[-:]?\s*/i, '')
+                .replace(/^\(mitigé\)\s*[-:]?\s*/i, '')
+                .trim();
+            }
+            if (parsed.answer2) {
+              answer2 = parsed.answer2
+                .replace(/^Scénario\s+[ABC]\s*[-:]?\s*/i, '')
+                .replace(/^Scénario\s+(pessimiste|optimiste|mitigé|neutre|limité|modéré|majeur)\s*[-:]?\s*/i, '')
+                .replace(/^\(pessimiste\)\s*[-:]?\s*/i, '')
+                .replace(/^\(optimiste\)\s*[-:]?\s*/i, '')
+                .replace(/^\(mitigé\)\s*[-:]?\s*/i, '')
+                .trim();
+            }
+            if (parsed.answer3) {
+              answer3 = parsed.answer3
+                .replace(/^Scénario\s+[ABC]\s*[-:]?\s*/i, '')
+                .replace(/^Scénario\s+(pessimiste|optimiste|mitigé|neutre|limité|modéré|majeur)\s*[-:]?\s*/i, '')
+                .replace(/^\(pessimiste\)\s*[-:]?\s*/i, '')
+                .replace(/^\(optimiste\)\s*[-:]?\s*/i, '')
+                .replace(/^\(mitigé\)\s*[-:]?\s*/i, '')
+                .trim();
+            }
           } catch (parseError) {
             console.error("Error parsing AI question result:", parseError);
             console.error("Raw response:", questionResult);
-            // En cas d'erreur de parsing, utiliser des valeurs par défaut spécifiques
+            // En cas d'erreur de parsing, utiliser des valeurs par défaut spécifiques (SANS labels "Scénario")
             question = `Dans les 3 prochains mois, quelles seront les conséquences de cette décision pour ${extracted.decider} ?`;
-            answer1 = `Scénario pessimiste : Conséquences négatives significatives pour ${extracted.decider} avec détérioration des conditions économiques et politiques.`;
-            answer2 = `Scénario mitigé : Résultats partiels avec des effets positifs et négatifs qui s'équilibrent pour ${extracted.decider}.`;
-            answer3 = `Scénario optimiste : Stabilisation ou amélioration de la situation pour ${extracted.decider} avec intervention ou résolution positive.`;
+            answer1 = `Conséquences négatives significatives pour ${extracted.decider} avec détérioration des conditions économiques et politiques.`;
+            answer2 = `Résultats partiels avec des effets positifs et négatifs qui s'équilibrent pour ${extracted.decider}.`;
+            answer3 = `Stabilisation ou amélioration de la situation pour ${extracted.decider} avec intervention ou résolution positive.`;
           }
         } else {
-          // Si l'IA ne retourne rien, utiliser des valeurs par défaut spécifiques
+          // Si l'IA ne retourne rien, utiliser des valeurs par défaut spécifiques (SANS labels "Scénario")
           question = `Dans les 3 prochains mois, quelles seront les conséquences de cette décision pour ${extracted.decider} ?`;
-          answer1 = `Scénario pessimiste : Conséquences négatives significatives pour ${extracted.decider} avec détérioration des conditions économiques et politiques.`;
-          answer2 = `Scénario mitigé : Résultats partiels avec des effets positifs et négatifs qui s'équilibrent pour ${extracted.decider}.`;
-          answer3 = `Scénario optimiste : Stabilisation ou amélioration de la situation pour ${extracted.decider} avec intervention ou résolution positive.`;
+          answer1 = `Conséquences négatives significatives pour ${extracted.decider} avec détérioration des conditions économiques et politiques.`;
+          answer2 = `Résultats partiels avec des effets positifs et négatifs qui s'équilibrent pour ${extracted.decider}.`;
+          answer3 = `Stabilisation ou amélioration de la situation pour ${extracted.decider} avec intervention ou résolution positive.`;
         }
       }
     } catch (error) {
@@ -502,18 +531,20 @@ Réponds UNIQUEMENT avec du JSON valide:
       badgeColor = calculateBadgeColor(heat, sentiment);
     }
 
-    // Utiliser l'IA pour générer une requête optimale (priorité absolue)
-    let imageQuery: string;
+    // ✅ Utiliser l'IA pour générer PLUSIEURS requêtes optimales (Phase 1 : Multi-requêtes)
+    let imageQueries: string[] = [];
     
     if (openaiKeyForSynthesis) {
       try {
-        const imageQueryPrompt = `Tu es un expert en recherche d'images pour l'actualité internationale. Analyse le CONTEXTE et le SENS de cet événement majeur pour générer une requête de recherche d'image INTELLIGENTE et PERTINENTE (2-4 mots-clés en anglais).
+        const imageQueryPrompt = `Tu es un expert en recherche d'images pour l'actualité internationale. Analyse le CONTEXTE et le SENS de cet événement majeur pour générer 3-5 requêtes de recherche d'image INTELLIGENTES et PERTINENTES (2-4 mots-clés en anglais chacune).
 
 ÉVÉNEMENT:
 Titre: ${eventTitle}
 Description: ${eventDescription}
 Décideur/Acteur principal: ${extracted.decider}
 Type d'événement: ${extracted.type}
+Domaines impactés: ${extracted.impactedDomains.join(", ") || "Non spécifié"}
+Sentiment: ${sentiment}
 Articles sources (${articles.length}): ${articles.slice(0, 3).map(a => a.title).join("; ")}
 
 INSTRUCTIONS CRITIQUES:
@@ -554,89 +585,128 @@ FORMAT:
 - Pas de mots génériques ou abstraits
 
 RÉPONSE ATTENDUE:
-UNIQUEMENT la requête (2-4 mots-clés en anglais), sans texte avant ou après, sans guillemets, sans explication.`;
+JSON avec un tableau de 3-5 requêtes différentes, chacune avec une approche différente (contextuelle, entité, type, domaine):
+{
+  "queries": [
+    "requête 1 (approche contextuelle)",
+    "requête 2 (approche entité si pertinente)",
+    "requête 3 (approche type d'événement)",
+    "requête 4 (approche domaine impacté)",
+    "requête 5 (combinaison optimale)"
+  ]
+}
 
-        const aiImageQuery = await callOpenAI(openaiKeyForSynthesis, imageQueryPrompt);
-        if (aiImageQuery) {
-          // Nettoyer la réponse de l'IA et s'assurer qu'elle est en anglais pour Pexels
-          let cleanedQuery = aiImageQuery.trim().replace(/["'`]/g, "").substring(0, 50);
-          
-          // Vérifier si la requête contient des mots français courants et les traduire
-          const frenchToEnglish: Record<string, string> = {
-            "france": "France",
-            "états-unis": "United States",
-            "royaume-uni": "United Kingdom",
-            "corée du nord": "North Korea",
-            "corée du sud": "South Korea",
-            "centrafrique": "Central African Republic",
-            "république centrafricaine": "Central African Republic",
-            "burkina faso": "Burkina Faso",
-          };
-          
-          const lowerQuery = cleanedQuery.toLowerCase();
-          for (const [french, english] of Object.entries(frenchToEnglish)) {
-            if (lowerQuery.includes(french)) {
-              cleanedQuery = cleanedQuery.replace(new RegExp(french, "gi"), english);
+Chaque requête doit être 2-4 mots-clés en anglais, sans guillemets.`;
+
+        const aiImageQueriesResult = await callOpenAI(openaiKeyForSynthesis, imageQueryPrompt, {
+          maxTokens: 200,
+        });
+        
+        if (aiImageQueriesResult) {
+          try {
+            // Parser le JSON
+            let jsonString = aiImageQueriesResult.trim();
+            const jsonMatch = jsonString.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+              jsonString = jsonMatch[0];
+            }
+            const parsed = JSON.parse(jsonString);
+            
+            if (parsed.queries && Array.isArray(parsed.queries) && parsed.queries.length > 0) {
+              // Nettoyer et valider chaque requête
+              const frenchToEnglish: Record<string, string> = {
+                "france": "France",
+                "états-unis": "United States",
+                "royaume-uni": "United Kingdom",
+                "corée du nord": "North Korea",
+                "corée du sud": "South Korea",
+                "centrafrique": "Central African Republic",
+                "république centrafricaine": "Central African Republic",
+                "burkina faso": "Burkina Faso",
+              };
+              
+              imageQueries = parsed.queries
+                .map((q: string) => {
+                  let cleaned = q.trim().replace(/["'`]/g, "").substring(0, 50);
+                  const lower = cleaned.toLowerCase();
+                  for (const [french, english] of Object.entries(frenchToEnglish)) {
+                    if (lower.includes(french)) {
+                      cleaned = cleaned.replace(new RegExp(french, "gi"), english);
+                    }
+                  }
+                  return cleaned;
+                })
+                .filter((q: string) => q.length > 5)
+                .slice(0, 5); // Max 5 requêtes
+              
+              console.log(`✅ ${imageQueries.length} requêtes générées par IA`);
+            }
+          } catch (parseError) {
+            console.error("Error parsing AI image queries:", parseError);
+            // Fallback : essayer d'extraire une seule requête du texte
+            const singleQuery = aiImageQueriesResult.trim().replace(/["'`]/g, "").substring(0, 50);
+            if (singleQuery.length > 5) {
+              imageQueries = [singleQuery];
             }
           }
-          
-          if (cleanedQuery.length > 5) {
-            imageQuery = cleanedQuery;
-          } else {
-            // Fallback si la réponse de l'IA est trop courte
-            imageQuery = buildImageSearchQuery(
-              extracted.decider,
-              extracted.deciderType,
-              extracted.type,
-              extracted.impactedDomains,
-              eventTitle
-            );
-          }
-        } else {
-          // Fallback si l'IA ne retourne rien
-          imageQuery = buildImageSearchQuery(
+        }
+        
+        // Fallback si pas de requêtes valides
+        if (imageQueries.length === 0) {
+          const fallbackQuery = buildImageSearchQuery(
             extracted.decider,
             extracted.deciderType,
             extracted.type,
             extracted.impactedDomains,
             eventTitle
           );
+          imageQueries = [fallbackQuery];
         }
       } catch (error) {
-        console.error("Error generating image query with AI:", error);
+        console.error("Error generating image queries with AI:", error);
         // Fallback si l'IA échoue
-        imageQuery = buildImageSearchQuery(
+        const fallbackQuery = buildImageSearchQuery(
           extracted.decider,
           extracted.deciderType,
           extracted.type,
           extracted.impactedDomains,
           eventTitle
         );
+        imageQueries = [fallbackQuery];
       }
     } else {
       // Fallback si pas de clé OpenAI
-      imageQuery = buildImageSearchQuery(
+      const fallbackQuery = buildImageSearchQuery(
         extracted.decider,
         extracted.deciderType,
         extracted.type,
         extracted.impactedDomains,
         eventTitle
       );
+      imageQueries = [fallbackQuery];
     }
 
-    // Rechercher image libre de droits
+    // ✅ Rechercher image libre de droits avec validation IA (Phase 2)
     let imageUrl: string | undefined;
     let imageSource: string | undefined;
     try {
       const imageResult = await ctx.runAction(
         api.bots.generateDecision.searchFreeImage,
         {
-          query: imageQuery,
+          queries: imageQueries, // ✅ Multi-requêtes
+          eventContext: { // ✅ Contexte pour validation
+            title: eventTitle,
+            description: eventDescription || eventTitle,
+            type: extracted.type,
+            decider: extracted.decider,
+            sentiment: sentiment,
+          },
         }
       );
       if (imageResult) {
         imageUrl = imageResult.url;
         imageSource = imageResult.source;
+        console.log(`✅ Image sélectionnée avec score: ${imageResult.relevanceScore}/100`);
       }
     } catch (error) {
       console.error("Error searching for image:", error);
@@ -703,11 +773,28 @@ UNIQUEMENT la requête (2-4 mots-clés en anglais), sans texte avant ou après, 
       }
     }
 
+    // ✅ Générer le hash de contenu pour déduplication optimisée
+    // Note: On doit importer generateContentHash depuis detectDecisions ou le recréer ici
+    // Pour éviter les dépendances circulaires, on le recrée ici
+    function generateContentHash(title: string, sourceUrl: string): string {
+      const content = `${title.toLowerCase().trim()}|${sourceUrl}`;
+      let hash = 0;
+      for (let i = 0; i < content.length; i++) {
+        const char = content.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+      }
+      return Math.abs(hash).toString(16).padStart(32, '0').substring(0, 32);
+    }
+    
+    const contentHash = generateContentHash(eventTitle, mainArticle.url);
+
     // Créer la Decision Card
     const decisionId = await ctx.runMutation(api.decisions.createDecision, {
       title: eventTitle,
       description: eventDescription || eventTitle, // Fallback si description vide
       slug: finalSlug,
+      contentHash, // ✅ Ajouter le hash pour déduplication optimisée
       decider: extracted.decider,
       deciderType: extracted.deciderType,
       date: mainArticle.publishedAt, // Date de l'article principal
@@ -756,6 +843,34 @@ UNIQUEMENT la requête (2-4 mots-clés en anglais), sans texte avant ou après, 
       logLevel: "success",
       functionName: "generateDecision",
     });
+
+    // ✅ Traduire automatiquement la décision dans toutes les langues supportées
+    try {
+      const supportedLanguages = ["en", "es", "de", "it", "pt"]; // Langues supportées
+      console.log(`[${new Date().toISOString()}] 🌍 Starting automatic translation for decision ${decisionId}...`);
+      
+      // Traduire en parallèle (mais avec un délai pour éviter de surcharger l'API)
+      for (const lang of supportedLanguages) {
+        try {
+          await ctx.runAction(api.decisionTranslations.translateDecision, {
+            decisionId,
+            targetLanguage: lang,
+            sourceLanguage: "fr",
+          });
+          console.log(`[${new Date().toISOString()}] ✅ Translated to ${lang}`);
+        } catch (error) {
+          console.error(`[${new Date().toISOString()}] ❌ Error translating to ${lang}:`, error);
+          // Continuer avec les autres langues même en cas d'erreur
+        }
+        // Petit délai entre chaque traduction pour éviter de surcharger l'API
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      
+      console.log(`[${new Date().toISOString()}] ✅ Automatic translation completed for decision ${decisionId}`);
+    } catch (error) {
+      console.error(`[${new Date().toISOString()}] ❌ Error in automatic translation:`, error);
+      // Ne pas faire échouer la création de la décision si la traduction échoue
+    }
 
     return decisionId;
   },
@@ -819,70 +934,249 @@ function calculateBadgeColor(heat: number, sentiment: "positive" | "negative" | 
 }
 
 /**
- * Recherche une image libre de droits pertinente
+ * ✅ Valide la pertinence d'une image avec scoring IA (Phase 2)
+ */
+async function validateImageRelevance(
+  image: {
+    url: string;
+    photographer: string;
+    alt?: string;
+    description?: string;
+  },
+  eventContext: {
+    title: string;
+    description: string;
+    type: string;
+    decider: string;
+    sentiment: "positive" | "negative" | "neutral";
+  },
+  openaiKey: string
+): Promise<{ score: number; reason: string }> {
+  try {
+    const validationPrompt = `Tu es un expert en validation d'images pour l'actualité internationale. Analyse si cette image est pertinente pour illustrer cet événement.
+
+ÉVÉNEMENT:
+- Titre: ${eventContext.title}
+- Description: ${eventContext.description}
+- Type: ${eventContext.type}
+- Décideur/Acteur: ${eventContext.decider}
+- Sentiment: ${eventContext.sentiment}
+
+IMAGE:
+- Description/Tags: ${image.description || image.alt || "Non disponible"}
+- Photographe: ${image.photographer}
+
+INSTRUCTIONS:
+1. Score de pertinence de 0 à 100
+2. 0-30 = Complètement hors sujet
+3. 31-50 = Légèrement lié mais pas vraiment pertinent
+4. 51-70 = Assez pertinent mais pourrait être mieux
+5. 71-85 = Très pertinent
+6. 86-100 = Parfaitement pertinent
+
+Réponds UNIQUEMENT avec du JSON:
+{
+  "score": 75,
+  "reason": "L'image montre un contexte de procès qui correspond bien à l'événement"
+}`;
+
+    const result = await callOpenAI(openaiKey, validationPrompt, {
+      maxTokens: 200,
+    });
+
+    if (result) {
+      try {
+        let jsonString = result.trim();
+        const jsonMatch = jsonString.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          jsonString = jsonMatch[0];
+        }
+        const parsed = JSON.parse(jsonString);
+        return {
+          score: Math.max(0, Math.min(100, parsed.score || 0)),
+          reason: parsed.reason || "Score généré",
+        };
+      } catch (parseError) {
+        console.error("Error parsing validation result:", parseError);
+      }
+    }
+  } catch (error) {
+    console.error("Error validating image relevance:", error);
+  }
+
+  // Fallback : score neutre si validation échoue
+  return { score: 50, reason: "Validation échouée, score par défaut" };
+}
+
+/**
+ * ✅ Recherche une image libre de droits pertinente avec validation IA (Phase 1 + 2)
  */
 export const searchFreeImage = action({
   args: {
-    query: v.string(),
+    queries: v.optional(v.array(v.string())), // ✅ Multi-requêtes (nouveau)
+    query: v.optional(v.string()), // ✅ Ancienne signature (compatibilité)
+    eventContext: v.optional(v.object({ // ✅ Contexte pour validation
+      title: v.string(),
+      description: v.string(),
+      type: v.string(),
+      decider: v.string(),
+      sentiment: v.union(v.literal("positive"), v.literal("negative"), v.literal("neutral")),
+    })),
   },
   handler: async (ctx, args) => {
-    // Pexels API (gratuite, optionnelle)
-    try {
-      const pexelsKey = process.env.PEXELS_API_KEY;
-      if (pexelsKey) {
-        // Essayer plusieurs variantes de la requête pour trouver la meilleure image
-        // Priorité: requête complète → nom principal seul → premier mot si nom composé
-        const queryWords = args.query.split(" ").filter(w => w.length > 0);
-        const queryVariants = [
-          args.query, // Requête originale complète (priorité absolue)
-          queryWords.slice(0, 2).join(" "), // Premiers 2 mots (ex: "Nicolas Maduro")
-          queryWords[0], // Premier mot seulement (ex: "Nicolas" ou "Venezuela")
-        ].filter(v => v && v.length > 2); // Filtrer les variantes trop courtes
-
-        let bestImage = null;
-        for (const variant of queryVariants) {
-          try {
-            const response = await fetch(
-              `https://api.pexels.com/v1/search?query=${encodeURIComponent(
-                variant
-              )}&per_page=5&orientation=landscape`, // Augmenté à 5 pour plus de choix
-              {
-                headers: {
-                  Authorization: pexelsKey,
-                },
-              }
-            );
-
-            if (response.ok) {
-              const data = await response.json();
-              if (data.photos && data.photos.length > 0) {
-                // Prendre la première photo (la plus pertinente selon Pexels)
-                // Pexels classe déjà les résultats par pertinence
-                const photo = data.photos[0];
-                bestImage = {
-                  url: photo.src?.large || photo.src?.original || "",
-                  source: "Pexels",
-                  photographer: photo.photographer || "Unknown",
-                };
-                console.log(`✅ Image trouvée avec la requête: "${variant}"`);
-                break; // On a trouvé une image pertinente, on s'arrête
-              }
-            }
-          } catch (error) {
-            console.error(`Error fetching Pexels image for variant "${variant}":`, error);
-            // Continuer avec la variante suivante
-          }
-        }
-
-        if (bestImage) {
-          return bestImage;
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching Pexels image:", error);
+    // ✅ Compatibilité avec ancienne signature
+    let queries: string[] = [];
+    if (args.queries && args.queries.length > 0) {
+      queries = args.queries;
+    } else if (args.query) {
+      queries = [args.query];
+    } else {
+      return null;
     }
 
-    return null;
+    // ✅ Fallback si pas de contexte (ancien comportement)
+    if (!args.eventContext) {
+      // Mode compatibilité : pas de validation IA, retourner première image
+      const pexelsKey = process.env.PEXELS_API_KEY;
+      if (!pexelsKey) {
+        return null;
+      }
+
+      try {
+        const response = await fetch(
+          `https://api.pexels.com/v1/search?query=${encodeURIComponent(
+            queries[0]
+          )}&per_page=1&orientation=landscape`,
+          {
+            headers: {
+              Authorization: pexelsKey,
+            },
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.photos && data.photos.length > 0) {
+            const photo = data.photos[0];
+            return {
+              url: photo.src?.large || photo.src?.original || "",
+              source: "Pexels",
+              photographer: photo.photographer || "Unknown",
+              relevanceScore: 50, // Score par défaut
+            };
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching Pexels image (compat mode):", error);
+      }
+
+      return null;
+    }
+
+    const eventContext = args.eventContext;
+    const pexelsKey = process.env.PEXELS_API_KEY;
+    const openaiKey = process.env.OPENAI_API_KEY;
+    
+    if (!pexelsKey) {
+      return null;
+    }
+
+    // ✅ Récupérer top 5 images pour chaque requête
+    const allCandidates: Array<{
+      url: string;
+      photographer: string;
+      alt?: string;
+      description?: string;
+      query: string;
+    }> = [];
+
+    for (const query of queries) {
+      try {
+        const response = await fetch(
+          `https://api.pexels.com/v1/search?query=${encodeURIComponent(
+            query
+          )}&per_page=5&orientation=landscape`,
+          {
+            headers: {
+              Authorization: pexelsKey,
+            },
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.photos && data.photos.length > 0) {
+            for (const photo of data.photos) {
+              allCandidates.push({
+                url: photo.src?.large || photo.src?.original || "",
+                photographer: photo.photographer || "Unknown",
+                alt: photo.alt || undefined,
+                description: photo.alt || undefined,
+                query: query,
+              });
+            }
+          }
+        }
+      } catch (error) {
+        console.error(`Error fetching Pexels images for query "${query}":`, error);
+        // Continuer avec la requête suivante
+      }
+    }
+
+    if (allCandidates.length === 0) {
+      return null;
+    }
+
+    // ✅ Valider chaque image avec IA si disponible
+    if (openaiKey && eventContext) {
+      console.log(`🔍 Validation de ${allCandidates.length} images candidates...`);
+      
+      const scoredImages = await Promise.all(
+        allCandidates.map(async (img) => {
+          const validation = await validateImageRelevance(img, eventContext, openaiKey);
+          return {
+            ...img,
+            relevanceScore: validation.score,
+            reason: validation.reason,
+          };
+        })
+      );
+
+      // ✅ Filtrer et trier : score >= 70, puis par score décroissant
+      const validImages = scoredImages
+        .filter((img) => img.relevanceScore >= 70)
+        .sort((a, b) => b.relevanceScore - a.relevanceScore);
+
+      if (validImages.length > 0) {
+        const bestImage = validImages[0];
+        console.log(`✅ Image sélectionnée: score ${bestImage.relevanceScore}/100 (${bestImage.reason})`);
+        return {
+          url: bestImage.url,
+          source: "Pexels",
+          photographer: bestImage.photographer,
+          relevanceScore: bestImage.relevanceScore,
+        };
+      } else {
+        // Aucune image avec score >= 70, prendre la meilleure disponible
+        const bestAvailable = scoredImages.sort((a, b) => b.relevanceScore - a.relevanceScore)[0];
+        console.log(`⚠️ Aucune image avec score >= 70, meilleure disponible: ${bestAvailable.relevanceScore}/100`);
+        return {
+          url: bestAvailable.url,
+          source: "Pexels",
+          photographer: bestAvailable.photographer,
+          relevanceScore: bestAvailable.relevanceScore,
+        };
+      }
+    } else {
+      // ✅ Fallback si pas d'OpenAI : prendre la première image (comportement original)
+      console.log(`⚠️ Pas de clé OpenAI, utilisation de la première image trouvée`);
+      return {
+        url: allCandidates[0].url,
+        source: "Pexels",
+        photographer: allCandidates[0].photographer,
+        relevanceScore: 50, // Score par défaut
+      };
+    }
   },
 });
 

@@ -4,6 +4,57 @@ import { Id } from "./_generated/dataModel";
 import { api } from "./_generated/api";
 
 /**
+ * Helper function pour appeler OpenAI API pour la traduction
+ */
+async function callOpenAI(
+  apiKey: string,
+  prompt: string,
+  options?: {
+    maxTokens?: number;
+  }
+): Promise<string | null> {
+  try {
+    const body: any = {
+      model: "gpt-4o-mini", // Utiliser gpt-4o-mini pour la traduction (plus économique)
+      messages: [
+        {
+          role: "system",
+          content:
+            "Tu es un traducteur professionnel expert. Tu traduis de manière précise et fidèle, en conservant le style et le ton du texte original.",
+        },
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      temperature: 0.3, // Température plus basse pour des traductions plus fidèles
+      max_tokens: options?.maxTokens ?? 2000,
+    };
+
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("OpenAI API error:", response.status, errorText);
+      throw new Error(`OpenAI API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.choices[0]?.message?.content?.trim() || null;
+  } catch (error) {
+    console.error("Error calling OpenAI:", error);
+    throw error;
+  }
+}
+
+/**
  * Récupère la traduction d'une Decision Card pour une langue donnée
  */
 export const getDecisionTranslation = query({
@@ -130,24 +181,77 @@ export const translateDecision = action({
       return existing._id;
     }
 
-    // TODO: Intégrer une API de traduction (DeepL, Google Translate, etc.)
-    // Pour l'instant, on simule la traduction
-    // Dans la vraie implémentation, on appellerait l'API ici
+    // ✅ Traduction avec OpenAI
+    const openaiKeyEnv = process.env.OPENAI_API_KEY;
+    if (!openaiKeyEnv) {
+      throw new Error("OPENAI_API_KEY not configured");
+    }
+    const openaiKey: string = openaiKeyEnv; // Type guard pour TypeScript
 
-    // Exemple de structure pour l'appel API (à implémenter) :
-    // const translated = await translateWithAPI({
-    //   text: decision.title,
-    //   sourceLang,
-    //   targetLang: args.targetLanguage,
-    // });
+    // Noms de langues pour le prompt
+    const languageNames: Record<string, string> = {
+      fr: "français",
+      en: "anglais",
+      es: "espagnol",
+      de: "allemand",
+      it: "italien",
+      pt: "portugais",
+      nl: "néerlandais",
+      pl: "polonais",
+      ru: "russe",
+      zh: "chinois",
+      ja: "japonais",
+      ko: "coréen",
+      ar: "arabe",
+    };
 
-    // Pour l'instant, on retourne les textes originaux (à remplacer par la vraie traduction)
-    const translatedTitle: string = decision.title; // TODO: Traduire
-    const translatedQuestion: string = decision.question; // TODO: Traduire
-    const translatedAnswer1: string = decision.answer1; // TODO: Traduire
-    const translatedAnswer2: string = decision.answer2; // TODO: Traduire
-    const translatedAnswer3: string = decision.answer3; // TODO: Traduire
-    const translatedOfficialText: string = decision.officialText; // TODO: Traduire
+    const sourceLangName = languageNames[sourceLang] || sourceLang;
+    const targetLangName = languageNames[args.targetLanguage] || args.targetLanguage;
+
+    // Fonction helper pour traduire un texte
+    async function translateText(text: string, context: string): Promise<string> {
+      const prompt = `Tu es un traducteur professionnel expert en actualité internationale et géopolitique.
+
+Traduis ce texte de ${sourceLangName} vers ${targetLangName}.
+
+CONTEXTE: ${context}
+
+TEXTE À TRADUIRE:
+${text}
+
+INSTRUCTIONS:
+- Traduis de manière précise et fidèle au sens original
+- Conserve le style journalistique et factuel
+- Adapte les expressions idiomatiques naturellement
+- Garde les noms propres (personnes, pays, institutions) tels quels
+- Assure-toi que la traduction est naturelle et fluide dans la langue cible
+
+Réponds UNIQUEMENT avec la traduction, sans commentaire ni explication.`;
+
+      try {
+        const result = await callOpenAI(openaiKey, prompt, {
+          maxTokens: 1000,
+        });
+        return result || text; // Fallback sur le texte original si erreur
+      } catch (error) {
+        console.error(`Error translating text (${context}):`, error);
+        return text; // Fallback sur le texte original
+      }
+    }
+
+    // Traduire tous les textes en parallèle pour performance
+    console.log(`[${new Date().toISOString()}] 🌍 Translating decision ${args.decisionId} from ${sourceLang} to ${args.targetLanguage}...`);
+    
+    const [translatedTitle, translatedQuestion, translatedAnswer1, translatedAnswer2, translatedAnswer3, translatedOfficialText] = await Promise.all([
+      translateText(decision.title, "Titre de la décision"),
+      translateText(decision.question, "Question objective"),
+      translateText(decision.answer1, "Réponse 1 (option positive)"),
+      translateText(decision.answer2, "Réponse 2 (option partielle)"),
+      translateText(decision.answer3, "Réponse 3 (option négative)"),
+      decision.officialText ? translateText(decision.officialText, "Texte officiel de la décision") : Promise.resolve(undefined),
+    ]);
+
+    console.log(`[${new Date().toISOString()}] ✅ Translation completed for decision ${args.decisionId}`);
 
     // Créer la traduction
     const translationId = await ctx.runMutation(

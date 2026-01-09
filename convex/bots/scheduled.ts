@@ -33,6 +33,51 @@ export const runDecisionDetection = internalAction({
     console.log(`[${new Date().toISOString()}] Running decision detection...`);
 
     try {
+      // ✅ 1. Calculer le ratio actuel (24h dernières heures) pour équilibrage
+      const now = Date.now();
+      const last24h = now - 24 * 60 * 60 * 1000;
+      
+      const recentDecisions = await ctx.runQuery(api.decisions.getDecisions, {
+        limit: 100,
+      });
+      
+      const last24hDecisions = recentDecisions.filter(
+        (d: any) => d.createdAt >= last24h
+      );
+      
+      const positiveCount = last24hDecisions.filter(
+        (d: any) => d.sentiment === "positive"
+      ).length;
+      const negativeCount = last24hDecisions.filter(
+        (d: any) => d.sentiment === "negative"
+      ).length;
+      const neutralCount = last24hDecisions.filter(
+        (d: any) => d.sentiment === "neutral"
+      ).length;
+      
+      // Calculer le ratio cible (50/50 positif/négatif, neutre ignoré)
+      const totalWithSentiment = positiveCount + negativeCount;
+      const currentRatio = totalWithSentiment > 0
+        ? positiveCount / totalWithSentiment
+        : 0.5;
+      const targetRatio = 0.5; // 50/50
+      
+      // Déterminer le type prioritaire
+      let preferredSentiment: "positive" | "negative" | undefined = undefined;
+      if (currentRatio < targetRatio - 0.1) {
+        // Pas assez de positif, prioriser positif
+        preferredSentiment = "positive";
+        console.log(`[${new Date().toISOString()}] ⚖️ Équilibrage: Ratio actuel ${(currentRatio * 100).toFixed(1)}% positif, prioriser POSITIF`);
+      } else if (currentRatio > targetRatio + 0.1) {
+        // Pas assez de négatif, prioriser négatif
+        preferredSentiment = "negative";
+        console.log(`[${new Date().toISOString()}] ⚖️ Équilibrage: Ratio actuel ${(currentRatio * 100).toFixed(1)}% positif, prioriser NÉGATIF`);
+      } else {
+        console.log(`[${new Date().toISOString()}] ⚖️ Équilibrage: Ratio équilibré ${(currentRatio * 100).toFixed(1)}% positif, pas de préférence`);
+      }
+      
+      console.log(`[${new Date().toISOString()}] 📊 Stats 24h: ${positiveCount} positif, ${negativeCount} négatif, ${neutralCount} neutre`);
+      
       // Détecter les nouvelles décisions avec retry
       console.log(`[${new Date().toISOString()}] Starting detectDecisions action...`);
       const detectStartTime = Date.now();
@@ -41,6 +86,7 @@ export const runDecisionDetection = internalAction({
         // @ts-ignore - Type instantiation is excessively deep (known Convex type issue)
         return await ctx.runAction(api.bots.detectDecisions.detectDecisions, {
           limit: 10, // Réduit à 10 pour éviter les timeouts
+          preferredSentiment, // ✅ Passer le sentiment préféré pour équilibrage
         });
       }, 2, 2000); // Réduire à 2 retries avec délai initial de 2s
 

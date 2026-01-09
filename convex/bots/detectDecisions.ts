@@ -8,6 +8,23 @@ import {
 import { updateBotActivity } from "./helpers";
 
 /**
+ * ✅ Génère un hash unique pour une décision (titre + sourceUrl)
+ * Utilisé pour déduplication optimisée (O(1) lookup au lieu de scan complet)
+ */
+function generateContentHash(title: string, sourceUrl: string): string {
+  const content = `${title.toLowerCase().trim()}|${sourceUrl}`;
+  // Utiliser une fonction de hash simple mais efficace (compatible Convex)
+  let hash = 0;
+  for (let i = 0; i < content.length; i++) {
+    const char = content.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  // Convertir en hexadécimal et prendre les 32 premiers caractères
+  return Math.abs(hash).toString(16).padStart(32, '0').substring(0, 32);
+}
+
+/**
  * Évalue l'importance d'une décision géopolitique avec l'IA
  * Retourne un score d'importance (0-10) et un booléen indiquant si c'est une vraie décision importante
  */
@@ -489,9 +506,107 @@ Réponds UNIQUEMENT avec un JSON array de 15 requêtes :
   ];
 }
 
+/**
+ * Analyse le sentiment d'un événement (positif, négatif, neutre)
+ */
+async function analyzeEventSentiment(
+  title: string,
+  summary: string | undefined,
+  openaiKey: string | undefined
+): Promise<"positive" | "negative" | "neutral"> {
+  // Si pas de clé OpenAI, utiliser un filtre basique
+  if (!openaiKey) {
+    const titleLower = title.toLowerCase();
+    const summaryLower = (summary || "").toLowerCase();
+    const fullText = `${titleLower} ${summaryLower}`;
+    
+    // Mots-clés positifs
+    const positiveKeywords = [
+      "accord", "paix", "réconciliation", "coopération", "découverte", "innovation",
+      "progrès", "réforme", "transition", "croissance", "investissement", "partenariat",
+      "réussite", "victoire", "avancée", "breakthrough", "succès"
+    ];
+    
+    // Mots-clés négatifs
+    const negativeKeywords = [
+      "crise", "conflit", "guerre", "sanction", "embargo", "rupture", "coup d'état",
+      "catastrophe", "krach", "récession", "faillite", "attaque", "intervention militaire"
+    ];
+    
+    const hasPositive = positiveKeywords.some(kw => fullText.includes(kw));
+    const hasNegative = negativeKeywords.some(kw => fullText.includes(kw));
+    
+    if (hasPositive && !hasNegative) return "positive";
+    if (hasNegative && !hasPositive) return "negative";
+    return "neutral";
+  }
+  
+  try {
+    const prompt = `Analyse le sentiment de cet événement géopolitique/économique/technologique:
+
+Titre: ${title}
+Résumé: ${summary || "Aucun résumé disponible"}
+
+Détermine si l'événement est:
+- "positive": Progrès, découverte, accord de paix, innovation, réforme démocratique, coopération internationale, croissance économique
+- "negative": Crise, conflit, catastrophe, sanction, rupture diplomatique, krach, récession, guerre
+- "neutral": Événement factuel sans connotation clairement positive ou négative
+
+Réponds UNIQUEMENT avec du JSON valide:
+{
+  "sentiment": "positive|negative|neutral",
+  "reason": "explication courte"
+}`;
+
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${openaiKey}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-5-mini",
+        messages: [
+          {
+            role: "system",
+            content: "Tu es un expert en analyse de sentiment géopolitique. Réponds UNIQUEMENT avec du JSON valide.",
+          },
+          { role: "user", content: prompt },
+        ],
+        reasoning_effort: "minimal",
+        max_completion_tokens: 150,
+      }),
+    });
+
+    if (!response.ok) {
+      return "neutral"; // Fallback en cas d'erreur
+    }
+
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content;
+    if (!content) return "neutral";
+
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (["positive", "negative", "neutral"].includes(parsed.sentiment)) {
+        return parsed.sentiment as "positive" | "negative" | "neutral";
+      }
+    }
+  } catch (error) {
+    console.error("Error analyzing sentiment:", error);
+  }
+  
+  return "neutral";
+}
+
 export const detectDecisions = action({
   args: {
     limit: v.optional(v.number()), // Nombre max d'événements majeurs à détecter
+    preferredSentiment: v.optional(v.union(
+      v.literal("positive"),
+      v.literal("negative")
+    )), // ✅ Sentiment préféré pour équilibrage
   },
   handler: async (ctx, args) => {
     const limit = args.limit || 10;
@@ -834,11 +949,46 @@ export const detectDecisions = action({
     });
     
     // Prendre les N premiers événements majeurs (après tri par diversité)
-    const majorEvents = scoredEvents.slice(0, limit).map((scored) => ({
+    let majorEvents = scoredEvents.slice(0, limit * 2).map((scored) => ({
       articles: scored.group.articles,
       // Utiliser l'article le plus récent comme référence principale
       mainArticle: scored.group.articles.sort((a, b) => b.publishedAt - a.publishedAt)[0],
     }));
+
+    // ✅ Filtrer par sentiment préféré si fourni (pour équilibrage)
+    if (args.preferredSentiment) {
+      const openaiKey = process.env.OPENAI_API_KEY;
+      console.log(`⚖️ Filtrage par sentiment préféré: ${args.preferredSentiment}`);
+      
+      // Analyser le sentiment de chaque événement
+      const eventsWithSentiment = await Promise.all(
+        majorEvents.map(async (event) => {
+          const sentiment = await analyzeEventSentiment(
+            event.mainArticle.title,
+            event.mainArticle.content,
+            openaiKey
+          );
+          return { event, sentiment };
+        })
+      );
+      
+      // Filtrer pour garder seulement les événements du sentiment préféré
+      const filteredEvents = eventsWithSentiment
+        .filter(({ sentiment }) => sentiment === args.preferredSentiment)
+        .map(({ event }) => event);
+      
+      // Si on a assez d'événements du sentiment préféré, les utiliser
+      // Sinon, utiliser tous les événements (mieux vaut avoir des événements que rien)
+      if (filteredEvents.length >= limit / 2) {
+        majorEvents = filteredEvents.slice(0, limit);
+        console.log(`✅ ${filteredEvents.length} événements ${args.preferredSentiment} trouvés, ${majorEvents.length} retenus`);
+      } else {
+        console.log(`⚠️ Seulement ${filteredEvents.length} événements ${args.preferredSentiment} trouvés, utilisation de tous les événements`);
+        majorEvents = majorEvents.slice(0, limit);
+      }
+    } else {
+      majorEvents = majorEvents.slice(0, limit);
+    }
 
     console.log(`✅ Événements majeurs retenus: ${majorEvents.length}`);
 
@@ -975,11 +1125,10 @@ Réponds UNIQUEMENT avec du JSON:
 }
 
 /**
- * Vérifie si une décision similaire existe déjà (version optimisée)
- * - Limite aux 7 derniers jours seulement (probabilité de doublon élevée)
- * - Max 30 décisions récentes à comparer
- * - Comparaison sémantique IA limitée (max 10 décisions, timeout 5s)
- * - Fallback rapide sans IA (comparaison textuelle améliorée)
+ * ✅ Vérifie si une décision similaire existe déjà (version optimisée avec hash)
+ * - Utilise un index de hash pour lookup O(1) au lieu de scan complet
+ * - Fallback sur vérification textuelle (7 derniers jours) si hash non trouvé
+ * - Comparaison sémantique IA limitée (max 5 décisions) seulement si nécessaire
  */
 export const checkDuplicateDecision = action({
   args: {
@@ -991,21 +1140,41 @@ export const checkDuplicateDecision = action({
     isDuplicate: boolean;
     existingDecision: any | null;
   }> => {
-    const now = Date.now();
-    const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000; // 7 jours en millisecondes
+    // ✅ 1. Générer le hash du contenu
+    const contentHash = generateContentHash(args.title, args.sourceUrl);
+    
+    // ✅ 2. Vérification O(1) via index hash (TOUTE la base de données)
+    try {
+      const existingByHash = await ctx.runQuery(
+        api.decisions.getDecisionByContentHash,
+        { contentHash }
+      );
+      
+      if (existingByHash) {
+        console.log(`✅ Doublon détecté via hash: ${args.title.substring(0, 50)}...`);
+        return {
+          isDuplicate: true,
+          existingDecision: existingByHash,
+        };
+      }
+    } catch (error) {
+      // Si la query échoue (index pas encore créé), continuer avec fallback
+      console.warn("Error checking hash (index may not exist yet):", error);
+    }
 
-    // Récupérer seulement les décisions récentes (7 derniers jours)
-    // Utiliser getDecisions avec limite, puis filtrer par date
+    // ✅ 3. Fallback : Vérification textuelle (7 derniers jours seulement)
+    const now = Date.now();
+    const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
+
     const allRecentDecisions = await ctx.runQuery(api.decisions.getDecisions, {
-      limit: 50, // Limite raisonnable pour récupérer les récentes
+      limit: 50,
     });
 
-    // Filtrer par date (7 derniers jours) et limiter à 30
     const recentDecisions = allRecentDecisions
       .filter((d: any) => d.date >= sevenDaysAgo)
-      .slice(0, 30); // Max 30 décisions récentes à comparer
+      .slice(0, 20); // Réduit à 20 pour performance
 
-    // 1. Vérification rapide : titre exact ou URL source (sans IA)
+    // Vérification rapide : titre exact ou URL source
     const exactDuplicate = recentDecisions.find(
       (d: any) =>
         d.title.toLowerCase() === args.title.toLowerCase() ||
