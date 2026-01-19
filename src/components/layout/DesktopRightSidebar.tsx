@@ -13,6 +13,7 @@ import { WorldMapWidget } from "@/components/widgets/WorldMapWidget";
 import { WordCloudWidget } from "@/components/widgets/WordCloudWidget";
 import { DailyLoginWidget } from "@/components/widgets/DailyLoginWidget";
 import { LeaderboardWidget } from "@/components/widgets/LeaderboardWidget";
+import { ShopPromoWidget } from "@/components/widgets/ShopPromoWidget";
 import { Separator } from "@/components/ui/separator";
 import { useTranslations } from 'next-intl';
 
@@ -78,6 +79,11 @@ export function DesktopRightSidebar() {
             </div>
           </div>
         )}
+
+        {/* Promotion boutique */}
+        <div className="mb-6">
+          <ShopPromoWidget />
+        </div>
 
         {/* Widgets pertinents */}
         <div className="space-y-6">

@@ -28,7 +28,7 @@ async function callOpenAI(
         },
       ],
       temperature: 0.3, // Température plus basse pour des traductions plus fidèles
-      max_tokens: options?.maxTokens ?? 2000,
+      max_tokens: options?.maxTokens ?? 500, // ✅ OPTIMISÉ: Réduit de 2000 à 500 par défaut
     };
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -100,9 +100,8 @@ export const upsertDecisionTranslation = mutation({
     language: v.string(),
     title: v.string(),
     question: v.string(),
-    answer1: v.string(),
-    answer2: v.string(),
-    answer3: v.string(),
+    answer1: v.string(), // Scénario OUI (système binaire)
+    // answer2 et answer3 supprimés (système binaire)
     officialText: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -121,8 +120,7 @@ export const upsertDecisionTranslation = mutation({
         title: args.title,
         question: args.question,
         answer1: args.answer1,
-        answer2: args.answer2,
-        answer3: args.answer3,
+        // answer2 et answer3 supprimés (système binaire)
         officialText: args.officialText,
         updatedAt: now,
       });
@@ -135,8 +133,7 @@ export const upsertDecisionTranslation = mutation({
         title: args.title,
         question: args.question,
         answer1: args.answer1,
-        answer2: args.answer2,
-        answer3: args.answer3,
+        // answer2 et answer3 supprimés (système binaire)
         officialText: args.officialText,
         createdAt: now,
         updatedAt: now,
@@ -230,7 +227,7 @@ Réponds UNIQUEMENT avec la traduction, sans commentaire ni explication.`;
 
       try {
         const result = await callOpenAI(openaiKey, prompt, {
-          maxTokens: 1000,
+          maxTokens: 500, // ✅ OPTIMISÉ: Réduit de 1000 à 500 (suffisant pour traductions courtes)
         });
         return result || text; // Fallback sur le texte original si erreur
       } catch (error) {
@@ -239,15 +236,13 @@ Réponds UNIQUEMENT avec la traduction, sans commentaire ni explication.`;
       }
     }
 
-    // Traduire tous les textes en parallèle pour performance
+    // Traduire tous les textes en parallèle pour performance (système binaire)
     console.log(`[${new Date().toISOString()}] 🌍 Translating decision ${args.decisionId} from ${sourceLang} to ${args.targetLanguage}...`);
     
-    const [translatedTitle, translatedQuestion, translatedAnswer1, translatedAnswer2, translatedAnswer3, translatedOfficialText] = await Promise.all([
+    const [translatedTitle, translatedQuestion, translatedAnswer1, translatedOfficialText] = await Promise.all([
       translateText(decision.title, "Titre de la décision"),
-      translateText(decision.question, "Question objective"),
-      translateText(decision.answer1, "Réponse 1 (option positive)"),
-      translateText(decision.answer2, "Réponse 2 (option partielle)"),
-      translateText(decision.answer3, "Réponse 3 (option négative)"),
+      translateText(decision.question, "Prédiction binaire"),
+      translateText(decision.answer1, "Scénario OUI"),
       decision.officialText ? translateText(decision.officialText, "Texte officiel de la décision") : Promise.resolve(undefined),
     ]);
 
@@ -262,8 +257,7 @@ Réponds UNIQUEMENT avec la traduction, sans commentaire ni explication.`;
         title: translatedTitle,
         question: translatedQuestion,
         answer1: translatedAnswer1,
-        answer2: translatedAnswer2,
-        answer3: translatedAnswer3,
+        // answer2 et answer3 supprimés (système binaire)
         officialText: translatedOfficialText,
       }
     );

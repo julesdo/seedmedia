@@ -74,6 +74,12 @@ export default defineSchema({
     // Gamification - Daily Login & Streak
     lastLoginDate: v.optional(v.number()), // Date de dernière connexion (timestamp, jour à 00:00)
     loginStreak: v.optional(v.number()), // Nombre de jours consécutifs de connexion
+    // 🎯 SHOP: Badge Fondateur
+    isFounderMember: v.optional(v.boolean()), // Badge fondateur (coût: 5000 Seeds)
+    // 🎨 VOTE SKINS: Skin de vote sélectionné
+    selectedVoteSkin: v.optional(v.string()), // Skin de vote sélectionné (ex: "default", "gold", "silver", etc.)
+    // 💳 STRIPE: Paiements
+    stripeCustomerId: v.optional(v.string()), // ID client Stripe
     // Timestamps
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -998,6 +1004,7 @@ export default defineSchema({
       v.literal("member_joined"), // Nouveau membre (pour organisations)
       v.literal("role_changed"), // Changement de rôle
       v.literal("level_up"), // Montée de niveau
+      v.literal("seeds_earned"), // Seeds gagnés
       v.literal("other") // Autre
     ),
     title: v.string(), // Titre de la notification
@@ -1345,11 +1352,17 @@ export default defineSchema({
     // Indicateurs associés
     indicatorIds: v.array(v.id("indicators")), // Indicateurs à suivre
 
-    // Question et réponses (générées par bot, objectives)
-    question: v.string(), // Question objective générée automatiquement
-    answer1: v.string(), // "ça marche" (générée par bot)
-    answer2: v.string(), // "ça marche partiellement" (générée par bot)
-    answer3: v.string(), // "ça ne marche pas" (générée par bot)
+    // Prédiction binaire (générée par bot)
+    question: v.string(), // Prédiction binaire générée automatiquement (ex: "Est-ce que X va se passer ?")
+    answer1: v.string(), // Scénario OUI (généré par bot) - ce qui se passe si la prédiction est vraie
+    
+    // 🎯 PARAMÈTRES DE BONDING CURVE (pour le marché prédictif)
+    targetPrice: v.number(), // Prix de départ voulu en Seeds (ex: 80 pour évidence, 5 pour rumeur)
+    depthFactor: v.number(), // Volatilité (ex: 10000 pour stable, 500 pour volatile)
+    
+    // 🎯 SHOP: TOP COMMENT (King of the Hill)
+    topCommentId: v.optional(v.id("topArguments")), // Commentaire en vedette actuel
+    currentBidPrice: v.optional(v.number()), // Prix plancher actuel pour le top comment (en Seeds)
 
     // Image libre de droits
     imageUrl: v.optional(v.string()), // URL de l'image
@@ -1413,9 +1426,7 @@ export default defineSchema({
     // Traductions
     title: v.string(),
     question: v.string(),
-    answer1: v.string(),
-    answer2: v.string(),
-    answer3: v.string(),
+    answer1: v.string(), // Scénario OUI uniquement (système binaire)
     officialText: v.optional(v.string()),
 
     // Timestamps
@@ -1427,33 +1438,32 @@ export default defineSchema({
     .index("decisionId_language", ["decisionId", "language"]),
 
   // ============================================
-  // ANTICIPATIONS (Anticipations des utilisateurs)
+  // ANTICIPATIONS (Portefeuille de trading des utilisateurs)
   // ============================================
   anticipations: defineTable({
     decisionId: v.id("decisions"),
     userId: v.id("users"),
 
-    // Issue anticipée
-    issue: v.union(
-      v.literal("works"), // "ça marche"
-      v.literal("partial"), // "ça marche partiellement"
-      v.literal("fails") // "ça ne marche pas"
+    // Position binaire (OUI ou NON)
+    position: v.union(
+      v.literal("yes"), // OUI
+      v.literal("no") // NON
     ),
 
-    // Seeds engagés
-    seedsEngaged: v.number(), // Nombre de Seeds engagés
+    // 🎯 TRADING: Actions possédées et investissement
+    sharesOwned: v.number(), // Nombre d'actions possédées pour cette position
+    totalInvested: v.number(), // Total de Seeds investis au total (pour calculer le prix moyen)
 
     // Résolution
     resolved: v.boolean(), // Résolu ou non
     resolvedAt: v.optional(v.number()),
     result: v.optional(
       v.union(
-        v.literal("won"), // Gagné
-        v.literal("lost"), // Perdu
-        v.literal("partial") // Partiel
+        v.literal("won"), // Gagné (position correcte)
+        v.literal("lost") // Perdu (position incorrecte)
       )
     ),
-    seedsEarned: v.optional(v.number()), // Seeds gagnés (peut être négatif)
+    seedsEarned: v.optional(v.number()), // Seeds gagnés après résolution (peut être négatif)
 
     // Timestamps
     createdAt: v.number(),
@@ -1463,6 +1473,202 @@ export default defineSchema({
     .index("userId", ["userId"])
     .index("resolved", ["resolved"])
     .index("decisionId_userId", ["decisionId", "userId"]),
+
+  // ============================================
+  // VOTE SKINS (🎯 FEATURE 5: LES SKINS DE VOTE - Boutique de styles)
+  // ============================================
+  voteSkins: defineTable({
+    userId: v.id("users"),
+    skinType: v.union(
+      v.literal("default"), // Gratuit
+      v.literal("neon"), // Néon
+      v.literal("stamp"), // Tampon
+      v.literal("gold") // Or
+    ),
+    // Timestamps
+    purchasedAt: v.number(),
+  })
+    .index("userId", ["userId"])
+    .index("userId_skinType", ["userId", "skinType"]),
+
+  // ============================================
+  // DECISION BOOSTS (🎯 FEATURE 4: LE MÉGAPHONE - Booster des news)
+  // ============================================
+  decisionBoosts: defineTable({
+    decisionId: v.id("decisions"),
+    userId: v.id("users"),
+    
+    // Durée du boost (en millisecondes)
+    duration: v.number(), // Durée en ms (ex: 1h = 3600000)
+    
+    // Timestamps
+    createdAt: v.number(), // Début du boost
+    expiresAt: v.number(), // Fin du boost (createdAt + duration)
+    
+    // Montant payé
+    seedsSpent: v.number(), // Seeds dépensés (ex: 500)
+  })
+    .index("decisionId", ["decisionId"])
+    .index("userId", ["userId"])
+    .index("expiresAt", ["expiresAt"])
+    .index("decisionId_expiresAt", ["decisionId", "expiresAt"]),
+
+  // ============================================
+  // TOP ARGUMENTS (🎯 FEATURE 3: KING OF THE HILL - Enchères pour top argument)
+  // ============================================
+  topArguments: defineTable({
+    decisionId: v.id("decisions"),
+    userId: v.id("users"),
+    
+    // Contenu du commentaire
+    content: v.string(),
+    
+    // Mentions dans le commentaire (array d'IDs d'utilisateurs)
+    mentionedUserIds: v.optional(v.array(v.id("users"))),
+    
+    // Position (optionnel, pour rétrocompatibilité - ne plus utiliser)
+    position: v.optional(v.union(
+      v.literal("yes"),
+      v.literal("no")
+    )),
+    
+    // Enchère actuelle (en Seeds)
+    currentBid: v.number(),
+    
+    // Historique des enchères (pour afficher qui a payé combien)
+    bidHistory: v.array(v.object({
+      userId: v.id("users"),
+      amount: v.number(),
+      timestamp: v.number(),
+    })),
+    
+    // Timestamps
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("decisionId", ["decisionId"])
+    .index("userId", ["userId"]),
+
+  // ============================================
+  // OPINION SNAPSHOTS (Snapshots quotidiens des cours d'opinions)
+  // ============================================
+  opinionSnapshots: defineTable({
+    decisionId: v.id("decisions"),
+    
+    // Date du snapshot (timestamp du début de journée UTC)
+    snapshotDate: v.number(), // Timestamp du début de journée (00:00:00 UTC)
+    
+    // 🎯 COURS D'ACTION (valeur en Seeds) - Système binaire
+    yesPrice: v.number(), // Cours de l'action "OUI" en Seeds
+    noPrice: v.number(), // Cours de l'action "NON" en Seeds
+    
+    // Nombre total d'anticipations
+    totalAnticipations: v.number(),
+    
+    // Compteurs par position
+    yesCount: v.number(), // Nombre d'actions OUI
+    noCount: v.number(), // Nombre d'actions NON
+    
+    // Timestamps
+    createdAt: v.number(),
+  })
+    .index("decisionId", ["decisionId"])
+    .index("snapshotDate", ["snapshotDate"])
+    .index("decisionId_snapshotDate", ["decisionId", "snapshotDate"]),
+
+  // ============================================
+  // OPINION COURSE TICKS (Cours en temps réel - à chaque vote)
+  // ============================================
+  opinionCourseTicks: defineTable({
+    decisionId: v.id("decisions"),
+    
+    // Timestamp précis (millisecondes) - permet de voir les variations jusqu'à la seconde
+    timestamp: v.number(),
+    
+    // 🎯 COURS D'ACTION (valeur en Seeds) - Calculé en temps réel selon offre/demande (système binaire)
+    yesPrice: v.number(), // Cours de l'action "OUI" en Seeds
+    noPrice: v.number(), // Cours de l'action "NON" en Seeds
+    
+    // Nombre total d'anticipations au moment du tick
+    totalAnticipations: v.number(),
+    
+    // Compteurs par position
+    yesCount: v.number(), // Nombre d'actions OUI
+    noCount: v.number(), // Nombre d'actions NON
+  })
+    .index("decisionId", ["decisionId"])
+    .index("decisionId_timestamp", ["decisionId", "timestamp"]),
+
+  // ============================================
+  // TRADING POOLS (Pools de liquidité pour le marché prédictif)
+  // ============================================
+  tradingPools: defineTable({
+    decisionId: v.id("decisions"),
+    position: v.union(
+      v.literal("yes"), // Pool OUI
+      v.literal("no") // Pool NON
+    ),
+    
+    // 🎯 PARAMÈTRES DE BONDING CURVE
+    slope: v.number(), // m (pente de la courbe) : m = 100 / depthFactor
+    ghostSupply: v.number(), // S_ghost (supply fantôme initial) : S_ghost = targetPrice / m
+    
+    // 🎯 ÉTAT ACTUEL DU POOL
+    realSupply: v.number(), // Supply réel (actions utilisateurs) - commence à 0
+    reserve: v.number(), // Seeds dans la réserve du pool - commence à 0
+    
+    // Timestamps
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("decisionId", ["decisionId"])
+    .index("decisionId_position", ["decisionId", "position"]),
+
+  // ============================================
+  // TRADING TRANSACTIONS (Historique des transactions de trading)
+  // ============================================
+  tradingTransactions: defineTable({
+    decisionId: v.id("decisions"),
+    userId: v.id("users"),
+    position: v.union(
+      v.literal("yes"), // Position OUI
+      v.literal("no") // Position NON
+    ),
+    type: v.union(
+      v.literal("buy"), // Achat d'actions
+      v.literal("sell") // Vente d'actions
+    ),
+    
+    // Détails de la transaction
+    shares: v.number(), // Nombre d'actions achetées/vendues
+    cost: v.number(), // Coût en Seeds (pour buy) ou montant brut (pour sell)
+    netAmount: v.optional(v.number()), // Montant net reçu (pour sell, après taxe 5%)
+    pricePerShare: v.number(), // Prix brut par action (bonding curve)
+    pricePerShareNormalized: v.optional(v.number()), // Prix normalisé par action (pour affichage)
+    
+    // Timestamps
+    timestamp: v.number(),
+    createdAt: v.number(),
+  })
+    .index("decisionId", ["decisionId"])
+    .index("userId", ["userId"])
+    .index("decisionId_timestamp", ["decisionId", "timestamp"])
+    .index("userId_createdAt", ["userId", "createdAt"]),
+
+  // ============================================
+  // USER DECISION UNLOCKS (🎯 SHOP: Rayon X - Data Insider)
+  // ============================================
+  userDecisionUnlocks: defineTable({
+    userId: v.id("users"),
+    decisionId: v.id("decisions"),
+    feature: v.union(v.literal("rayon_x")), // Fonctionnalité débloquée
+    
+    // Timestamps
+    purchasedAt: v.number(), // Date d'achat
+  })
+    .index("userId", ["userId"])
+    .index("decisionId", ["decisionId"])
+    .index("userId_decisionId", ["userId", "decisionId"]),
 
   // ============================================
   // INDICATORS (Indicateurs mesurables)
@@ -1550,11 +1756,10 @@ export default defineSchema({
   resolutions: defineTable({
     decisionId: v.id("decisions"),
 
-    // Issue résolue
+    // Issue résolue (système binaire)
     issue: v.union(
-      v.literal("works"), // "ça marche"
-      v.literal("partial"), // "ça marche partiellement"
-      v.literal("fails") // "ça ne marche pas"
+      v.literal("yes"), // OUI - La prédiction est vraie
+      v.literal("no") // NON - La prédiction est fausse
     ),
 
     // Confiance
@@ -1617,6 +1822,32 @@ export default defineSchema({
     .index("userId", ["userId"])
     .index("type", ["type"])
     .index("createdAt", ["createdAt"])
+    .index("userId_createdAt", ["userId", "createdAt"]),
+
+  // ============================================
+  // STRIPE PAYMENTS (Paiements Stripe)
+  // ============================================
+  stripePayments: defineTable({
+    userId: v.id("users"),
+    stripeSessionId: v.string(), // ID de session Stripe Checkout
+    stripePaymentIntentId: v.optional(v.string()), // ID du paiement Stripe
+    packId: v.string(), // "pack_survie", "pack_strategie", "pack_whale"
+    amount: v.number(), // Montant en centimes (ex: 199 = 1.99€)
+    currency: v.string(), // "eur"
+    seedsAwarded: v.number(), // Seeds crédités
+    status: v.union(
+      v.literal("pending"), // En attente
+      v.literal("completed"), // Payé et crédité
+      v.literal("failed"), // Échec
+      v.literal("refunded") // Remboursé
+    ),
+    metadata: v.optional(v.any()), // Métadonnées Stripe (JSON)
+    createdAt: v.number(),
+    completedAt: v.optional(v.number()),
+  })
+    .index("userId", ["userId"])
+    .index("stripeSessionId", ["stripeSessionId"])
+    .index("status", ["status"])
     .index("userId_createdAt", ["userId", "createdAt"]),
 
   // ============================================
@@ -1922,4 +2153,18 @@ export default defineSchema({
     .index("botId_timestamp", ["botId", "timestamp"])
     .index("botId_metricType", ["botId", "metricType"])
     .index("botId_metricType_timestamp", ["botId", "metricType", "timestamp"]),
+
+  // ============================================
+  // PROFILE ACCESS (Accès payés aux profils utilisateurs)
+  // ============================================
+  profileAccess: defineTable({
+    viewerId: v.id("users"), // Utilisateur qui paie pour voir le profil
+    profileUserId: v.id("users"), // Utilisateur dont le profil est consulté
+    pricePaid: v.number(), // Prix payé en Seeds (pour historique)
+    economyAtTime: v.number(), // Économie totale au moment du paiement
+    createdAt: v.number(), // Date de création
+  })
+    .index("viewerId", ["viewerId"])
+    .index("profileUserId", ["profileUserId"])
+    .index("viewerId_profileUserId", ["viewerId", "profileUserId"]),
 });

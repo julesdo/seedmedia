@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from 'next-intl';
 import dynamic from "next/dynamic";
+import { SeedsDisplayWithShop } from "@/components/ui/SeedsDisplayWithShop";
 
 // Lazy load SearchModal (modal, pas besoin au chargement initial)
 const SearchModal = dynamic(
@@ -78,28 +79,10 @@ export function SimplifiedHeader() {
             ))}
           </nav>
 
-          {/* Right side: Seeds + Recherche + Notifications + Paramètres */}
+          {/* Right side: Seeds + Notifications + Paramètres */}
           <div className="flex items-center gap-2">
-            {/* Seeds - Gamification */}
-            {isAuthenticated && user && (
-              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary/10 border border-primary/20 hover:bg-primary/15 transition-colors">
-                <SolarIcon icon="leaf-bold" className="size-4 text-primary" />
-                <span className="text-sm font-semibold text-foreground">
-                  {user.seedsBalance || 0}
-                </span>
-              </div>
-            )}
-
-            {/* Recherche */}
-            <button
-              onClick={() => setIsSearchModalOpen(true)}
-              className="flex items-center justify-center h-10 w-10 hover:bg-muted/50 rounded-lg transition-colors"
-            >
-              <SolarIcon 
-                icon="magnifer-bold" 
-                className="size-6 text-muted-foreground"
-              />
-            </button>
+            {/* Seeds avec bouton shop */}
+            <SeedsDisplayWithShop variant="default" buttonSize="sm" />
 
             {/* Notifications */}
             <Link 

@@ -13,6 +13,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { getLocale, getMessages } from 'next-intl/server';
 import { DynamicIntlProvider } from '@/components/providers/DynamicIntlProvider';
 import { ServiceWorkerRegistration } from '@/components/service-worker/ServiceWorkerRegistration';
+import { SeedsGainManager } from "@/components/seeds/SeedsGainManager";
 
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono",
@@ -24,19 +25,19 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://seed.media"),
   title: {
-    default: "Seed - Le média social de la résilience technologique",
+    default: "Seed - Anticipez les décisions importantes",
     template: "%s | Seed",
   },
-  description: "Plateforme d'information et d'utilité publique où la communauté publie, organise, vérifie et fait évoluer les contenus sur les technologies résilientes et l'IA éthique. Gouvernance partagée, pas d'algos opaques.",
+  description: "Suivez les décisions qui façonnent notre monde et testez votre intuition en anticipant leur issue.",
   keywords: [
-    "technologies résilientes",
-    "IA éthique",
-    "média communautaire",
-    "gouvernance partagée",
-    "vérification collaborative",
-    "information publique",
-    "développement durable",
-    "innovation responsable",
+    "décisions importantes",
+    "anticipation",
+    "actualité",
+    "prédiction",
+    "intuition",
+    "apprendre",
+    "comprendre le monde",
+    "seeds",
   ],
   authors: [{ name: "Seed Community" }],
   creator: "Seed by Laiyr",
@@ -46,26 +47,32 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Seed",
+  },
   openGraph: {
     type: "website",
     locale: "fr_FR",
     url: "/",
     siteName: "Seed",
-    title: "Seed - Le média social de la résilience technologique",
-    description: "Plateforme d'information et d'utilité publique où la communauté publie, organise, vérifie et fait évoluer les contenus sur les technologies résilientes et l'IA éthique.",
+    title: "Seed - Anticipez les décisions importantes",
+    description: "Suivez les décisions qui façonnent notre monde et testez votre intuition en anticipant leur issue.",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Seed - Le média social de la résilience technologique",
+        alt: "Seed - Anticipez les décisions importantes",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Seed - Le média social de la résilience technologique",
-    description: "Plateforme d'information et d'utilité publique où la communauté publie, organise, vérifie et fait évoluer les contenus.",
+    title: "Seed - Anticipez les décisions importantes",
+    description: "Suivez les décisions qui façonnent notre monde et testez votre intuition en anticipant leur issue.",
     images: ["/og-image.png"],
     creator: "@seedmedia",
   },
@@ -84,6 +91,21 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   category: "Technology",
+  icons: {
+    icon: [
+      { url: "/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512x512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/icon-192x192.png", sizes: "192x192", type: "image/png" },
+    ],
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-status-bar-style": "black-translucent",
+    "theme-color": "#246BFD",
+  },
 };
 
 export default async function RootLayout({
@@ -133,6 +155,7 @@ export default async function RootLayout({
                   <DynamicIntlProvider initialLocale={locale} initialMessages={messages}>
                     <LanguageProvider>
                       <ServiceWorkerRegistration />
+                      <SeedsGainManager />
                       <main>
                         {children}
                       </main>

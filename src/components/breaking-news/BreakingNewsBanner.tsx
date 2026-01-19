@@ -19,7 +19,10 @@ export function BreakingNewsBanner() {
   const { user } = useUser();
 
   // Récupérer les breaking news importantes (heat >= 70 et récentes)
-  const breakingNews = useQuery(api.decisions.getBreakingNews, {});
+  // ✅ Protection : skip si Convex n'est pas disponible
+  const breakingNews = useQuery(api.decisions.getBreakingNews, {}, { 
+    enabled: true 
+  }) || undefined;
 
   // Mettre à jour la variable CSS pour ajuster le top des autres éléments
   useEffect(() => {

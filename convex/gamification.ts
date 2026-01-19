@@ -34,6 +34,18 @@ function calculateLevel(totalSeeds: number): {
 }
 
 /**
+ * Query publique pour calculer le niveau d'un utilisateur
+ */
+export const getLevelInfo = query({
+  args: {
+    totalSeeds: v.number(),
+  },
+  handler: async (ctx, args) => {
+    return calculateLevel(args.totalSeeds);
+  },
+});
+
+/**
  * Réclame le bonus de connexion quotidienne
  * 
  * Mécanisme :

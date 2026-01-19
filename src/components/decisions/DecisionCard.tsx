@@ -9,7 +9,7 @@ import { Id } from "../../../convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
 import { SolarIcon } from "@/components/icons/SolarIcon";
 import { SaveButton } from "./SaveButton";
-import { EventBadge } from "./EventBadge";
+import { BoostButton } from "./BoostButton";
 import { useTranslations } from 'next-intl';
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -110,36 +110,43 @@ export function DecisionCard({
         className
       )}
     >
-      {/* Header simplifié */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
+      {/* Header simplifié - 2 lignes sur mobile */}
+      <div className={cn(
+        "px-4 py-3 border-b border-border/50",
+        isMobile ? "space-y-2" : "flex items-center justify-between"
+      )}>
+        {/* Ligne 1 : Infos principales */}
         <Link 
           href={`/${decision.slug}`} 
-          className="flex items-center gap-2 flex-1 min-w-0"
+          className={cn(
+            "flex items-center",
+            isMobile ? "w-full" : "flex-1 min-w-0"
+          )}
           prefetch={false}
           onMouseEnter={!isMobile ? handlePrefetch : undefined}
           onClick={isMobile ? handlePrefetch : undefined}
         >
-          <EventBadge
-            impactLevel={decision.impactLevel}
-            heat={decision.heat}
-            sentiment={decision.sentiment}
-            badgeColor={decision.badgeColor}
-            size="sm"
-          />
-          <Badge 
-            variant="secondary" 
-            className={cn(
-              "text-xs px-2 py-0.5",
-              statusColors[decision.status]
-            )}
-          >
-            {statusLabels[decision.status]}
-          </Badge>
-          <span className="text-sm text-muted-foreground truncate">
+          <span className={cn(
+            "text-sm text-muted-foreground",
+            isMobile ? "truncate flex-1 min-w-0" : "truncate"
+          )}>
             {decision.decider}
           </span>
         </Link>
-        <SaveButton decisionId={decision._id} size="icon" isSaved={isSavedProp} />
+        
+        {/* Ligne 2 sur mobile, même ligne sur desktop */}
+        <div className={cn(
+          "flex items-center",
+          isMobile ? "justify-between w-full" : "gap-2"
+        )}>
+          {/* 🎯 FEATURE 4: LE MÉGAPHONE - Bouton booster */}
+          <BoostButton decisionId={decision._id} />
+          
+          {/* Bouton enregistré - toujours à droite */}
+          <div className={isMobile ? "ml-auto" : ""}>
+            <SaveButton decisionId={decision._id} size="icon" isSaved={isSavedProp} />
+          </div>
+        </div>
       </div>
 
       {/* Image pleine largeur - Style Instagram */}

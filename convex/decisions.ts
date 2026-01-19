@@ -2,6 +2,7 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { betterAuthComponent } from "./auth";
 import { Id } from "./_generated/dataModel";
+import { internal } from "./_generated/api";
 
 /**
  * Récupère les Decision Cards avec pagination et filtres
@@ -111,6 +112,35 @@ export const getDecisions = query({
       );
     }
 
+    // 🎯 FEATURE 4: LE MÉGAPHONE - Prioriser les décisions boostées
+    const now = Date.now();
+    const boostedDecisionIds = new Set<Id<"decisions">>();
+    
+    // Récupérer toutes les décisions boostées actuellement
+    const activeBoosts = await ctx.db
+      .query("decisionBoosts")
+      .withIndex("expiresAt", (q) => q.gt("expiresAt", now))
+      .collect();
+
+    for (const boost of activeBoosts) {
+      boostedDecisionIds.add(boost.decisionId);
+    }
+
+    // Séparer les décisions boostées et non boostées
+    const boostedDecisions = decisions.filter((d) => boostedDecisionIds.has(d._id));
+    const nonBoostedDecisions = decisions.filter((d) => !boostedDecisionIds.has(d._id));
+
+    // Trier les boostées par date de boost (plus récent en premier)
+    boostedDecisions.sort((a, b) => {
+      const boostA = activeBoosts.find((boost) => boost.decisionId === a._id);
+      const boostB = activeBoosts.find((boost) => boost.decisionId === b._id);
+      if (!boostA || !boostB) return 0;
+      return boostB.createdAt - boostA.createdAt; // Plus récent en premier
+    });
+
+    // Combiner : boostées en premier, puis non boostées
+    decisions = [...boostedDecisions, ...nonBoostedDecisions];
+
     // Limiter les résultats
     decisions = decisions.slice(0, args.limit || 20);
 
@@ -219,11 +249,8 @@ export const getDecisionById = query({
       .collect();
 
     // Récupérer les actualités
-    const newsItems = await ctx.db
-      .query("newsItems")
-      .withIndex("decisionId", (q) => q.eq("decisionId", args.decisionId))
-      .order("desc")
-      .take(10);
+    // ⚠️ SUPPRIMÉ: newsItems (plus nécessaire, utilise RelatedNewsClient côté client)
+    const newsItems: any[] = [];
 
     // Récupérer la résolution si elle existe
     const resolution = await ctx.db
@@ -277,11 +304,8 @@ export const getDecisionBySlug = query({
       .collect();
 
     // Récupérer les actualités
-    const newsItems = await ctx.db
-      .query("newsItems")
-      .withIndex("decisionId", (q) => q.eq("decisionId", decision._id))
-      .order("desc")
-      .take(10);
+    // ⚠️ SUPPRIMÉ: newsItems (plus nécessaire, utilise RelatedNewsClient côté client)
+    const newsItems: any[] = [];
 
     // Récupérer la résolution si elle existe
     const resolution = await ctx.db
@@ -457,9 +481,11 @@ export const createDecision = mutation({
     impactedDomains: v.array(v.string()),
     indicatorIds: v.array(v.id("indicators")),
     question: v.string(),
-    answer1: v.string(),
-    answer2: v.string(),
-    answer3: v.string(),
+    answer1: v.string(), // Scénario OUI (système binaire)
+    // answer2 et answer3 supprimés (système binaire)
+    // 🚀 PARAMÈTRES IPO (Initial Political Offering) - calculés dynamiquement par le bot
+    targetPrice: v.optional(v.number()), // Prix de départ (1-99 Seeds)
+    depthFactor: v.optional(v.number()), // Profondeur du marché (500-10000)
     imageUrl: v.optional(v.string()),
     imageSource: v.optional(v.string()),
     createdBy: v.union(v.literal("bot"), v.literal("manual")),
@@ -497,8 +523,10 @@ export const createDecision = mutation({
       indicatorIds: args.indicatorIds,
       question: args.question,
       answer1: args.answer1,
-      answer2: args.answer2,
-      answer3: args.answer3,
+      // answer2 et answer3 supprimés (système binaire)
+      // 🚀 PARAMÈTRES IPO (calculés dynamiquement par le bot ou valeurs par défaut)
+      targetPrice: args.targetPrice ?? 50, // Prix de départ (1-99 Seeds) - calculé par calculateIPOParameters()
+      depthFactor: args.depthFactor ?? 5000, // Profondeur du marché (500-10000) - calculé par calculateIPOParameters()
       imageUrl: args.imageUrl,
       imageSource: args.imageSource,
       createdBy: args.createdBy,
@@ -512,6 +540,16 @@ export const createDecision = mutation({
       createdAt: now,
       updatedAt: now,
     });
+
+    // 🎯 PHASE 2.2: Initialiser les pools de trading OUI/NON
+    try {
+      await ctx.scheduler.runAfter(0, internal.trading.initializeTradingPools, {
+        decisionId,
+      });
+    } catch (error) {
+      // Ne pas bloquer la création si l'initialisation des pools échoue
+      console.error("Error initializing trading pools:", error);
+    }
 
     return decisionId;
   },
@@ -560,9 +598,8 @@ export const updateDecision = mutation({
     impactedDomains: v.optional(v.array(v.string())),
     indicatorIds: v.optional(v.array(v.id("indicators"))),
     question: v.optional(v.string()),
-    answer1: v.optional(v.string()),
-    answer2: v.optional(v.string()),
-    answer3: v.optional(v.string()),
+    answer1: v.optional(v.string()), // Scénario OUI (système binaire)
+    // answer2 et answer3 supprimés (système binaire)
     imageUrl: v.optional(v.string()),
     imageSource: v.optional(v.string()),
     status: v.optional(
@@ -608,8 +645,7 @@ export const updateDecision = mutation({
       updateData.indicatorIds = updates.indicatorIds;
     if (updates.question !== undefined) updateData.question = updates.question;
     if (updates.answer1 !== undefined) updateData.answer1 = updates.answer1;
-    if (updates.answer2 !== undefined) updateData.answer2 = updates.answer2;
-    if (updates.answer3 !== undefined) updateData.answer3 = updates.answer3;
+    // answer2 et answer3 supprimés (système binaire)
     if (updates.imageUrl !== undefined) updateData.imageUrl = updates.imageUrl;
     if (updates.imageSource !== undefined)
       updateData.imageSource = updates.imageSource;

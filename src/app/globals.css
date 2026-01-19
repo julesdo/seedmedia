@@ -3,6 +3,49 @@
 @plugin "tailwind-scrollbar-hide";
 @import "tw-animate-css";
 
+/* Styles pour les notifications push mobiles Sonner */
+@media (max-width: 767px) {
+  .mobile-push-notification {
+    background: var(--background) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05) !important;
+    padding: 14px 16px !important;
+    margin-top: env(safe-area-inset-top, 8px) !important;
+    margin-left: 16px !important;
+    margin-right: 16px !important;
+    max-width: calc(100vw - 32px) !important;
+    width: auto !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+  }
+
+  /* Positionnement en haut pour mobile */
+  [data-sonner-toaster][data-position="top-center"] {
+    top: env(safe-area-inset-top, 8px) !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    right: auto !important;
+    bottom: auto !important;
+  }
+
+  /* Animation d'entrée depuis le haut */
+  [data-sonner-toast][data-styled="true"] {
+    animation: slideDownMobile 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+
+  @keyframes slideDownMobile {
+    from {
+      opacity: 0;
+      transform: translateY(-100%) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+}
+
 /* View Transitions API - Optimisations pour la fluidité */
 @view-transition {
   navigation: auto;
@@ -2790,6 +2833,70 @@
     a:active {
       transform: translateZ(0) scale(0.98);
       transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  }
+
+  /* Styles pour les notifications push mobiles Sonner */
+  @media (max-width: 767px) {
+    .mobile-push-notification {
+      background: var(--card) !important;
+      border: 1px solid var(--border) !important;
+      border-radius: 12px !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05) !important;
+      padding: 14px 16px !important;
+      margin-top: env(safe-area-inset-top, 8px) !important;
+      margin-left: 16px !important;
+      margin-right: 16px !important;
+      max-width: calc(100vw - 32px) !important;
+      width: auto !important;
+      backdrop-filter: blur(10px) !important;
+      -webkit-backdrop-filter: blur(10px) !important;
+    }
+
+    /* Positionnement en haut pour mobile */
+    [data-sonner-toaster][data-position="top-center"] {
+      top: env(safe-area-inset-top, 8px) !important;
+      left: 50% !important;
+      transform: translateX(-50%) !important;
+      right: auto !important;
+      bottom: auto !important;
+    }
+
+    /* Style du toast pour ressembler à une notification push */
+    [data-sonner-toast][data-styled="true"] {
+      animation: slideDownMobile 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+      border-radius: 12px !important;
+    }
+
+    /* Style du contenu du toast */
+    [data-sonner-toast] [data-title] {
+      font-weight: 600 !important;
+      font-size: 14px !important;
+      line-height: 1.4 !important;
+      margin-bottom: 4px !important;
+    }
+
+    [data-sonner-toast] [data-description] {
+      font-size: 13px !important;
+      line-height: 1.4 !important;
+      color: var(--muted-foreground) !important;
+    }
+
+    /* Icône à gauche */
+    [data-sonner-toast] [data-icon] {
+      margin-right: 12px !important;
+      flex-shrink: 0 !important;
+    }
+
+    @keyframes slideDownMobile {
+      from {
+        opacity: 0;
+        transform: translateY(-100%) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
     }
   }
 }

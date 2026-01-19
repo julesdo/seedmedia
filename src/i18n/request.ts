@@ -20,18 +20,31 @@ export default getRequestConfig(async () => {
   }
 
   try {
+    const messages = (await import(`../../messages/${locale}.json`)).default;
     return {
       locale,
-      messages: (await import(`../../messages/${locale}.json`)).default,
+      messages,
       timeZone: 'Europe/Paris' // Timezone par défaut pour éviter les mismatches
     };
   } catch (error) {
     // Fallback to French if locale file doesn't exist
-    return {
-      locale: routing.defaultLocale,
-      messages: (await import(`../../messages/${routing.defaultLocale}.json`)).default,
-      timeZone: 'Europe/Paris'
-    };
+    console.error(`Error loading locale ${locale}, falling back to ${routing.defaultLocale}:`, error);
+    try {
+      const fallbackMessages = (await import(`../../messages/${routing.defaultLocale}.json`)).default;
+      return {
+        locale: routing.defaultLocale,
+        messages: fallbackMessages,
+        timeZone: 'Europe/Paris'
+      };
+    } catch (fallbackError) {
+      // Last resort: return empty messages to prevent 404
+      console.error(`Error loading fallback locale ${routing.defaultLocale}:`, fallbackError);
+      return {
+        locale: routing.defaultLocale,
+        messages: {},
+        timeZone: 'Europe/Paris'
+      };
+    }
   }
 });
 

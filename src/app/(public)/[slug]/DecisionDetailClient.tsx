@@ -16,8 +16,25 @@ function ReelFeedSkeleton() {
       {/* Image de fond skeleton */}
       <div className="absolute inset-0">
         <Skeleton className="w-full h-full rounded-none" />
-        {/* Overlay gradient comme dans l'UI réelle */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/20" />
+        {/* Overlay gradient progressif style TikTok - Plus foncé vers le bas - Utilise la couleur de bg */}
+        {/* Au niveau du titre (50-60%), overlay suffisamment sombre pour la lecture, puis de plus en plus foncé */}
+        <div 
+          className="absolute inset-0"
+          style={{
+            background: `linear-gradient(to top, 
+              hsl(var(--background) / 0.95) 0%,
+              hsl(var(--background) / 0.92) 15%,
+              hsl(var(--background) / 0.85) 30%,
+              hsl(var(--background) / 0.75) 45%,
+              hsl(var(--background) / 0.70) 55%,
+              hsl(var(--background) / 0.60) 65%,
+              hsl(var(--background) / 0.45) 75%,
+              hsl(var(--background) / 0.30) 85%,
+              hsl(var(--background) / 0.15) 95%,
+              hsl(var(--background) / 0.05) 100%
+            )`
+          }}
+        />
       </div>
 
       {/* Contenu superposé */}

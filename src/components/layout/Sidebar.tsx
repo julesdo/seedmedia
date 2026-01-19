@@ -57,9 +57,9 @@ const navSections: NavSection[] = [
         icon: "magnifer-bold",
       },
       {
-        title: "Carte",
-        href: "/map",
-        icon: "map-point-bold",
+        title: "Portefeuille",
+        href: "/portfolio",
+        icon: "wallet-bold",
       },
       {
         title: "Projets",

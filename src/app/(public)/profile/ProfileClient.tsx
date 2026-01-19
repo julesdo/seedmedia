@@ -11,6 +11,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import { OpinionPortfolio } from "@/components/trading/OpinionPortfolio";
+import { SeedDisplay } from "@/components/ui/SeedDisplay";
+import { FounderBadgeButton } from "@/components/shop/FounderBadgeButton";
 
 /**
  * Composant client pour la page Profil
@@ -95,7 +98,7 @@ export function ProfileClient() {
               />
             ) : (
               <div className="size-16 rounded-full bg-primary/10 flex items-center justify-center">
-                <SolarIcon name="user" className="size-8 text-primary" />
+                <SolarIcon icon="user-bold" className="size-8 text-primary" />
               </div>
             )}
 
@@ -109,19 +112,19 @@ export function ProfileClient() {
 
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="default" className="gap-1">
-                  <SolarIcon name="star" className="size-3" />
+                  <SolarIcon icon="star-bold" className="size-3" />
                   Niveau {level}
                 </Badge>
                 <Badge variant="outline" className="gap-1">
-                  <SolarIcon name="seedling" className="size-3" />
-                  {seedsBalance} Seeds
+                  <SeedDisplay amount={seedsBalance} variant="compact" iconSize="size-3" />
                 </Badge>
                 {stats.accuracy > 0 && (
                   <Badge variant="secondary" className="gap-1">
-                    <SolarIcon name="check-circle" className="size-3" />
+                    <SolarIcon icon="check-circle-bold" className="size-3" />
                     {stats.accuracy}% précision
                   </Badge>
                 )}
+                <FounderBadgeButton />
               </div>
             </div>
           </div>
@@ -133,7 +136,7 @@ export function ProfileClient() {
                 Progression vers le niveau {level + 1}
               </span>
               <span className="font-medium">
-                {seedsBalance - currentLevelSeeds} / {nextLevelSeeds - currentLevelSeeds} Seeds
+                <SeedDisplay amount={seedsBalance - currentLevelSeeds} variant="inline" iconSize="size-2.5" /> / <SeedDisplay amount={nextLevelSeeds - currentLevelSeeds} variant="inline" iconSize="size-2.5" />
               </span>
             </div>
             <Progress value={Math.max(0, Math.min(100, progress))} className="h-2" />
@@ -153,7 +156,7 @@ export function ProfileClient() {
                 <p className="text-2xl font-bold">{stats.totalAnticipations}</p>
               </div>
               <SolarIcon
-                name="star"
+                icon="star-bold"
                 className="size-8 text-primary opacity-20"
               />
             </div>
@@ -170,7 +173,7 @@ export function ProfileClient() {
                 </p>
               </div>
               <SolarIcon
-                name="check-circle"
+                icon="check-circle-bold"
                 className="size-8 text-primary opacity-20"
               />
             </div>
@@ -187,13 +190,26 @@ export function ProfileClient() {
                 </p>
               </div>
               <SolarIcon
-                name="trophy"
+                icon="cup-star-bold"
                 className="size-8 text-primary opacity-20"
               />
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* 🎯 FEATURE 2: LE TRADING - Portefeuille d'Opinions */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <SolarIcon icon="chart-2-bold" className="size-5 text-primary" />
+            Portefeuille d'Opinions
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <OpinionPortfolio />
+        </CardContent>
+      </Card>
 
       {/* Historique des transactions récentes */}
       {transactions && transactions.length > 0 && (
@@ -218,10 +234,10 @@ export function ProfileClient() {
                       )}
                     >
                       <SolarIcon
-                        name={
+                        icon={
                           transaction.type === "earned"
-                            ? "arrow-up"
-                            : "arrow-down"
+                            ? "arrow-up-bold"
+                            : "arrow-down-bold"
                         }
                         className="size-5"
                       />
@@ -250,7 +266,7 @@ export function ProfileClient() {
                     )}
                   >
                     {transaction.type === "earned" ? "+" : "-"}
-                    {transaction.amount} Seeds
+                    <SeedDisplay amount={transaction.amount} variant="inline" iconSize="size-2.5" />
                   </div>
                 </div>
               ))}

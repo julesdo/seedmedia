@@ -140,7 +140,7 @@ Réponds UNIQUEMENT avec du JSON valide:
 }`;
 
         const synthesisResult = await callOpenAI(openaiKeyForSynthesis, eventSynthesisPrompt, {
-          maxTokens: 300,
+          maxTokens: 200, // ✅ OPTIMISÉ: Réduit de 300 à 200 (titre + description courts)
         });
 
         if (synthesisResult) {
@@ -179,12 +179,10 @@ Réponds UNIQUEMENT avec du JSON valide:
       indicatorIds: [],
     };
 
-    // Questions prédictives par défaut (seront améliorées par l'IA)
-    // ✅ SANS labels "Scénario" - juste le texte descriptif
-    let question = `Dans les 3 prochains mois, quelles seront les conséquences de cette décision ?`;
-    let answer1 = `Les objectifs sont atteints rapidement avec des effets positifs mesurables.`;
-    let answer2 = `Résultats partiels avec des effets positifs et négatifs qui s'équilibrent.`;
-    let answer3 = `Les objectifs ne sont pas atteints, avec des conséquences négatives significatives.`;
+    // Prédictions binaires par défaut (seront améliorées par l'IA)
+    // ✅ Système binaire : seulement OUI/NON, pas besoin de scénario détaillé
+    let question = `Est-ce que cette décision aura des conséquences positives dans les 3 prochains mois ?`;
+    let answer1 = `OUI`; // Valeur minimale (requis par le schéma mais non utilisé dans l'UI binaire)
 
     // Utiliser l'IA si disponible (OpenAI)
     try {
@@ -232,7 +230,7 @@ Réponds UNIQUEMENT avec du JSON valide (format json_object):
         const extractionResult = await callOpenAI(openaiKeyForSynthesis, extractionPrompt, {
           responseFormat: "json_object",
           temperature: 0.1,
-          maxTokens: 500,
+          maxTokens: 300, // ✅ OPTIMISÉ: Réduit de 500 à 300 (JSON court suffisant)
         });
 
         if (extractionResult) {
@@ -286,8 +284,8 @@ Réponds UNIQUEMENT avec du JSON valide (format json_object):
           }
         }
 
-        // Génération de question prédictive avec scénarios accessibles au grand public
-        const questionPrompt = `Tu es un journaliste expert qui explique l'actualité internationale au grand public. Analyse cet ÉVÉNEMENT MAJEUR et génère une question prédictive CLAIRE, ainsi que trois scénarios courts et ACCESSIBLES (sans jargon technique).
+        // Génération de question prédictive BINAIRE (OUI/NON) uniquement
+        const questionPrompt = `Tu es un journaliste expert qui explique l'actualité internationale au grand public. Analyse cet ÉVÉNEMENT MAJEUR et génère une PRÉDICTION BINAIRE (OUI/NON) sous forme de question.
 
 ═══════════════════════════════════════════════════════════════
 ÉVÉNEMENT MAJEUR À ANALYSER:
@@ -300,101 +298,94 @@ Domaines impactés: ${extracted.impactedDomains.join(", ") || "À déterminer"}
 Articles (${articles.length}): ${articles.map((a) => a.title).join("; ")}
 
 ═══════════════════════════════════════════════════════════════
+🛡️ RÈGLES ÉTHIQUES ABSOLUES (À RESPECTER IMPÉRATIVEMENT):
+═══════════════════════════════════════════════════════════════
+
+❌ INTERDICTIONS STRICTES:
+- NE JAMAIS générer de questions sur des morts, décès, victimes, pertes humaines
+- NE JAMAIS demander "Y aura-t-il plus de X morts ?" ou "Combien de morts ?"
+- NE JAMAIS faire de prédictions morbides ou exploitant des tragédies humaines
+- NE JAMAIS utiliser des formulations comme "plus de X morts", "au moins X décès", "nombre de victimes"
+
+✅ À PRIVILÉGIER:
+- Questions sur les conséquences politiques, économiques, diplomatiques
+- Questions sur les impacts positifs ou négatifs (sans mentionner les morts)
+- Questions sur les décisions, accords, sanctions, politiques
+- Questions sur les améliorations ou dégradations de situation (sans morbidité)
+
+EXEMPLES DE QUESTIONS INTERDITES:
+❌ "Y aura-t-il plus de 200 morts au Mozambique dans les 3 prochains mois ?"
+❌ "Combien de victimes y aura-t-il dans cette catastrophe ?"
+❌ "Le nombre de décès va-t-il dépasser X ?"
+
+EXEMPLES DE QUESTIONS AUTORISÉES:
+✅ "La situation humanitaire va-t-elle s'améliorer au Mozambique dans les 3 prochains mois ?"
+✅ "Les secours vont-ils être efficaces dans les 3 prochains mois ?"
+✅ "La reconstruction va-t-elle progresser dans les 3 prochains mois ?"
+
+═══════════════════════════════════════════════════════════════
 INSTRUCTIONS STRICTES:
 ═══════════════════════════════════════════════════════════════
 
-1. QUESTION PRÉDICTIVE (OBLIGATOIRE):
+1. PRÉDICTION BINAIRE SOUS FORME DE QUESTION (OBLIGATOIRE):
+   ✓ Doit être une QUESTION FERMÉE qui appelle une réponse OUI ou NON
    ✓ Doit être COURTE et DIRECTE (maximum 12-15 mots)
    ✓ Doit être SPÉCIFIQUE à cet événement précis (pas générique)
    ✓ Doit mentionner le décideur OU le pays/région (pas besoin des deux)
-   ✓ Doit avoir un horizon temporel: "3 prochains mois" ou "6 prochains mois"
+   ✓ Doit avoir un horizon temporel: "dans les 3 prochains mois" ou "dans les 6 prochains mois"
    ✓ Ton simple et direct, comme une conversation (éviter les formulations pompeuses)
    ✓ Éviter les énumérations de pays/acteurs multiples dans la question
+   ✓ Formulation typique: "Est-ce que... ?", "Va-t-il... ?", "Sera-t-il... ?", "Y aura-t-il... ?"
    
-   ✅ EXEMPLES BONS (courts et directs):
-   - "Que va-t-il se passer au Venezuela dans les 3 prochains mois ?"
-   - "Comment la Syrie va-t-elle réagir à la levée des sanctions ?"
-   - "Quelles seront les conséquences pour l'Iran dans les 3 prochains mois ?"
-   - "Comment cette découverte va-t-elle changer les choses ?"
-   - "Quel impact aura cet accord de paix dans les 6 prochains mois ?"
-   - "Comment Kim Jong Un va-t-il utiliser ce tir de missiles ?"
+   ✅ EXEMPLES BONS (prédictions binaires claires):
+   - "Est-ce que la situation va s'améliorer au Venezuela dans les 3 prochains mois ?"
+   - "La Syrie va-t-elle bénéficier de la levée des sanctions dans les 6 prochains mois ?"
+   - "L'Iran va-t-il subir des conséquences négatives dans les 3 prochains mois ?"
+   - "Cette découverte va-t-elle changer les choses positivement dans les 6 prochains mois ?"
+   - "Cet accord de paix va-t-il avoir un impact positif dans les 3 prochains mois ?"
+   - "Kim Jong Un va-t-il utiliser ce tir de missiles de manière constructive dans les 6 prochains mois ?"
+   
+   ❌ EXEMPLES MAUVAIS (questions ouvertes, pas binaires):
+   - "Que va-t-il se passer au Venezuela dans les 3 prochains mois ?" (question ouverte)
+   - "Comment la Syrie va-t-elle réagir à la levée des sanctions ?" (question ouverte)
+   - "Quelles seront les conséquences pour l'Iran dans les 3 prochains mois ?" (question ouverte)
+   - "Comment cette découverte va-t-elle changer les choses ?" (question ouverte)
    
    ❌ EXEMPLES MAUVAIS (trop longs et pompeux):
-   - "Dans les 3 prochains mois, comment Kim Jong Un et la Corée du Nord vont-ils utiliser ce tir de missiles hypersoniques pour influencer la sécurité et la diplomatie dans la péninsule coréenne et les relations avec la Corée du Sud, le Japon et les États-Unis ?"
-   - "Quelles seront les conséquences économiques, politiques et sociales de cette décision pour les populations concernées ?"
-   - "Comment cet événement va-t-il transformer les relations internationales et l'équilibre géopolitique dans la région ?"
+   - "Dans les 3 prochains mois, est-ce que Kim Jong Un et la Corée du Nord vont-ils utiliser ce tir de missiles hypersoniques pour influencer positivement la sécurité et la diplomatie dans la péninsule coréenne et les relations avec la Corée du Sud, le Japon et les États-Unis ?"
    
    ❌ EXEMPLES MAUVAIS (trop génériques):
    - "Quelles seront les conséquences ?"
    - "Que va-t-il se passer ?"
    - "Quels seront les impacts ?"
 
-2. TROIS RÉPONSES ACCESSIBLES AU GRAND PUBLIC:
+2. PAS DE SCÉNARIO NÉCESSAIRE:
 
-   IMPORTANT: Les réponses doivent être COMPRÉHENSIBLES par tous, sans jargon technique ou économique complexe.
-   ⚠️ CRITIQUE: Ne JAMAIS inclure de labels comme "Scénario A", "Scénario B", "(pessimiste)", "(optimiste)", etc. Juste le texte descriptif pur.
-   
-   Pour événements NÉGATIFS (crises, catastrophes, conflits):
-   Réponse 1 (conséquences négatives probables):
-   ✓ Langage simple et accessible (ex: "les prix augmentent" plutôt que "inflation de X%")
-   ✓ Conséquences concrètes pour les populations (ex: "difficultés à se nourrir", "services publics perturbés")
-   ✓ Mention des pays/régions concernés de manière claire
-   ✓ 2-3 phrases maximum, style journalistique simple
-   ✓ Exemple: "La situation se détériore. Les prix des produits de base augmentent fortement, les services publics fonctionnent mal et la population rencontre des difficultés quotidiennes."
-   
-   Réponse 2 (scénario intermédiaire réaliste):
-   ✓ Situation stabilisée mais sans amélioration majeure
-   ✓ Langage simple, conséquences équilibrées (du bon et du moins bon)
-   ✓ 2-3 phrases maximum
-   ✓ Exemple: "La situation reste tendue mais se stabilise progressivement. Certains secteurs s'améliorent tandis que d'autres continuent de rencontrer des difficultés."
-   
-   Réponse 3 (stabilisation ou amélioration):
-   ✓ Intervention ou résolution positive expliquée simplement
-   ✓ Améliorations concrètes pour les populations
-   ✓ 2-3 phrases maximum
-   ✓ Exemple: "La situation s'améliore grâce à une intervention internationale. Les conditions de vie de la population commencent à se normaliser et les services essentiels reprennent progressivement."
-   
-   Pour événements POSITIFS (découvertes, accords, innovations):
-   Réponse 1 (impact positif mais limité):
-   ✓ Progrès réels mais avec des limites expliquées simplement
-   ✓ 2-3 phrases maximum
-   ✓ Exemple: "Des progrès sont réalisés mais restent limités. Certaines améliorations sont visibles mais des défis importants persistent."
-   
-   Réponse 2 (impact positif significatif):
-   ✓ Progrès concrets et bénéfices pour les populations
-   ✓ Langage simple et accessible
-   ✓ 2-3 phrases maximum
-   ✓ Exemple: "Des améliorations significatives sont observées. Les populations concernées bénéficient de changements positifs dans leur quotidien."
-   
-   Réponse 3 (impact positif transformateur):
-   ✓ Transformation majeure expliquée simplement
-   ✓ Bénéfices larges et durables
-   ✓ 2-3 phrases maximum
-   ✓ Exemple: "Une transformation majeure est en cours. Les bénéfices sont larges et durables, améliorant significativement les conditions de vie des populations concernées."
+   ⚠️ IMPORTANT: Le système est binaire (OUI/NON). Pas besoin de générer un scénario détaillé.
+   Les utilisateurs répondront simplement OUI ou NON à la question prédictive.
+   La question doit être suffisamment claire pour que les utilisateurs comprennent ce qu'ils prédisent.
 
 ═══════════════════════════════════════════════════════════════
 RÈGLES ABSOLUES:
 ═══════════════════════════════════════════════════════════════
-- Langage SIMPLE et ACCESSIBLE (éviter: taux, pourcentages techniques, jargon économique)
-- Chaque scénario: 2-3 phrases MAXIMUM
+- La question doit être formulée pour une réponse BINAIRE (OUI/NON), pas une question ouverte
+- La question doit être suffisamment claire pour que les utilisateurs comprennent ce qu'ils prédisent
 - Style journalistique grand public (comme un article de presse généraliste)
-- Mentionner les pays/régions de manière claire
-- Conséquences CONCRÈTES pour les populations (pas de détails techniques)
+- Mentionner les pays/régions de manière claire si pertinent
 - Sois FACTUEL et OBJECTIF, pas idéologique
-- Évite les termes techniques: préfère "les prix augmentent" à "inflation de X%"
 
 Réponds UNIQUEMENT avec du JSON valide (format json_object):
 {
-  "question": "question prédictive COURTE (max 12-15 mots), directe et simple, avec horizon temporel",
-  "answer1": "2-3 phrases courtes, langage simple, conséquences concrètes pour les populations. SANS label 'Scénario A' ou 'pessimiste', juste le texte descriptif.",
-  "answer2": "2-3 phrases courtes, langage simple, situation équilibrée. SANS label 'Scénario B' ou 'neutre/mitigé', juste le texte descriptif.",
-  "answer3": "2-3 phrases courtes, langage simple, améliorations concrètes. SANS label 'Scénario C' ou 'optimiste', juste le texte descriptif."
+  "question": "question prédictive BINAIRE (OUI/NON) COURTE (max 12-15 mots), directe et simple, avec horizon temporel"
 }
 
-IMPORTANT: Les réponses (answer1, answer2, answer3) doivent être UNIQUEMENT le texte descriptif, SANS aucun préfixe comme "Scénario A", "Scénario B", "Scénario C", "(pessimiste)", "(optimiste)", etc.`;
+IMPORTANT: 
+- La question doit être formulée pour une réponse binaire (OUI/NON)
+- Pas besoin de générer de scénario : le système est binaire (OUI ou NON)
+- La question suffit, les utilisateurs répondront OUI ou NON directement`;
 
         const questionResult = await callOpenAI(openaiKeyForSynthesis, questionPrompt, {
-          maxTokens: 4000,
+          maxTokens: 150, // ✅ OPTIMISÉ: Réduit à 150 (suffisant pour une question courte uniquement)
         });
 
         if (questionResult) {
@@ -408,49 +399,19 @@ IMPORTANT: Les réponses (answer1, answer2, answer3) doivent être UNIQUEMENT le
             const parsed = JSON.parse(jsonString);
             
             if (parsed.question) question = parsed.question;
-            // ✅ Nettoyer les réponses pour retirer les labels "Scénario" si présents
-            if (parsed.answer1) {
-              answer1 = parsed.answer1
-                .replace(/^Scénario\s+[ABC]\s*[-:]?\s*/i, '')
-                .replace(/^Scénario\s+(pessimiste|optimiste|mitigé|neutre|limité|modéré|majeur)\s*[-:]?\s*/i, '')
-                .replace(/^\(pessimiste\)\s*[-:]?\s*/i, '')
-                .replace(/^\(optimiste\)\s*[-:]?\s*/i, '')
-                .replace(/^\(mitigé\)\s*[-:]?\s*/i, '')
-                .trim();
-            }
-            if (parsed.answer2) {
-              answer2 = parsed.answer2
-                .replace(/^Scénario\s+[ABC]\s*[-:]?\s*/i, '')
-                .replace(/^Scénario\s+(pessimiste|optimiste|mitigé|neutre|limité|modéré|majeur)\s*[-:]?\s*/i, '')
-                .replace(/^\(pessimiste\)\s*[-:]?\s*/i, '')
-                .replace(/^\(optimiste\)\s*[-:]?\s*/i, '')
-                .replace(/^\(mitigé\)\s*[-:]?\s*/i, '')
-                .trim();
-            }
-            if (parsed.answer3) {
-              answer3 = parsed.answer3
-                .replace(/^Scénario\s+[ABC]\s*[-:]?\s*/i, '')
-                .replace(/^Scénario\s+(pessimiste|optimiste|mitigé|neutre|limité|modéré|majeur)\s*[-:]?\s*/i, '')
-                .replace(/^\(pessimiste\)\s*[-:]?\s*/i, '')
-                .replace(/^\(optimiste\)\s*[-:]?\s*/i, '')
-                .replace(/^\(mitigé\)\s*[-:]?\s*/i, '')
-                .trim();
-            }
+            // ✅ Pas besoin de answer1 : système binaire (OUI/NON uniquement)
+            // answer1 reste à sa valeur par défaut
           } catch (parseError) {
             console.error("Error parsing AI question result:", parseError);
             console.error("Raw response:", questionResult);
-            // En cas d'erreur de parsing, utiliser des valeurs par défaut spécifiques (SANS labels "Scénario")
-            question = `Dans les 3 prochains mois, quelles seront les conséquences de cette décision pour ${extracted.decider} ?`;
-            answer1 = `Conséquences négatives significatives pour ${extracted.decider} avec détérioration des conditions économiques et politiques.`;
-            answer2 = `Résultats partiels avec des effets positifs et négatifs qui s'équilibrent pour ${extracted.decider}.`;
-            answer3 = `Stabilisation ou amélioration de la situation pour ${extracted.decider} avec intervention ou résolution positive.`;
+            // En cas d'erreur de parsing, utiliser des valeurs par défaut binaires
+            question = `Est-ce que cette décision aura des conséquences positives pour ${extracted.decider} dans les 3 prochains mois ?`;
+            answer1 = `OUI`; // Valeur minimale (requis par le schéma mais non utilisé)
           }
         } else {
-          // Si l'IA ne retourne rien, utiliser des valeurs par défaut spécifiques (SANS labels "Scénario")
-          question = `Dans les 3 prochains mois, quelles seront les conséquences de cette décision pour ${extracted.decider} ?`;
-          answer1 = `Conséquences négatives significatives pour ${extracted.decider} avec détérioration des conditions économiques et politiques.`;
-          answer2 = `Résultats partiels avec des effets positifs et négatifs qui s'équilibrent pour ${extracted.decider}.`;
-          answer3 = `Stabilisation ou amélioration de la situation pour ${extracted.decider} avec intervention ou résolution positive.`;
+          // Si l'IA ne retourne rien, utiliser des valeurs par défaut binaires
+          question = `Est-ce que cette décision aura des conséquences positives pour ${extracted.decider} dans les 3 prochains mois ?`;
+          answer1 = `OUI`; // Valeur minimale (requis par le schéma mais non utilisé)
         }
       }
     } catch (error) {
@@ -488,7 +449,7 @@ Réponds UNIQUEMENT avec du JSON valide:
 }`;
 
         const gamificationResult = await callOpenAI(openaiKeyForSynthesis, gamificationPrompt, {
-          maxTokens: 200,
+          maxTokens: 150, // ✅ OPTIMISÉ: Réduit de 200 à 150 (JSON court suffisant)
         });
 
         if (gamificationResult) {
@@ -599,7 +560,7 @@ JSON avec un tableau de 3-5 requêtes différentes, chacune avec une approche di
 Chaque requête doit être 2-4 mots-clés en anglais, sans guillemets.`;
 
         const aiImageQueriesResult = await callOpenAI(openaiKeyForSynthesis, imageQueryPrompt, {
-          maxTokens: 200,
+          maxTokens: 150, // ✅ OPTIMISÉ: Réduit de 200 à 150 (JSON avec 3-5 requêtes)
         });
         
         if (aiImageQueriesResult) {
@@ -789,6 +750,26 @@ Chaque requête doit être 2-4 mots-clés en anglais, sans guillemets.`;
     
     const contentHash = generateContentHash(eventTitle, mainArticle.url);
 
+    // 🛡️ FILTRE ÉTHIQUE : Vérifier que la décision ne contient pas de contenu sensible/morbide
+    const shouldBlockDecision = checkEthicalFilter({
+      title: eventTitle,
+      description: eventDescription || eventTitle,
+      question: question,
+      type: extracted.type,
+    });
+
+    if (shouldBlockDecision) {
+      console.log(`🚫 Decision blocked by ethical filter: ${eventTitle}`);
+      return null;
+    }
+
+    // 🚀 Calculer dynamiquement les paramètres IPO (Initial Political Offering)
+    const { targetPrice, depthFactor } = calculateIPOParameters({
+      heat,
+      sentiment,
+      type: extracted.type,
+    });
+
     // Créer la Decision Card
     const decisionId = await ctx.runMutation(api.decisions.createDecision, {
       title: eventTitle,
@@ -806,8 +787,10 @@ Chaque requête doit être 2-4 mots-clés en anglais, sans guillemets.`;
       indicatorIds: extracted.indicatorIds,
       question,
       answer1,
-      answer2,
-      answer3,
+      // answer2 et answer3 supprimés (système binaire)
+      // 🚀 PARAMÈTRES IPO CALCULÉS DYNAMIQUEMENT
+      targetPrice, // Prix de départ (1-99 Seeds)
+      depthFactor, // Profondeur du marché (500-10000)
       imageUrl,
       imageSource,
       createdBy: "bot",
@@ -817,23 +800,9 @@ Chaque requête doit être 2-4 mots-clés en anglais, sans guillemets.`;
       badgeColor,
     });
 
-    // Sauvegarder tous les articles comme sources associées
-    for (const article of articles) {
-      try {
-        await ctx.runMutation(api.news.createNewsItem, {
-          decisionId,
-          title: article.title,
-          url: article.url,
-          source: article.source,
-          publishedAt: article.publishedAt,
-          summary: article.content,
-          imageUrl: undefined, // Les images seront récupérées lors de l'agrégation
-          relevanceScore: 100, // Tous les articles du groupe sont pertinents
-        });
-      } catch (error) {
-        console.error(`Error saving article as news item:`, error);
-      }
-    }
+    // ⚠️ SUPPRIMÉ: Sauvegarde des articles en base (plus nécessaire)
+    // Les actualités sont maintenant récupérées côté client via RelatedNewsClient (RSS)
+    // Cela évite les coûts de stockage et d'API backend
 
     // Mettre à jour les stats du bot Générateur
     await updateBotActivity(ctx, {
@@ -875,6 +844,154 @@ Chaque requête doit être 2-4 mots-clés en anglais, sans guillemets.`;
     return decisionId;
   },
 });
+
+/**
+ * 🛡️ Filtre éthique : Vérifie si une décision doit être bloquée
+ * 
+ * Bloque les décisions qui :
+ * - Font référence à des morts, décès, victimes de manière morbide
+ * - Sont trop sensibles ou exploitent des tragédies humaines
+ * - Contiennent des prédictions sur des catastrophes avec pertes humaines
+ */
+function checkEthicalFilter(params: {
+  title: string;
+  description: string;
+  question: string;
+  type: string;
+}): boolean {
+  const { title, description, question, type } = params;
+  
+  // Mots-clés sensibles à bloquer (morts, décès, victimes, etc.)
+  const sensitiveKeywords = [
+    // Morts et décès
+    /\b(mort|morts|décès|décédé|décédés|victime|victimes|tué|tués|assassiné|assassinés)\b/i,
+    // Catastrophes avec pertes humaines
+    /\b(plus de \d+ morts?|au moins \d+ morts?|au moins \d+ décès|plus de \d+ décès|plus de \d+ victimes)\b/i,
+    // Formulations morbides
+    /\b(périr|péris|mourir|mourront|mourra|mouriront)\b/i,
+    // Tragédies humaines
+    /\b(tragédie|tragédies|massacre|massacres|génocide|génocides)\b/i,
+  ];
+
+  // Vérifier dans le titre, la description et la question
+  const textToCheck = `${title} ${description} ${question}`.toLowerCase();
+  
+  // Vérifier si un mot-clé sensible est présent
+  for (const keyword of sensitiveKeywords) {
+    if (keyword.test(textToCheck)) {
+      return true; // Bloquer la décision
+    }
+  }
+
+  // Bloquer spécifiquement les questions qui demandent des prédictions sur des morts
+  const deathPredictionPatterns = [
+    /\b(y aura-t-il|y aura|il y aura|sera-t-il|seront-ils)\s+(plus de|au moins|au moins)\s+\d+\s+(mort|morts|décès|victime|victimes)\b/i,
+    /\b(combien de|nombre de)\s+(mort|morts|décès|victime|victimes)\b/i,
+  ];
+
+  for (const pattern of deathPredictionPatterns) {
+    if (pattern.test(question)) {
+      return true; // Bloquer la décision
+    }
+  }
+
+  return false; // Ne pas bloquer
+}
+
+/**
+ * 🚀 Calcule les paramètres IPO (Initial Political Offering) dynamiquement
+ * 
+ * @param params - Paramètres de la décision
+ * @returns targetPrice (1-99 Seeds) et depthFactor (500-10000)
+ * 
+ * STRATÉGIE :
+ * - targetPrice : Probabilité initiale perçue
+ *   - Heat élevé + Sentiment positif → Prix élevé (événement probable)
+ *   - Heat faible + Sentiment négatif → Prix faible (événement improbable)
+ * 
+ * - depthFactor : Volatilité du marché
+ *   - Type volatile (crisis, conflict, disaster) + Heat élevé → Faible profondeur (marché "Meme Coin")
+ *   - Type stable (election, law, regulation) + Heat faible → Élevée profondeur (marché "Blue Chip")
+ */
+function calculateIPOParameters(params: {
+  heat: number; // 0-100
+  sentiment: "positive" | "negative" | "neutral";
+  type: "law" | "sanction" | "tax" | "agreement" | "policy" | "regulation" | "crisis" | "disaster" | "conflict" | "discovery" | "election" | "economic_event" | "other";
+}): { targetPrice: number; depthFactor: number } {
+  const { heat, sentiment, type } = params;
+  
+  // 🎯 CALCUL DU TARGET PRICE (1-99 Seeds) - Probabilité initiale
+  // Base : 50 Seeds (probabilité moyenne)
+  let targetPrice = 50;
+  
+  // Ajustement selon le sentiment
+  if (sentiment === "positive") {
+    // Événements positifs tendent à être plus probables (optimisme)
+    targetPrice += 15; // +15 Seeds
+  } else if (sentiment === "negative") {
+    // Événements négatifs tendent à être moins probables (espoir qu'ils n'arrivent pas)
+    targetPrice -= 15; // -15 Seeds
+  }
+  // Neutral reste à 50
+  
+  // Ajustement selon le heat (0-100)
+  // Heat élevé = événement plus "réel" et donc plus probable
+  const heatAdjustment = (heat - 50) * 0.4; // -20 à +20 Seeds selon heat
+  targetPrice += heatAdjustment;
+  
+  // Ajustement selon le type d'événement
+  const typeAdjustments: Record<string, number> = {
+    // Événements généralement plus probables
+    "election": +10, // Les élections arrivent souvent
+    "law": +5, // Les lois sont souvent adoptées
+    "regulation": +5,
+    "agreement": +8, // Les accords sont souvent signés
+    
+    // Événements généralement moins probables
+    "disaster": -10, // Les catastrophes sont rares
+    "discovery": -5, // Les découvertes majeures sont rares
+    "conflict": -8, // Les conflits majeurs sont moins fréquents
+    
+    // Événements neutres
+    "crisis": 0,
+    "economic_event": 0,
+    "sanction": 0,
+    "tax": 0,
+    "policy": 0,
+    "other": 0,
+  };
+  
+  targetPrice += typeAdjustments[type] || 0;
+  
+  // Clamper entre 1 et 99 Seeds
+  targetPrice = Math.max(1, Math.min(99, Math.round(targetPrice)));
+  
+  // 🎯 CALCUL DU DEPTH FACTOR (500-10000) - Volatilité du marché
+  // Base : 5000 (marché modéré)
+  let depthFactor = 5000;
+  
+  // Types volatils (marché "Meme Coin" - peu de Seeds = gros mouvement)
+  const volatileTypes: string[] = ["crisis", "conflict", "disaster", "economic_event"];
+  if (volatileTypes.includes(type)) {
+    depthFactor -= 2000; // Réduire la profondeur (plus volatile)
+  }
+  
+  // Types stables (marché "Blue Chip" - beaucoup de Seeds = petit mouvement)
+  const stableTypes: string[] = ["election", "law", "regulation", "policy"];
+  if (stableTypes.includes(type)) {
+    depthFactor += 3000; // Augmenter la profondeur (plus stable)
+  }
+  
+  // Ajustement selon le heat
+  // Heat élevé = plus de buzz = plus volatile
+  const heatVolatilityAdjustment = (heat - 50) * 20; // -1000 à +1000 selon heat
+  depthFactor -= heatVolatilityAdjustment;
+  
+  // Clamper entre 500 (très volatile) et 10000 (très stable)
+  depthFactor = Math.max(500, Math.min(10000, Math.round(depthFactor)));
+  
+  return { targetPrice, depthFactor };
+}
 
 /**
  * Calcule la couleur du badge selon le heat (0-100) et le sentiment
@@ -981,7 +1098,7 @@ Réponds UNIQUEMENT avec du JSON:
 }`;
 
     const result = await callOpenAI(openaiKey, validationPrompt, {
-      maxTokens: 200,
+      maxTokens: 100, // ✅ OPTIMISÉ: Réduit de 200 à 100 (JSON court suffisant)
     });
 
     if (result) {
@@ -1081,7 +1198,7 @@ export const searchFreeImage = action({
       return null;
     }
 
-    // ✅ Récupérer top 5 images pour chaque requête
+    // ✅ OPTIMISÉ: Récupérer top 3 images pour chaque requête (au lieu de 5) pour réduire consommation OpenAI
     const allCandidates: Array<{
       url: string;
       photographer: string;
@@ -1095,7 +1212,7 @@ export const searchFreeImage = action({
         const response = await fetch(
           `https://api.pexels.com/v1/search?query=${encodeURIComponent(
             query
-          )}&per_page=5&orientation=landscape`,
+          )}&per_page=3&orientation=landscape`, // ✅ OPTIMISÉ: 3 images au lieu de 5
           {
             headers: {
               Authorization: pexelsKey,
@@ -1127,12 +1244,14 @@ export const searchFreeImage = action({
       return null;
     }
 
-    // ✅ Valider chaque image avec IA si disponible
+    // ✅ OPTIMISÉ: Valider seulement les 5 meilleures images (au lieu de toutes) pour réduire consommation OpenAI
     if (openaiKey && eventContext) {
-      console.log(`🔍 Validation de ${allCandidates.length} images candidates...`);
+      // Limiter à 5 images pour validation (les plus prometteuses)
+      const imagesToValidate = allCandidates.slice(0, 5);
+      console.log(`🔍 Validation de ${imagesToValidate.length} images candidates (sur ${allCandidates.length} totales)...`);
       
       const scoredImages = await Promise.all(
-        allCandidates.map(async (img) => {
+        imagesToValidate.map(async (img) => {
           const validation = await validateImageRelevance(img, eventContext, openaiKey);
           return {
             ...img,
@@ -1141,9 +1260,18 @@ export const searchFreeImage = action({
           };
         })
       );
+      
+      // Ajouter les images non validées avec score par défaut (50)
+      const unvalidatedImages = allCandidates.slice(5).map(img => ({
+        ...img,
+        relevanceScore: 50,
+        reason: "Non validée (limite de validation)",
+      }));
+      
+      const allScoredImages = [...scoredImages, ...unvalidatedImages];
 
       // ✅ Filtrer et trier : score >= 70, puis par score décroissant
-      const validImages = scoredImages
+      const validImages = allScoredImages
         .filter((img) => img.relevanceScore >= 70)
         .sort((a, b) => b.relevanceScore - a.relevanceScore);
 
@@ -1158,7 +1286,7 @@ export const searchFreeImage = action({
         };
       } else {
         // Aucune image avec score >= 70, prendre la meilleure disponible
-        const bestAvailable = scoredImages.sort((a, b) => b.relevanceScore - a.relevanceScore)[0];
+        const bestAvailable = allScoredImages.sort((a, b) => b.relevanceScore - a.relevanceScore)[0];
         console.log(`⚠️ Aucune image avec score >= 70, meilleure disponible: ${bestAvailable.relevanceScore}/100`);
         return {
           url: bestAvailable.url,

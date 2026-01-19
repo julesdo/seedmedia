@@ -12,7 +12,8 @@ import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carouse
  * Stories horizontales pour les décisions importantes (style Instagram)
  */
 export function DecisionStories() {
-  const hotDecisions = useQuery(api.decisions.getHotDecisions, { limit: 8 });
+  // ✅ Protection : skip si Convex n'est pas disponible
+  const hotDecisions = useQuery(api.decisions.getHotDecisions, { limit: 8 }) || undefined;
 
   if (!hotDecisions || hotDecisions.length === 0) {
     return null;

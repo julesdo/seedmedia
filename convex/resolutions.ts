@@ -1,6 +1,7 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
+import { internal } from "./_generated/api";
 
 /**
  * Récupère la résolution pour une décision
@@ -38,9 +39,8 @@ export const createResolution = mutation({
   args: {
     decisionId: v.id("decisions"),
     issue: v.union(
-      v.literal("works"),
-      v.literal("partial"),
-      v.literal("fails")
+      v.literal("yes"), // OUI - La prédiction est vraie
+      v.literal("no") // NON - La prédiction est fausse
     ),
     confidence: v.number(), // 0-100
     details: v.object({
@@ -80,6 +80,17 @@ export const createResolution = mutation({
       status: "resolved",
     });
 
+    // 🎯 PHASE 3: Liquider les pools de trading
+    try {
+      await ctx.scheduler.runAfter(0, internal.trading.liquidatePools, {
+        decisionId: args.decisionId,
+        winner: args.issue, // "yes" ou "no"
+      });
+    } catch (error) {
+      // Ne pas bloquer si la liquidation échoue
+      console.error("Error liquidating pools:", error);
+    }
+
     return resolutionId;
   },
 });
@@ -91,7 +102,7 @@ export const updateResolution = mutation({
   args: {
     resolutionId: v.id("resolutions"),
     issue: v.optional(
-      v.union(v.literal("works"), v.literal("partial"), v.literal("fails"))
+      v.union(v.literal("yes"), v.literal("no"))
     ),
     confidence: v.optional(v.number()),
     details: v.optional(

@@ -193,7 +193,7 @@ export function WorldMapWidget() {
       </div>
       <div 
         className="relative w-full rounded-lg overflow-hidden border border-border/50 bg-muted/20 cursor-pointer hover:opacity-80 transition-opacity"
-        onClick={() => router.push("/map")}
+        onClick={() => router.push("/portfolio")}
       >
         <DottedMap
           width={280}

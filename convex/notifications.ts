@@ -171,6 +171,108 @@ export const markAllNotificationsAsRead = mutation({
 });
 
 /**
+ * Crée une notification (mutation publique pour les clients)
+ */
+export const createNotification = mutation({
+  args: {
+    userId: v.id("users"),
+    type: v.union(
+      v.literal("article_pending"),
+      v.literal("article_approved"),
+      v.literal("article_rejected"),
+      v.literal("correction_proposed"),
+      v.literal("correction_approved"),
+      v.literal("correction_rejected"),
+      v.literal("proposal_vote"),
+      v.literal("proposal_closed"),
+      v.literal("debat_argument"),
+      v.literal("debate_new_argument"),
+      v.literal("debate_argument_voted"),
+      v.literal("debate_closed"),
+      v.literal("article_comment"),
+      v.literal("comment"),
+      v.literal("comment_reply"),
+      v.literal("comment_reaction"),
+      v.literal("invitation_received"),
+      v.literal("invitation_accepted"),
+      v.literal("invitation_rejected"),
+      v.literal("member_joined"),
+      v.literal("role_changed"),
+      v.literal("level_up"),
+      v.literal("seeds_earned"),
+      v.literal("other")
+    ),
+    title: v.string(),
+    message: v.string(),
+    link: v.optional(v.string()),
+    metadata: v.optional(
+      v.object({
+        articleId: v.optional(v.id("articles")),
+        proposalId: v.optional(v.id("governanceProposals")),
+        debateId: v.optional(v.id("debates")),
+        correctionId: v.optional(v.id("articleCorrections")),
+        organizationId: v.optional(v.id("organizations")),
+        invitationId: v.optional(v.id("invitations")),
+        acceptedBy: v.optional(v.id("users")),
+        rejectedBy: v.optional(v.id("users")),
+        targetType: v.optional(v.union(
+          v.literal("article"),
+          v.literal("project"),
+          v.literal("action"),
+          v.literal("proposal")
+        )),
+        targetId: v.optional(v.union(
+          v.id("articles"),
+          v.id("projects"),
+          v.id("actions"),
+          v.id("governanceProposals")
+        )),
+        commentId: v.optional(v.id("comments")),
+        commenterId: v.optional(v.id("users")),
+        parentCommentId: v.optional(v.id("comments")),
+        reactionType: v.optional(v.union(
+          v.literal("like"),
+          v.literal("love"),
+          v.literal("useful")
+        )),
+        reactorId: v.optional(v.id("users")),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    const betterAuthUser = await betterAuthComponent.safeGetAuthUser(ctx as any);
+    if (!betterAuthUser) {
+      throw new Error("Not authenticated");
+    }
+
+    const appUser = await ctx.db
+      .query("users")
+      .withIndex("email", (q) => q.eq("email", betterAuthUser.email))
+      .first();
+
+    if (!appUser) {
+      throw new Error("User not found");
+    }
+
+    // Vérifier que l'utilisateur peut créer une notification pour lui-même
+    if (args.userId !== appUser._id) {
+      throw new Error("Unauthorized");
+    }
+
+    await ctx.db.insert("notifications", {
+      userId: args.userId,
+      type: args.type,
+      title: args.title,
+      message: args.message,
+      link: args.link,
+      read: false,
+      metadata: args.metadata,
+      createdAt: Date.now(),
+    });
+  },
+});
+
+/**
  * Crée une notification (mutation interne, appelée par d'autres mutations)
  */
 export const createNotificationInternal = internalMutation({
@@ -199,6 +301,7 @@ export const createNotificationInternal = internalMutation({
       v.literal("member_joined"),
       v.literal("role_changed"),
       v.literal("level_up"), // Montée de niveau
+      v.literal("seeds_earned"), // Seeds gagnés
       v.literal("other")
     ),
     title: v.string(),

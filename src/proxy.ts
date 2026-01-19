@@ -10,7 +10,29 @@ import { NextRequest, NextResponse } from "next/server";
 const signInRoutes = ["/sign-in", "/sign-up", "/verify-2fa", "/callback", "/oauth-callback"];
 
 // Routes publiques accessibles même si connecté
-const publicRoutes = ["/articles", "/dossiers", "/debats", "/gouvernance", "/actions", "/projets"];
+// ✅ Toutes les routes sous (public) sont publiques
+const publicRoutes = [
+  "/", // Page d'accueil
+  "/articles", 
+  "/dossiers", 
+  "/debats", 
+  "/gouvernance", 
+  "/actions", 
+  "/projets",
+  // Routes (public)
+  "/profile",
+  "/map",
+  "/stats",
+  "/trending",
+  "/bots",
+  "/notifications",
+  "/saved",
+  "/settings",
+  "/rules",
+  "/anticipations",
+  "/search",
+  "/u", // /u/[username]
+];
 
 // Just check cookie, recommended approach
 export default async function proxy(request: NextRequest) {
@@ -23,7 +45,21 @@ export default async function proxy(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
   const isSignInRoute = signInRoutes.includes(pathname);
-  const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route)) || pathname === "/";
+  
+  // ✅ Vérifier si la route est publique
+  // - Commence par une route publique
+  // - OU c'est une route dynamique simple (format /slug) pour les décisions
+  const isPublicRoute = publicRoutes.some(route => {
+    if (route === "/") {
+      return pathname === "/";
+    }
+    return pathname.startsWith(route);
+  }) || 
+  // Routes dynamiques publiques : /[slug] pour les décisions (format /slug-simple)
+  (pathname.split("/").filter(Boolean).length === 1 && // Une seule partie après /
+   !pathname.startsWith("/api") && 
+   !pathname.startsWith("/_next") && 
+   !pathname.includes(".")); // Pas un fichier statique
   const addAccountParam = request.nextUrl.searchParams.get("add_account") === "true";
   const switchToAccountParam = request.nextUrl.searchParams.get("switch_to_account");
   const autoReconnectParam = request.nextUrl.searchParams.get("auto_reconnect") === "true";

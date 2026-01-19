@@ -16,9 +16,9 @@ const navItems = [
     icon: "document-text-bold",
   },
   {
-    labelKey: "navigation.map",
-    href: "/map",
-    icon: "map-point-bold",
+    labelKey: "navigation.portfolio",
+    href: "/portfolio",
+    icon: "wallet-bold",
   },
   {
     labelKey: "navigation.settings",

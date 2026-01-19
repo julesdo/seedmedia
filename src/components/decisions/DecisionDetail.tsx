@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
@@ -9,15 +10,17 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image";
-import { formatDistanceToNow, format } from "date-fns";
-import { fr } from "date-fns/locale";
 import { SolarIcon } from "@/components/icons/SolarIcon";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { SaveButton } from "./SaveButton";
 import { EventBadge } from "./EventBadge";
-import { QuizSimple } from "./QuizSimple";
+import { TradingInterface } from "./TradingInterface";
+import { TradingInterfaceReels } from "./TradingInterfaceReels";
 import { useTranslations } from 'next-intl';
+import { TopArgumentsList } from "./TopArgumentsList";
+import { VoteSkinShop } from "@/components/vote-skins/VoteSkinShop";
+import { RelatedNewsClient } from "./RelatedNewsClient";
 
 interface DecisionDetailProps {
   decisionId: Id<"decisions">;
@@ -35,9 +38,20 @@ export function DecisionDetail({
   className,
 }: DecisionDetailProps) {
   const t = useTranslations('decisions');
+  const [isMobile, setIsMobile] = useState(false);
   const decision = useQuery(api.decisions.getDecisionById, {
     decisionId,
   });
+
+  // Détecter si on est sur mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768); // md breakpoint
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const typeLabels: Record<string, string> = {
     law: t('types.law'),
@@ -90,12 +104,9 @@ export function DecisionDetail({
     );
   }
 
-  const decisionDate = new Date(decision.date);
-  const timeAgo = formatDistanceToNow(decisionDate, { addSuffix: true, locale: fr });
-  const formattedDate = format(decisionDate, "d MMMM yyyy", { locale: fr });
 
   return (
-    <div className={cn("space-y-6 pb-24", className)}>
+    <div className={cn("space-y-4 pb-24", className)}>
       {/* Image */}
       {decision.imageUrl && (
         <div className="relative aspect-video w-full overflow-hidden rounded-lg">
@@ -110,127 +121,55 @@ export function DecisionDetail({
         </div>
       )}
 
-      {/* Header simplifié - Mobile first */}
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-          <div className="flex-1 space-y-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <EventBadge
-                impactLevel={decision.impactLevel}
-                emoji={decision.emoji} // Fallback pour compatibilité
-                heat={decision.heat}
-                sentiment={decision.sentiment}
-                badgeColor={decision.badgeColor}
-                size="md"
-              />
-              <Badge variant="secondary" className="text-xs">{typeLabels[decision.type]}</Badge>
-              <Badge className={cn("text-xs", statusColors[decision.status])}>
-                {statusLabels[decision.status]}
-              </Badge>
-              {decision.impactedDomains.slice(0, 3).map((domain) => (
-                <Badge key={domain} variant="outline" className="text-xs">
-                  {domain}
-                </Badge>
-              ))}
-            </div>
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold leading-tight">{decision.title}</h1>
-            {decision.description && (
-              <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-                {decision.description}
-              </p>
-            )}
-            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
-              <span>{decision.decider}</span>
-              <span className="hidden sm:inline">•</span>
-              <span>{formattedDate}</span>
-              {decision.sourceUrl && (
-                <>
-                  <span className="hidden sm:inline">•</span>
-                  <Link
-                    href={decision.sourceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline"
-                  >
-                    {t('detail.source')}
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-          <div className="flex sm:block">
-            <SaveButton decisionId={decision._id} className="w-full sm:w-auto" />
-          </div>
+      {/* Header allégé */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <EventBadge
+            impactLevel={decision.impactLevel}
+            emoji={decision.emoji}
+            heat={decision.heat}
+            sentiment={decision.sentiment}
+            badgeColor={decision.badgeColor}
+            size="sm"
+          />
+          <Badge variant="secondary" className="text-xs">{typeLabels[decision.type]}</Badge>
         </div>
+        <h1 className="text-xl sm:text-2xl font-bold leading-tight">{decision.title}</h1>
       </div>
 
-      <Separator />
-
-      {/* Quizz simple avec stats */}
+      {/* Trading Interface - Style reels sur mobile, classique sur desktop */}
       {decision.status !== "resolved" && (
-        <QuizSimple
-          decisionId={decision._id}
-          question={decision.question}
-          answer1={decision.answer1}
-          answer2={decision.answer2}
-          answer3={decision.answer3}
-          status={decision.status}
-        />
-      )}
-
-
-      {/* Actualités avec images */}
-      {decision.newsItems && decision.newsItems.length > 0 && (
-        <div className="space-y-4">
-          <h2 className="text-xl font-bold">{t('detail.relatedNews')}</h2>
-          <div className="grid gap-4 md:grid-cols-2">
-            {decision.newsItems.map((news) => (
-              <Link
-                key={news._id}
-                href={news.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group block overflow-hidden rounded-lg border bg-card hover:border-primary/50 transition-all"
-              >
-                {news.imageUrl && (
-                  <div className="relative aspect-video w-full overflow-hidden bg-muted">
-                    <img
-                      src={news.imageUrl}
-                      alt={news.title}
-                      className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                      loading="lazy"
-                      onError={(e) => {
-                        // Cacher l'image si elle ne charge pas
-                        e.currentTarget.style.display = 'none';
-                      }}
-                    />
-                  </div>
-                )}
-                <div className="p-4 space-y-2">
-                  <p className="font-semibold text-sm line-clamp-2 group-hover:text-primary transition-colors">
-                    {news.title}
-                  </p>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span className="font-medium">{news.source}</span>
-                    <span>•</span>
-                    <span>
-                      {formatDistanceToNow(new Date(news.publishedAt), {
-                        addSuffix: true,
-                        locale: fr,
-                      })}
-                    </span>
-                  </div>
-                  {news.summary && (
-                    <p className="text-xs text-muted-foreground line-clamp-2">
-                      {news.summary}
-                    </p>
-                  )}
+        <>
+          {isMobile ? (
+            <TradingInterfaceReels
+              decisionId={decision._id}
+              question={decision.question}
+              answer1={decision.answer1}
+              status={decision.status}
+            />
+          ) : (
+            <>
+              <TradingInterface
+                decisionId={decision._id}
+                question={decision.question}
+                answer1={decision.answer1}
+                status={decision.status}
+              />
+              {/* Commentaires - Desktop uniquement */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 px-1">
+                  <SolarIcon icon="chat-round-bold" className="size-4 text-primary" />
+                  <h2 className="text-sm font-semibold">Commentaires</h2>
                 </div>
-              </Link>
-            ))}
-          </div>
-        </div>
+                <TopArgumentsList decisionId={decision._id} />
+              </div>
+            </>
+          )}
+        </>
       )}
+
+      {/* Actualités liées (client-side via RSS) */}
+      <RelatedNewsClient decisionId={decision._id} />
 
       {/* Résolution */}
       {decision.resolution && (

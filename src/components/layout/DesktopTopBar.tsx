@@ -11,6 +11,7 @@ import { useConvexAuth } from "convex/react";
 import Link from "next/link";
 import { SearchModal } from "@/components/search/SearchModal";
 import { useUser } from "@/contexts/UserContext";
+import { SeedsDisplayWithShop } from "@/components/ui/SeedsDisplayWithShop";
 
 /**
  * Top Bar Desktop - Style Instagram
@@ -61,15 +62,8 @@ export function DesktopTopBar() {
 
         {/* Actions droite */}
         <div className="flex items-center gap-2">
-          {/* Seeds - Gamification */}
-          {isAuthenticated && user && (
-            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary/10 border border-primary/20 hover:bg-primary/15 transition-colors">
-              <SolarIcon icon="leaf-bold" className="size-4 text-primary" />
-              <span className="text-sm font-semibold text-foreground">
-                {user.seedsBalance || 0}
-              </span>
-            </div>
-          )}
+          {/* Seeds avec bouton shop */}
+          <SeedsDisplayWithShop variant="default" buttonSize="md" />
 
           {/* Notifications */}
           <Link href="/notifications" prefetch={true} data-prefetch="viewport">

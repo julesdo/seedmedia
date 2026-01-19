@@ -6,7 +6,7 @@ import { updateBotActivity } from "./helpers";
 
 /**
  * Seuils de résolution (publiques et documentées)
- * Ces seuils déterminent si une décision "works", "partial", ou "fails"
+ * Ces seuils déterminent si une décision est "yes" (OUI) ou "no" (NON)
  */
 const RESOLUTION_THRESHOLDS = {
   // Pourcentage de variation minimum pour considérer un effet significatif
@@ -53,7 +53,7 @@ function determineOutcome(
     weight: number;
   }>
 ): {
-  outcome: "works" | "partial" | "fails";
+  outcome: "yes" | "no";
   confidence: number; // 0-100
   details: {
     positiveIndicators: number;
@@ -64,7 +64,7 @@ function determineOutcome(
 } {
   if (variationsForCalculation.length === 0) {
     return {
-      outcome: "fails",
+      outcome: "no", // Par défaut, si pas de données, on considère que la prédiction est fausse
       confidence: 0,
       details: {
         positiveIndicators: 0,
@@ -113,22 +113,20 @@ function determineOutcome(
   const normalizedScore =
     totalWeight > 0 ? weightedScore / totalWeight : 0;
 
-  // Déterminer l'issue
-  let outcome: "works" | "partial" | "fails";
+  // Déterminer l'issue (système binaire : OUI ou NON)
+  // Score positif = OUI (la prédiction est vraie)
+  // Score négatif = NON (la prédiction est fausse)
+  let outcome: "yes" | "no";
   let confidence: number;
 
-  if (normalizedScore >= 30) {
-    // Score positif élevé = ça marche
-    outcome = "works";
-    confidence = Math.min(100, 50 + normalizedScore);
-  } else if (normalizedScore <= -30) {
-    // Score négatif élevé = ça ne marche pas
-    outcome = "fails";
+  if (normalizedScore >= 0) {
+    // Score positif ou nul = OUI (la prédiction est vraie)
+    outcome = "yes";
     confidence = Math.min(100, 50 + Math.abs(normalizedScore));
   } else {
-    // Score proche de zéro = partiel
-    outcome = "partial";
-    confidence = Math.max(30, 50 - Math.abs(normalizedScore));
+    // Score négatif = NON (la prédiction est fausse)
+    outcome = "no";
+    confidence = Math.min(100, 50 + Math.abs(normalizedScore));
   }
 
   return {
@@ -152,7 +150,7 @@ export const resolveDecision = action({
   },
   handler: async (ctx, args): Promise<{
     resolutionId: Id<"resolutions">;
-    outcome: "works" | "partial" | "fails";
+    outcome: "yes" | "no";
     confidence: number;
     details: {
       positiveIndicators: number;
@@ -333,7 +331,7 @@ export const resolveAllEligibleDecisions = action({
     results: Array<{
       decisionId: Id<"decisions">;
       resolved: boolean;
-      outcome?: "works" | "partial" | "fails";
+      outcome?: "yes" | "no";
       error?: string;
     }>;
   }> => {
@@ -349,7 +347,7 @@ export const resolveAllEligibleDecisions = action({
     const results: Array<{
       decisionId: Id<"decisions">;
       resolved: boolean;
-      outcome?: "works" | "partial" | "fails";
+      outcome?: "yes" | "no";
       error?: string;
     }> = [];
 

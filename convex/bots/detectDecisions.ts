@@ -107,7 +107,7 @@ Réponds UNIQUEMENT avec du JSON valide:
         ],
         reasoning_effort: "minimal", // Pour gpt-5-mini, utiliser "minimal" au lieu de "none"
         // temperature n'est pas supporté avec reasoning_effort: "minimal" pour gpt-5-mini (seule valeur par défaut 1)
-        max_completion_tokens: 200, // Pour gpt-5-mini, utiliser max_completion_tokens au lieu de max_tokens
+        max_completion_tokens: 100, // ✅ OPTIMISÉ: Réduit de 200 à 100 (JSON court suffisant)
         // Note: response_format peut ne pas être compatible avec reasoning_effort pour gpt-5-mini
       }),
     });
@@ -466,7 +466,7 @@ Réponds UNIQUEMENT avec un JSON array de 15 requêtes :
           },
         ],
         reasoning_effort: "minimal",
-        max_completion_tokens: 500,
+        max_completion_tokens: 300, // ✅ OPTIMISÉ: Réduit de 500 à 300 (25 requêtes en JSON)
       }),
     });
 
@@ -574,7 +574,7 @@ Réponds UNIQUEMENT avec du JSON valide:
           { role: "user", content: prompt },
         ],
         reasoning_effort: "minimal",
-        max_completion_tokens: 150,
+        max_completion_tokens: 80, // ✅ OPTIMISÉ: Réduit de 150 à 80 (JSON court suffisant)
       }),
     });
 
@@ -690,9 +690,8 @@ export const detectDecisions = action({
         "aide internationale",
       ];
 
-      // Utiliser plus de requêtes pour couvrir l'actualité chaude mondiale (priorité aux requêtes IA)
-      // Limité à 30 requêtes pour éviter les timeouts (on peut augmenter progressivement)
-      const queriesToProcess = searchQueries.slice(0, 30);
+      // ✅ OPTIMISÉ: Réduit à 20 requêtes (au lieu de 30) pour réduire consommation OpenAI
+      const queriesToProcess = searchQueries.slice(0, 20);
       console.log(`📡 Traitement de ${queriesToProcess.length} requêtes de recherche...`);
 
       for (const query of queriesToProcess) {
@@ -708,8 +707,8 @@ export const detectDecisions = action({
           const xml = await response.text();
           const items = parseRSSFeed(xml);
           
-          // Filtrer les articles de cette semaine uniquement et limiter à 20 articles par requête pour éviter les timeouts
-          const recentItems = items.filter((item) => item.publishedAt >= weekAgo).slice(0, 20);
+          // ✅ OPTIMISÉ: Limiter à 15 articles par requête (au lieu de 20) pour réduire consommation OpenAI
+          const recentItems = items.filter((item) => item.publishedAt >= weekAgo).slice(0, 15);
 
           for (const item of recentItems) {
             // Filtrer pour ne garder que les VRAIES décisions géopolitiques (pas les articles boursiers)
@@ -1089,7 +1088,7 @@ Réponds UNIQUEMENT avec du JSON:
             { role: "user", content: prompt },
           ],
           reasoning_effort: "minimal",
-          max_completion_tokens: 150,
+          max_completion_tokens: 80, // ✅ OPTIMISÉ: Réduit de 150 à 80 (JSON court suffisant)
         }),
         signal: controller.signal,
       });

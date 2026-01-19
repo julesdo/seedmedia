@@ -4,11 +4,11 @@ import { api, internal } from "./_generated/api";
 /**
  * Cron jobs pour l'automatisation des Decision Cards
  * 
- * STRATÉGIE POUR L'ACTUALITÉ CHAUDE :
- * - Détection optimale (1h) pour capturer les nouvelles décisions sans être excessif
+ * STRATÉGIE OPTIMISÉE :
+ * - Détection optimale (1h) pour capturer les nouvelles prédictions binaires (OUI/NON)
  * - Équilibrage automatique 50/50 positif/négatif pour éviter l'effet anxiogène
- * - Agrégation intensive pour les décisions récentes (< 24h) toutes les heures
- * - Agrégation complète toutes les 6h pour maintenir à jour toutes les décisions
+ * - Actualités récupérées côté client via RelatedNewsClient (RSS) - Zéro coût backend
+ * - Résolution quotidienne des prédictions basée sur les indicateurs
  */
 const crons = cronJobs();
 
@@ -22,23 +22,9 @@ crons.interval(
   {}
 );
 
-// Agrégation d'actualités pour les décisions récentes (< 24h) - toutes les heures
-// Focus sur l'actualité chaude : les décisions récentes ont besoin d'actualités fraîches
-crons.interval(
-  "aggregateNewsRecent",
-  { hours: 1 },
-  api.bots.aggregateNews.aggregateNewsForRecentDecisions,
-  {}
-);
-
-// Agrégation d'actualités complète - toutes les 6 heures
-// Maintient à jour toutes les décisions en suivi (pas seulement les récentes)
-crons.interval(
-  "aggregateNewsScheduled",
-  { hours: 6 },
-  api.bots.aggregateNews.aggregateNewsForAllDecisions,
-  {}
-);
+// ⚠️ SUPPRIMÉ: Agrégation d'actualités (plus nécessaire)
+// Les actualités sont maintenant récupérées côté client via RelatedNewsClient (RSS)
+// Cela évite les coûts de stockage et d'API backend
 
 // Traduction automatique - toutes les 6 heures
 crons.interval(
@@ -70,6 +56,14 @@ crons.daily(
   "resolveAnticipationsDaily",
   { hourUTC: 1, minuteUTC: 0 },
   api.bots.resolveAnticipations.resolveAllAnticipations,
+  {}
+);
+
+// 🎯 FEATURE 2: LE TRADING - Snapshot quotidien des cours d'opinions - tous les jours à minuit UTC
+crons.daily(
+  "takeOpinionSnapshotsDaily",
+  { hourUTC: 0, minuteUTC: 0 },
+  internal.trading.takeDailySnapshot,
   {}
 );
 

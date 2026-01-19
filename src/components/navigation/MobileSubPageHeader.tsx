@@ -16,7 +16,7 @@ const pageConfig: Record<string, { name: string; icon: string }> = {
   "/notifications": { name: "Notifications", icon: "bell-bold" },
   "/trending": { name: "Tendances", icon: "fire-bold" },
   "/saved": { name: "Sauvegardés", icon: "bookmark-bold" },
-  "/map": { name: "Carte", icon: "map-point-bold" },
+  "/portfolio": { name: "Portefeuille", icon: "wallet-bold" },
   "/bots": { name: "Bots", icon: "smile-square-bold" },
 };
 

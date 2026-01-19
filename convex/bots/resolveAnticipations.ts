@@ -4,84 +4,6 @@ import { api } from "../_generated/api";
 import { Id } from "../_generated/dataModel";
 
 /**
- * Règles de calcul des Seeds (publiques et documentées)
- */
-const SEEDS_RULES = {
-  // Multiplicateur de base pour les gains
-  BASE_MULTIPLIER: 1.5, // Si vous avez raison, vous gagnez 1.5x vos Seeds engagés
-
-  // Pénalité pour avoir tort
-  WRONG_PENALTY: 0.5, // Si vous avez tort, vous perdez 50% de vos Seeds engagés
-
-  // Bonus pour avoir raison avec une issue "partial"
-  PARTIAL_BONUS: 1.2, // Bonus de 20% si vous avez anticipé "partial" et que c'est "partial"
-
-  // Bonus pour avoir raison avec une issue "works" ou "fails"
-  EXACT_BONUS: 1.5, // Bonus de 50% si vous avez anticipé exactement "works" ou "fails"
-
-  // Minimum de Seeds gagnés/perdus
-  MIN_GAIN: 1,
-  MIN_LOSS: 1,
-} as const;
-
-/**
- * Calcule les gains/pertes de Seeds pour une anticipation
- */
-function calculateSeedsGain(
-  anticipation: {
-    issue: "works" | "partial" | "fails";
-    seedsEngaged: number;
-  },
-  resolution: {
-    issue: "works" | "partial" | "fails";
-    confidence: number;
-  }
-): {
-  seedsEarned: number;
-  reason: string;
-} {
-  const { issue: anticipatedIssue, seedsEngaged } = anticipation;
-  const { issue: resolvedIssue, confidence } = resolution;
-
-  // Si l'anticipation correspond exactement à la résolution
-  if (anticipatedIssue === resolvedIssue) {
-    let multiplier = SEEDS_RULES.BASE_MULTIPLIER;
-
-    // Bonus selon le type d'issue
-    if (resolvedIssue === "partial") {
-      multiplier *= SEEDS_RULES.PARTIAL_BONUS;
-    } else {
-      multiplier *= SEEDS_RULES.EXACT_BONUS;
-    }
-
-    // Ajuster selon la confiance (plus la confiance est élevée, plus le gain est élevé)
-    const confidenceMultiplier = confidence / 100;
-    multiplier *= confidenceMultiplier;
-
-    const seedsEarned = Math.max(
-      SEEDS_RULES.MIN_GAIN,
-      Math.round(seedsEngaged * multiplier)
-    );
-
-    return {
-      seedsEarned,
-      reason: `Anticipation correcte (${resolvedIssue}) avec ${confidence}% de confiance`,
-    };
-  }
-
-  // Si l'anticipation ne correspond pas
-  const seedsLost = Math.max(
-    SEEDS_RULES.MIN_LOSS,
-    Math.round(seedsEngaged * SEEDS_RULES.WRONG_PENALTY)
-  );
-
-  return {
-    seedsEarned: -seedsLost, // Négatif = perte
-    reason: `Anticipation incorrecte (anticipé: ${anticipatedIssue}, résolu: ${resolvedIssue})`,
-  };
-}
-
-/**
  * Calcule le niveau d'un utilisateur basé sur son total de Seeds
  */
 function calculateLevel(totalSeeds: number): {
@@ -165,59 +87,58 @@ export const resolveAnticipationsForDecision = action({
     // Résoudre chaque anticipation
     for (const anticipation of unresolvedAnticipations) {
       try {
-        // Calculer les gains/pertes
-        const gain = calculateSeedsGain(
-          {
-            issue: anticipation.issue,
-            seedsEngaged: anticipation.seedsEngaged,
-          },
-          {
-            issue: resolution.issue,
-            confidence: resolution.confidence,
-          }
-        );
-
+        // Calculer les gains/pertes (système binaire)
+        // La liquidation des pools a déjà été effectuée par liquidatePools
+        // On vérifie juste si l'anticipation était correcte
+        const isCorrect = anticipation.position === resolution.issue; // "yes" ou "no"
+        
+        // seedsEarned a déjà été calculé et crédité par liquidatePools
+        // On récupère la valeur depuis l'anticipation mise à jour
+        const seedsEarned = anticipation.seedsEarned || 0;
+        
         // Mettre à jour l'anticipation
         await ctx.runMutation(api.anticipations.updateAnticipation, {
           anticipationId: anticipation._id,
           resolved: true,
-          result: resolution.issue,
-          seedsEarned: gain.seedsEarned,
+          result: isCorrect ? "won" : "lost",
+          seedsEarned: seedsEarned,
         });
 
-        // Mettre à jour la balance de Seeds de l'utilisateur
-        const user = await ctx.runQuery(api.users.getUserById, {
-          userId: anticipation.userId,
-        });
-
-        if (user) {
-          // Récupérer la balance actuelle (peut ne pas exister dans l'ancien schéma)
-          const oldBalance = (user as any).seedsBalance || 0;
-          const oldLevel = user.level || 1;
-          const newBalance = oldBalance + gain.seedsEarned;
-
-          // Calculer le nouveau niveau
-          const levelInfo = calculateLevel(newBalance);
-
-          // Mettre à jour l'utilisateur
-          await ctx.runMutation(api.users.updateUserSeeds, {
+        // Mettre à jour la balance de Seeds de l'utilisateur (si seedsEarned > 0)
+        if (seedsEarned !== 0) {
+          const user = await ctx.runQuery(api.users.getUserById, {
             userId: anticipation.userId,
-            seedsBalance: newBalance,
-            level: levelInfo.level,
-            seedsToNextLevel: levelInfo.seedsToNextLevel,
           });
 
-          // Créer une transaction Seeds
-          await ctx.runMutation(api.seedsTransactions.createTransaction, {
-            userId: anticipation.userId,
-            type: gain.seedsEarned > 0 ? "earned" : "lost",
-            amount: Math.abs(gain.seedsEarned),
-            reason: gain.reason,
-            relatedId: anticipation._id.toString(),
-            relatedType: "anticipation",
-            levelBefore: oldLevel,
-            levelAfter: levelInfo.level,
-          });
+          if (user) {
+            // Récupérer la balance actuelle
+            const oldBalance = Number((user as any).seedsBalance || 0);
+            const oldLevel = user.level || 1;
+            const newBalance = oldBalance + seedsEarned;
+
+            // Calculer le nouveau niveau
+            const levelInfo = calculateLevel(newBalance);
+
+            // Mettre à jour l'utilisateur
+            await ctx.runMutation(api.users.updateUserSeeds, {
+              userId: anticipation.userId,
+              seedsBalance: newBalance,
+              level: levelInfo.level,
+              seedsToNextLevel: levelInfo.seedsToNextLevel,
+            });
+
+            // Créer une transaction Seeds
+            await ctx.runMutation(api.seedsTransactions.createTransaction, {
+              userId: anticipation.userId,
+              type: seedsEarned > 0 ? "earned" : "lost",
+              amount: Math.abs(seedsEarned),
+              reason: isCorrect ? "anticipation_won" : "anticipation_lost",
+              relatedId: anticipation._id.toString(),
+              relatedType: "anticipation",
+              levelBefore: oldLevel,
+              levelAfter: levelInfo.level,
+            });
+          }
         }
 
         resolved++;

@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { SolarIcon } from "@/components/icons/SolarIcon";
 import { SaveButton } from "./SaveButton";
 import { EventBadge } from "./EventBadge";
-import { QuizSimple } from "./QuizSimple";
+import { TradingInterfaceReels } from "./TradingInterfaceReels";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -115,129 +115,81 @@ export function DecisionReelCard({
             priority
             sizes="100vw"
           />
-          {/* Overlay gradient pour lisibilité */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/20" />
+          {/* Overlay gradient progressif style TikTok - Plus foncé vers le bas - Utilise la couleur de bg */}
+          {/* Au niveau du titre (50-60%), overlay suffisamment sombre pour la lecture, puis de plus en plus foncé */}
+          <div 
+            className="absolute inset-0"
+            style={{
+              background: `linear-gradient(to top, 
+                hsl(var(--background) / 0.95) 0%,
+                hsl(var(--background) / 0.92) 15%,
+                hsl(var(--background) / 0.85) 30%,
+                hsl(var(--background) / 0.75) 45%,
+                hsl(var(--background) / 0.70) 55%,
+                hsl(var(--background) / 0.60) 65%,
+                hsl(var(--background) / 0.45) 75%,
+                hsl(var(--background) / 0.30) 85%,
+                hsl(var(--background) / 0.15) 95%,
+                hsl(var(--background) / 0.05) 100%
+              )`
+            }}
+          />
         </div>
       )}
 
-      {/* Contenu Superposé */}
+      {/* Contenu Superposé - Sans header spécial */}
       <div className="relative h-full flex flex-col">
-        {/* Header Minimaliste - Sticky Top */}
-        <header className="sticky top-0 z-20 flex items-center justify-between p-4 bg-gradient-to-b from-black/60 via-black/40 to-transparent backdrop-blur-sm pointer-events-none">
-          {/* Bouton Retour - Toujours visible */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onBack || (() => router.back())}
-            className="h-10 w-10 rounded-full bg-black/40 backdrop-blur-md text-white hover:bg-black/60 border-0 pointer-events-auto"
-          >
-            <SolarIcon icon="alt-arrow-left-bold" className="size-5 text-white" />
-          </Button>
 
-          {/* Badge Statut */}
-          <div className="flex items-center gap-2 pointer-events-auto">
-            <EventBadge
-              impactLevel={decision.impactLevel}
-              emoji={decision.emoji} // Fallback pour compatibilité
-              heat={decision.heat}
-              sentiment={decision.sentiment}
-              badgeColor={decision.badgeColor}
-              size="sm"
-            />
-            <Badge
-              variant="secondary"
-              className="bg-black/40 backdrop-blur-md text-white border-0 text-xs"
-            >
-              {statusLabels[decision.status]}
-            </Badge>
-          </div>
-
-          {/* Save Button */}
-          <div className="pointer-events-auto">
-            <SaveButton
+        {/* Trading Interface Style Reels - Fullscreen (remplace le contenu principal si non résolu) */}
+        {decision.status !== "resolved" ? (
+          <div className="flex-1 min-h-0 relative">
+            <TradingInterfaceReels
               decisionId={decision._id}
-              size="icon"
-              variant="ghost"
-              className="h-10 w-10 rounded-full bg-black/40 backdrop-blur-md text-white hover:bg-black/60 border-0 [&_svg]:text-white"
+              question={decision.question}
+              answer1={decision.answer1}
+              status={decision.status}
+              description={decision.description}
             />
           </div>
-        </header>
-
-        {/* Contenu Principal - Scrollable */}
-        <main ref={mainContentRef} className="flex-1 overflow-y-auto p-4 space-y-4 pb-20 min-h-0">
-          {/* Titre + Décideur */}
-          <div className="space-y-2">
-            <h1 className="text-2xl sm:text-3xl font-bold text-white leading-tight drop-shadow-lg">
-              {decision.title}
-            </h1>
-            <div className="flex items-center gap-2 text-sm text-white/80">
-              <span>{decision.decider}</span>
-              <span>•</span>
-              <span>{timeAgo}</span>
-            </div>
-          </div>
-
-          {/* Quiz Compact Intégré */}
-          {decision.status !== "resolved" && (
-            <div className="bg-black/30 backdrop-blur-md rounded-xl p-3 border border-white/10">
-              <QuizSimple
-                decisionId={decision._id}
-                question={decision.question}
-                answer1={decision.answer1}
-                answer2={decision.answer2}
-                answer3={decision.answer3}
-                status={decision.status}
-                compact
-              />
-            </div>
-          )}
-
-          {/* Détails - Toujours affichés */}
-          <div className="space-y-3">
-            {decision.description && (
-              <p className="text-sm text-white/90 leading-relaxed">
-                {decision.description}
-              </p>
-            )}
-            {decision.impactedDomains.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {decision.impactedDomains.map((domain) => (
-                  <Badge
-                    key={domain}
-                    variant="outline"
-                    className="bg-black/30 backdrop-blur-md text-white border-white/20 text-xs"
-                  >
-                    {domain}
-                  </Badge>
-                ))}
+        ) : (
+          <main ref={mainContentRef} className="flex-1 overflow-y-auto p-4 space-y-4 pb-20 min-h-0">
+            {/* Titre + Décideur */}
+            <div className="space-y-2">
+              <h1 className="text-2xl sm:text-3xl font-bold text-white leading-tight drop-shadow-lg">
+                {decision.title}
+              </h1>
+              <div className="flex items-center gap-2 text-sm text-white/80">
+                <span>{decision.decider}</span>
+                <span>•</span>
+                <span>{timeAgo}</span>
               </div>
-            )}
-          </div>
-        </main>
+            </div>
 
-        {/* Actions Bar - Sticky Bottom */}
-        <footer className="sticky bottom-0 z-20 flex items-center justify-between p-4 bg-gradient-to-t from-black/80 via-black/60 to-transparent backdrop-blur-md mt-auto">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-10 w-10 rounded-full bg-black/40 backdrop-blur-md text-white hover:bg-black/60 border-0"
-            >
-              <SolarIcon icon="heart-bold" className="size-5 text-white" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-10 w-10 rounded-full bg-black/40 backdrop-blur-md text-white hover:bg-black/60 border-0"
-              onClick={() => router.push(`/${decision.slug}`)}
-            >
-              <SolarIcon icon="share-bold" className="size-5 text-white" />
-            </Button>
-          </div>
-          <div className="text-xs text-white/60">
-            {decision.anticipationsCount} anticipations
-          </div>
-        </footer>
+            {/* Détails - Toujours affichés */}
+            <div className="space-y-3">
+              {decision.description && (
+                <p className="text-sm text-white/90 leading-relaxed">
+                  {decision.description}
+                </p>
+              )}
+              {decision.impactedDomains.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {decision.impactedDomains.map((domain) => (
+                    <Badge
+                      key={domain}
+                      variant="outline"
+                      className="bg-black/30 backdrop-blur-md text-white border-white/20 text-xs"
+                    >
+                      {domain}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+          </main>
+        )}
+
+        {/* Pas de footer spécial - On utilise la BottomNav classique */}
       </div>
     </div>
   );

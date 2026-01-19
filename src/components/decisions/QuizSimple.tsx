@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "motion/react";
 import { useTranslations } from 'next-intl';
 import { useUser } from "@/contexts/UserContext";
+import { SeedDisplay } from "@/components/ui/SeedDisplay";
 
 interface QuizSimpleProps {
   decisionId: Id<"decisions">;
@@ -36,9 +37,54 @@ export function QuizSimple({
   const { isAuthenticated } = useConvexAuth();
   const { user: currentUser } = useUser();
   const router = useRouter();
+  
+  // 🎯 FEATURE 5: LES SKINS DE VOTE - Récupérer le skin sélectionné
+  const userSkins = useQuery(
+    api.voteSkins.getUserSkins,
+    isAuthenticated ? {} : "skip"
+  );
+  const selectedSkin = userSkins?.selectedSkin || "default";
+
+  // Fonction pour obtenir les classes CSS selon le skin
+  const getSkinClasses = (skinType: string) => {
+    switch (skinType) {
+      case "neon":
+        return {
+          button: "bg-gradient-to-br from-cyan-500/20 via-purple-500/20 to-pink-500/20 border-cyan-400/50 shadow-[0_0_15px_rgba(6,182,212,0.3)]",
+          number: "bg-gradient-to-br from-cyan-500 to-purple-500 text-white border-cyan-400/50 shadow-[0_0_10px_rgba(6,182,212,0.5)]",
+          progress: "bg-gradient-to-r from-cyan-400 to-purple-400",
+        };
+      case "stamp":
+        return {
+          button: "bg-red-50 dark:bg-red-950/30 border-red-300 dark:border-red-800 ring-2 ring-red-200 dark:ring-red-900",
+          number: "bg-red-600 text-white border-red-700 font-black text-lg",
+          progress: "bg-red-600",
+        };
+      case "gold":
+        return {
+          button: "bg-gradient-to-br from-yellow-50 via-amber-50 to-yellow-100 dark:from-yellow-950/30 dark:via-amber-950/30 dark:to-yellow-950/30 border-yellow-400 dark:border-yellow-600 shadow-lg shadow-yellow-500/20",
+          number: "bg-gradient-to-br from-yellow-400 via-amber-500 to-yellow-600 text-white border-yellow-500 shadow-lg shadow-yellow-500/50",
+          progress: "bg-gradient-to-r from-yellow-400 to-amber-500",
+        };
+      default:
+        return {
+          button: "",
+          number: "",
+          progress: "",
+        };
+    }
+  };
+
+  const skinClasses = getSkinClasses(selectedSkin);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [expandedAnswer, setExpandedAnswer] = useState<string | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [showClashFeedback, setShowClashFeedback] = useState(false);
+  const [clashData, setClashData] = useState<{
+    answer: "works" | "partial" | "fails";
+    percentage: number;
+    isMajority: boolean;
+  } | null>(null);
 
   // Récupérer les stats des anticipations
   const anticipations = useQuery(
@@ -157,6 +203,27 @@ export function QuizSimple({
         }
       }
 
+      // 🎯 FEATURE 1: LE CLASH - Afficher le feedback subtil immédiatement
+      // Calculer si le vote est majoritaire ou minoritaire (avec optimistic update)
+      const userPercentage = percentages[answer];
+      // Recalculer maxPercentage avec optimistic update inclus
+      const maxPercentage = Math.max(percentages.works, percentages.partial, percentages.fails);
+      // Le vote est majoritaire si c'est le pourcentage le plus élevé ET >= 50%
+      const isMajority = userPercentage === maxPercentage && userPercentage >= 50;
+      
+      // Afficher le feedback subtil (sur le même écran)
+      setClashData({
+        answer,
+        percentage: userPercentage,
+        isMajority,
+      });
+      setShowClashFeedback(true);
+      
+      // Auto-fermeture après 4 secondes
+      setTimeout(() => {
+        setShowClashFeedback(false);
+      }, 4000);
+
       toast.success("Réponse enregistrée !", {
         description: "Votre anticipation a été enregistrée",
       });
@@ -224,6 +291,79 @@ export function QuizSimple({
 
   return (
     <div className="space-y-3">
+      {/* 🎯 FEATURE 1: LE CLASH - Feedback subtil intégré (pas de modale) */}
+      <AnimatePresence>
+        {showClashFeedback && clashData && (
+          <motion.div
+            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            className={cn(
+              "relative rounded-xl p-4 border-2 overflow-hidden",
+              clashData.isMajority
+                ? "bg-blue-500/10 border-blue-400/50"
+                : "bg-orange-500/10 border-orange-400/50"
+            )}
+          >
+            {/* Effet de brillance subtil */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-shimmer" />
+            
+            <div className="relative flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <div className={cn(
+                  "size-8 rounded-full flex items-center justify-center",
+                  clashData.isMajority
+                    ? "bg-blue-500/20"
+                    : "bg-orange-500/20"
+                )}>
+                  <SolarIcon
+                    icon={clashData.isMajority ? "shield-check-bold" : "fire-bold"}
+                    className={cn(
+                      "size-4",
+                      clashData.isMajority ? "text-blue-400" : "text-orange-400"
+                    )}
+                  />
+                </div>
+                <div>
+                  <p className={cn(
+                    "text-sm font-bold",
+                    clashData.isMajority ? "text-blue-300" : "text-orange-300"
+                  )}>
+                    {clashData.isMajority ? "🛡️ Tendance" : "🦁 Contre-Courant"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {clashData.isMajority
+                      ? "Tu suis la masse"
+                      : "Tu es seul contre tous"}
+                  </p>
+                </div>
+              </div>
+              
+              {/* Cours en temps réel */}
+              <div className="flex items-center gap-2">
+                <div className="text-right">
+                  <motion.div
+                    key={clashData.percentage}
+                    initial={{ scale: 1.2 }}
+                    animate={{ scale: 1 }}
+                    className={cn(
+                      "text-lg font-bold",
+                      clashData.isMajority ? "text-blue-400" : "text-orange-400"
+                    )}
+                  >
+                    {clashData.percentage}%
+                  </motion.div>
+                  <p className="text-[10px] text-muted-foreground">
+                    Cours actuel
+                  </p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header - Question (compact style Instagram/Spotify) */}
       <div className="text-center space-y-1.5 px-2">
         <div className="size-10 mx-auto rounded-xl bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 flex items-center justify-center">
@@ -265,8 +405,8 @@ export function QuizSimple({
                 className={cn(
                   "w-full text-left p-3 rounded-xl border transition-all relative overflow-hidden",
                   "min-h-[64px]",
-                  answer.bgColor,
-                  answer.borderColor,
+                  selectedSkin !== "default" ? skinClasses.button : answer.bgColor,
+                  selectedSkin !== "default" ? "" : answer.borderColor,
                   !isSubmitting && answer.hoverBg,
                   !isSubmitting && answer.activeBg,
                   isExpanded && "ring-1 ring-primary/50",
@@ -280,14 +420,13 @@ export function QuizSimple({
                 whileTap={!isSubmitting ? { scale: 0.98 } : {}}
               >
                 <div className="flex items-start gap-3 relative z-10">
-                  {/* ✅ Numérotation au lieu d'icône */}
+                  {/* ✅ Numérotation au lieu d'icône - 🎯 FEATURE 5: Styles selon skin */}
                   <div className={cn(
                     "size-10 rounded-lg flex items-center justify-center shrink-0 border font-bold text-base",
-                    answer.bgColor,
-                    answer.borderColor,
+                    selectedSkin !== "default" ? skinClasses.number : cn(answer.bgColor, answer.borderColor),
                     isExpanded && "scale-105"
                   )}>
-                    <span className="text-foreground">
+                    <span className={selectedSkin !== "default" ? "text-white" : "text-foreground"}>
                       {answer.number}
                     </span>
                   </div>
@@ -303,21 +442,31 @@ export function QuizSimple({
                       </div>
                       {totalAnticipations > 0 && (
                         <div className="flex flex-col items-end gap-0.5 shrink-0">
-                          <span className="text-sm font-bold text-foreground">
+                          {/* 🎯 FEATURE 1: Cours en temps réel avec animation */}
+                          <motion.span
+                            key={percentage}
+                            initial={{ scale: 1.1, color: "#fff" }}
+                            animate={{ scale: 1, color: "inherit" }}
+                            transition={{ duration: 0.3 }}
+                            className="text-sm font-bold text-foreground"
+                          >
                             {percentage}%
-                          </span>
+                          </motion.span>
                           <span className="text-[10px] text-muted-foreground">
-                            {count}
+                            {count} vote{count > 1 ? "s" : ""}
                           </span>
                         </div>
                       )}
                     </div>
 
-                    {/* Barre de progression compacte - Couleur neutre */}
+                    {/* Barre de progression compacte - 🎯 FEATURE 5: Styles selon skin */}
                     {totalAnticipations > 0 && (
                       <div className="w-full h-1 bg-muted/50 rounded-full overflow-hidden">
                         <motion.div
-                          className="h-full rounded-full bg-primary/60" // ✅ Couleur neutre (primary au lieu de rouge/vert/jaune)
+                          className={cn(
+                            "h-full rounded-full",
+                            selectedSkin !== "default" ? skinClasses.progress : "bg-primary/60"
+                          )}
                           initial={{ width: 0 }}
                           animate={{ width: `${percentage}%` }}
                           transition={{ duration: 0.6, ease: "easeOut", delay: index * 0.1 }}
@@ -414,10 +563,8 @@ export function QuizSimple({
                       {/* Info Seeds */}
                       {!userAnticipation && (
                         <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground bg-muted/50 p-2 rounded-lg">
-                          <SolarIcon icon="seedling-bold" className="size-3.5 text-primary" />
-                          <span>
-                            <span className="font-semibold text-primary">10 Seeds</span> engagés
-                          </span>
+                          <SeedDisplay amount={10} variant="compact" iconSize="size-3.5" />
+                          <span>engagés</span>
                         </div>
                       )}
                     </div>
@@ -443,7 +590,7 @@ export function QuizSimple({
                     </div>
                     <div>
                       <p className="font-semibold text-sm">Réponse enregistrée !</p>
-                      <p className="text-xs text-muted-foreground">+10 Seeds</p>
+                      <SeedDisplay amount={10} variant="inline" iconSize="size-2.5" className="text-xs" />
                     </div>
                   </div>
                   <div className="flex items-center justify-between pt-2 border-t border-border/50">
@@ -479,6 +626,7 @@ export function QuizSimple({
           </p>
         </div>
       )}
+
     </div>
   );
 }

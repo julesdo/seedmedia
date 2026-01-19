@@ -2,13 +2,13 @@
 
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { SimplifiedHeader } from "@/components/navigation/SimplifiedHeader";
-import { MobileSubPageHeader } from "@/components/navigation/MobileSubPageHeader";
+import { ReelHeader } from "@/components/navigation/ReelHeader";
 import { DesktopSidebar } from "@/components/layout/DesktopSidebar";
 import { DesktopRightSidebar } from "@/components/layout/DesktopRightSidebar";
 import { DesktopTopBar } from "@/components/layout/DesktopTopBar";
 import { BreakingNewsBanner } from "@/components/breaking-news/BreakingNewsBanner";
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { usePrefetchVisibleLinks } from "@/hooks/useInstantNavigation";
 
@@ -25,9 +25,28 @@ export function SimplifiedLayout({
 }) {
   const pathname = usePathname();
   const isSubPage = pathname !== "/";
+  const [isReelMode, setIsReelMode] = useState(false);
   
   // Précharger automatiquement les liens visibles dans le viewport
   usePrefetchVisibleLinks();
+
+  // Détecter si on est en mode reels (body a la classe hide-mobile-nav)
+  useEffect(() => {
+    const checkReelMode = () => {
+      setIsReelMode(document.body.classList.contains('hide-mobile-nav'));
+    };
+    
+    checkReelMode();
+    
+    // Observer les changements de classe sur le body
+    const observer = new MutationObserver(checkReelMode);
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+    
+    return () => observer.disconnect();
+  }, []);
 
   // Note: Les barres de navigation sont cachées uniquement en mode feed reels
   // Cette logique est gérée dans DecisionDetailClient.tsx
@@ -35,6 +54,13 @@ export function SimplifiedLayout({
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {/* Reel Header - Affiché uniquement en mode reel (mobile) */}
+      {isReelMode && (
+        <div className="lg:hidden">
+          <ReelHeader />
+        </div>
+      )}
+
       {/* Mobile Header - Caché si body a la classe hide-mobile-nav */}
       <div data-hide-on-reel className="lg:hidden sticky top-0 z-50">
         {/* Breaking News Banner (au-dessus du header) - Sticky */}
@@ -42,9 +68,6 @@ export function SimplifiedLayout({
         {/* Header - Sticky juste en dessous du breaking news */}
         <SimplifiedHeader />
       </div>
-
-      {/* Mobile Sub Page Header - Affiché uniquement sur les sous-pages */}
-      <MobileSubPageHeader />
       
       {/* Desktop Breaking News Banner */}
       <div className="hidden lg:block">
@@ -74,9 +97,9 @@ export function SimplifiedLayout({
       {/* Desktop Sidebar Right */}
       <DesktopRightSidebar />
       
-      {/* Mobile Bottom Navigation - Caché si body a la classe hide-mobile-nav */}
-      <div data-hide-on-reel className="lg:hidden">
-        <BottomNav />
+      {/* Mobile Bottom Navigation - Couleur par défaut */}
+      <div className="lg:hidden">
+        <BottomNav transparent={false} />
       </div>
     </div>
   );

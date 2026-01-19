@@ -486,8 +486,9 @@ export const getUserProfile = query({
       .collect();
 
     const resolvedAnticipations = anticipations.filter((a) => a.resolved);
+    // Système binaire : result === "won" signifie que l'anticipation était correcte
     const correctAnticipations = resolvedAnticipations.filter(
-      (a) => a.result === a.issue
+      (a) => a.result === "won"
     );
 
     return {
@@ -505,6 +506,46 @@ export const getUserProfile = query({
             : 0,
       },
     };
+  },
+});
+
+/**
+ * Recherche des utilisateurs par username (pour autocomplétion de mentions)
+ */
+export const searchUsersByUsername = query({
+  args: {
+    query: v.string(), // Texte de recherche (sans @)
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit || 10;
+    const searchQuery = args.query.trim().toLowerCase().replace(/^@/, "");
+    
+    if (searchQuery.length < 1) {
+      return [];
+    }
+    
+    // Récupérer tous les utilisateurs avec username
+    const allUsers = await ctx.db
+      .query("users")
+      .filter((q) => q.neq(q.field("username"), undefined))
+      .collect();
+    
+    // Filtrer ceux dont le username commence par la recherche
+    const matchingUsers = allUsers
+      .filter((user) => {
+        const username = (user.username || "").toLowerCase();
+        return username.startsWith(searchQuery);
+      })
+      .slice(0, limit)
+      .map((user) => ({
+        _id: user._id,
+        name: user.name,
+        username: user.username,
+        image: user.image,
+      }));
+    
+    return matchingUsers;
   },
 });
 
