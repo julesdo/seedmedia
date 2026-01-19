@@ -3,19 +3,31 @@ import Stripe from "stripe";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-12-18.acacia",
-});
+// Initialisation conditionnelle pour éviter les erreurs lors du build
+const stripe = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: "2024-12-18.acacia",
+    })
+  : null;
 
 // Note: L'authentification est vérifiée côté Convex dans prepareCheckoutSession
 // On passe les cookies de session à Convex pour l'authentification
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+const convex = process.env.NEXT_PUBLIC_CONVEX_URL
+  ? new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL)
+  : null;
 
 /**
  * POST /api/payments/checkout
  * Crée une session Stripe Checkout pour un pack de Seeds
  */
 export async function POST(request: NextRequest) {
+  if (!stripe || !convex) {
+    return NextResponse.json(
+      { error: "Stripe not configured" },
+      { status: 500 }
+    );
+  }
+
   try {
     const body = await request.json();
     const { packId } = body;
