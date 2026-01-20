@@ -30,9 +30,13 @@ const SheetRootContext = createContext<{
 
 function Sheet({ 
   side,
+  shouldScaleBackground,
+  dismissible,
   ...props 
 }: React.ComponentProps<typeof SheetPrimitive.Root> & {
   side?: "top" | "right" | "bottom" | "left"
+  shouldScaleBackground?: boolean
+  dismissible?: boolean
 }) {
   const [isMobile, setIsMobile] = useState(false)
   const isBottomSheet = side === "bottom"
@@ -49,7 +53,12 @@ function Sheet({
   if (useDrawer) {
     return (
       <SheetRootContext.Provider value={{ useDrawer: true }}>
-        <DrawerPrimitive data-slot="drawer" {...(props as any)} />
+        <DrawerPrimitive 
+          data-slot="drawer" 
+          shouldScaleBackground={shouldScaleBackground}
+          dismissible={dismissible}
+          {...(props as any)} 
+        />
       </SheetRootContext.Provider>
     )
   }

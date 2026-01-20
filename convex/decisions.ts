@@ -48,6 +48,11 @@ export const getDecisions = query({
     regions: v.optional(v.array(v.string())), // ["EU", "US", "FR", etc.]
     deciderTypes: v.optional(v.array(v.string())), // ["country", "enterprise", etc.]
     types: v.optional(v.array(v.string())), // ["law", "sanction", etc.]
+    // ✅ Filtre pour événements spéciaux
+    specialEvent: v.optional(v.union(
+      v.literal("municipales_2026"),
+      v.literal("presidentielles_2027"),
+    )),
   },
   handler: async (ctx, args) => {
     let decisionsQuery;
@@ -110,6 +115,11 @@ export const getDecisions = query({
       decisions = decisions.filter((d) => 
         args.deciderTypes!.includes(d.deciderType)
       );
+    }
+
+    // ✅ Filtrer par événement spécial si fourni
+    if (args.specialEvent) {
+      decisions = decisions.filter((d) => d.specialEvent === args.specialEvent);
     }
 
     // 🎯 FEATURE 4: LE MÉGAPHONE - Prioriser les décisions boostées
@@ -493,6 +503,20 @@ export const createDecision = mutation({
     heat: v.number(),
     emoji: v.string(),
     badgeColor: v.string(),
+    // ✅ ÉVÉNEMENTS SPÉCIAUX : Municipales 2026
+    specialEvent: v.optional(v.union(
+      v.literal("municipales_2026"),
+      v.literal("presidentielles_2027"),
+    )),
+    specialEventMetadata: v.optional(v.object({
+      region: v.optional(v.string()),
+      city: v.optional(v.string()),
+      eventCategory: v.optional(v.union(
+        v.literal("blockbuster"),
+        v.literal("tendance"),
+        v.literal("insolite")
+      )),
+    })),
   },
   handler: async (ctx, args) => {
     // Vérifier que le slug est unique
@@ -537,6 +561,9 @@ export const createDecision = mutation({
       heat: args.heat,
       emoji: args.emoji,
       badgeColor: args.badgeColor,
+      // ✅ ÉVÉNEMENTS SPÉCIAUX
+      specialEvent: args.specialEvent,
+      specialEventMetadata: args.specialEventMetadata,
       createdAt: now,
       updatedAt: now,
     });

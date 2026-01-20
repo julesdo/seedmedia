@@ -887,23 +887,23 @@ export function TradingInterfaceReels({
           </motion.button>
 
           {/* Bouton Articles liés - Sheet par le bas */}
-          <Sheet open={showNewsSheet} onOpenChange={setShowNewsSheet}>
-            <motion.button
-              onClick={() => setShowNewsSheet(true)}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.98 }}
-              className="size-14 rounded-xl bg-background/60 backdrop-blur-sm border border-border/40 flex flex-col items-center justify-center gap-1 text-muted-foreground hover:bg-muted hover:border-border/60 hover:text-foreground transition-all duration-200"
-            >
-              <SolarIcon icon="document-text-bold" className="size-5" />
-              <span className="text-[9px] font-medium">Articles</span>
-            </motion.button>
+          <motion.button
+            onClick={() => setShowNewsSheet(true)}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.98 }}
+            className="size-14 rounded-xl bg-background/60 backdrop-blur-sm border border-border/40 flex flex-col items-center justify-center gap-1 text-muted-foreground hover:bg-muted hover:border-border/60 hover:text-foreground transition-all duration-200"
+          >
+            <SolarIcon icon="document-text-bold" className="size-5" />
+            <span className="text-[9px] font-medium">Articles</span>
+          </motion.button>
+          <Sheet side="bottom" open={showNewsSheet} onOpenChange={setShowNewsSheet} dismissible={true} shouldScaleBackground={true}>
             <SheetContent 
               side="bottom" 
               className="h-[90vh] rounded-t-3xl p-0 overflow-hidden w-full max-w-full [&>button]:hidden"
             >
               <SheetTitle className="sr-only">Articles liés</SheetTitle>
               
-              <div className="relative flex-1 flex flex-col overflow-hidden w-full max-w-full min-w-0 pointer-events-none">
+              <div className="relative flex-1 flex flex-col overflow-hidden w-full max-w-full min-w-0">
                 {decision?.imageUrl && (
                   <div className="absolute inset-0 z-0 pointer-events-none">
                     <Image
@@ -913,12 +913,12 @@ export function TradingInterfaceReels({
                       className="object-cover"
                       sizes="100vw"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-b from-background from-20% via-background/95 to-background" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-background from-20% via-background/95 to-background pointer-events-none" />
                   </div>
                 )}
 
                 {/* Contenu avec z-index relatif */}
-                <div className="relative z-5 flex flex-col flex-1 overflow-hidden max-w-full pointer-events-auto">
+                <div className="relative z-10 flex flex-col flex-1 overflow-hidden max-w-full">
                   {/* Header compact */}
                   <div className="px-4 pt-3 pb-2 shrink-0">
                     <SheetHeader className="text-left p-0">
@@ -945,7 +945,7 @@ export function TradingInterfaceReels({
                   </div>
                   
                   {/* Contenu scrollable */}
-                  <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-20 max-w-full">
+                  <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-20 space-y-3 max-w-full flex flex-col">
                     <RelatedNewsClient decisionId={decisionId} autoExpand={true} />
                   </div>
                 </div>
@@ -954,18 +954,18 @@ export function TradingInterfaceReels({
           </Sheet>
 
           {/* Bouton Commentaire - Sheet par le bas style TikTok */}
-          <Sheet open={showComments} onOpenChange={setShowComments}>
-            <motion.button
-              onClick={() => setShowComments(true)}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.98 }}
-              className="size-14 rounded-xl bg-background/60 backdrop-blur-sm border border-border/40 flex flex-col items-center justify-center gap-1 text-muted-foreground hover:bg-muted hover:border-border/60 hover:text-foreground transition-all duration-200"
-            >
-              <SolarIcon icon="chat-round-bold" className="size-5" />
-              <span className="text-[9px] font-medium">
-                {commentsCount > 0 ? commentsCount : "Commenter"}
-              </span>
-            </motion.button>
+          <motion.button
+            onClick={() => setShowComments(true)}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.98 }}
+            className="size-14 rounded-xl bg-background/60 backdrop-blur-sm border border-border/40 flex flex-col items-center justify-center gap-1 text-muted-foreground hover:bg-muted hover:border-border/60 hover:text-foreground transition-all duration-200"
+          >
+            <SolarIcon icon="chat-round-bold" className="size-5" />
+            <span className="text-[9px] font-medium">
+              {commentsCount > 0 ? commentsCount : "Commenter"}
+            </span>
+          </motion.button>
+          <Sheet side="bottom" open={showComments} onOpenChange={setShowComments} dismissible={true} shouldScaleBackground={true}>
             <SheetContent 
               side="bottom" 
               className="h-[90vh] rounded-t-3xl p-0 overflow-hidden w-full max-w-full [&>button]:hidden flex flex-col"
@@ -974,7 +974,7 @@ export function TradingInterfaceReels({
                 {commentsCount} commentaire{commentsCount > 1 ? "s" : ""}
               </SheetTitle>
               
-              <div className="relative flex-1 flex flex-col overflow-hidden w-full max-w-full min-w-0 h-full pointer-events-none">
+              <div className="relative flex-1 flex flex-col overflow-hidden w-full max-w-full min-w-0 h-full">
                 {/* Cover progressif partout */}
                 {decision?.imageUrl && (
                   <div className="absolute inset-0 z-0 pointer-events-none">
@@ -985,12 +985,12 @@ export function TradingInterfaceReels({
                       className="object-cover"
                       sizes="100vw"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-b from-background from-20% via-background/95 to-background" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-background from-20% via-background/95 to-background pointer-events-none" />
                   </div>
                 )}
 
                 {/* Contenu avec z-index relatif */}
-                <div className="relative z-10 flex flex-col flex-1 overflow-hidden max-w-full h-full pointer-events-auto">
+                <div className="relative z-10 flex flex-col flex-1 overflow-hidden max-w-full h-full">
                   {/* Header compact */}
                   <div className="px-4 pt-3 pb-2 shrink-0">
                     <SheetHeader className="text-left p-0">
@@ -1012,20 +1012,12 @@ export function TradingInterfaceReels({
                             {commentsCount} commentaire{commentsCount > 1 ? "s" : ""}
                           </SheetTitle>
                         </div>
-                        <SheetClose asChild>
-                          <button
-                            onClick={() => setShowComments(false)}
-                            className="size-8 rounded-full flex items-center justify-center bg-muted/50 hover:bg-muted transition-colors shrink-0"
-                          >
-                            <SolarIcon icon="close-circle-bold" className="size-4" />
-                          </button>
-                        </SheetClose>
                       </div>
                     </SheetHeader>
                   </div>
                   
                   {/* Liste des commentaires - Scrollable */}
-                  <div className="flex-1 overflow-hidden max-w-full min-h-0">
+                  <div className="flex-1 overflow-y-auto overflow-x-hidden max-w-full min-h-0">
                     <TopArgumentsList decisionId={decisionId} />
                   </div>
                 </div>
@@ -1038,6 +1030,8 @@ export function TradingInterfaceReels({
             open={showBuySheet && selectedPosition !== null} 
             onOpenChange={handleBuySheetOpenChange}
             side="bottom"
+            dismissible={true}
+            shouldScaleBackground={true}
           >
             <SheetContent 
               side="bottom" 
@@ -1047,7 +1041,7 @@ export function TradingInterfaceReels({
                 Prendre position - {selectedPosition === "yes" ? "Position OUI" : "Position NON"}
               </SheetTitle>
               
-              <div className="relative flex-1 flex flex-col overflow-hidden w-full max-w-full min-w-0 pointer-events-none">
+              <div className="relative flex-1 flex flex-col overflow-hidden w-full max-w-full min-w-0">
                 {/* Cover progressif partout */}
                 {decision?.imageUrl && (
                   <div className="absolute inset-0 z-0 pointer-events-none">
@@ -1058,12 +1052,12 @@ export function TradingInterfaceReels({
                       className="object-cover"
                       sizes="100vw"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-b from-background from-20% via-background/95 to-background" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-background from-20% via-background/95 to-background pointer-events-none" />
                   </div>
                 )}
 
                 {/* Contenu avec z-index relatif */}
-                <div className="relative z-10 flex flex-col flex-1 overflow-hidden max-w-full pointer-events-auto">
+                <div className="relative z-10 flex flex-col flex-1 overflow-hidden max-w-full">
                   {/* Header compact */}
                   <div className="px-4 pt-3 pb-2 shrink-0">
                     <SheetHeader className="text-left p-0">
@@ -1113,7 +1107,7 @@ export function TradingInterfaceReels({
                   </div>
 
                   {/* Contenu scrollable */}
-                  <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-20 space-y-3 max-w-full flex flex-col">
+                  <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-20 space-y-3 max-w-full flex flex-col select-text">
                     {/* Probabilité actuelle - Compact */}
                     <div className="bg-muted/50 rounded-lg p-3 text-center border border-border/20 space-y-2">
                       <div>
@@ -1336,14 +1330,14 @@ export function TradingInterfaceReels({
           </Sheet>
 
           {/* Sheet Graphique détaillé - Uniquement le graphique */}
-          <Sheet open={showChartSheet} onOpenChange={setShowChartSheet}>
+          <Sheet side="bottom" open={showChartSheet} onOpenChange={setShowChartSheet} dismissible={true} shouldScaleBackground={true}>
             <SheetContent 
               side="bottom" 
               className="h-[90vh] rounded-t-3xl p-0 overflow-hidden w-full max-w-full [&>button]:hidden"
             >
               <SheetTitle className="sr-only">Graphique détaillé</SheetTitle>
               
-              <div className="relative flex-1 flex flex-col overflow-hidden w-full max-w-full min-w-0 pointer-events-none">
+              <div className="relative flex-1 flex flex-col overflow-hidden w-full max-w-full min-w-0">
                 {/* Cover progressif partout */}
                 {decision?.imageUrl && (
                   <div className="absolute inset-0 z-0 pointer-events-none">
@@ -1354,12 +1348,12 @@ export function TradingInterfaceReels({
                       className="object-cover"
                       sizes="100vw"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-b from-background from-20% via-background/95 to-background" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-background from-20% via-background/95 to-background pointer-events-none" />
                   </div>
                 )}
 
                 {/* Contenu avec z-index relatif */}
-                <div className="relative z-10 flex flex-col flex-1 overflow-hidden max-w-full pointer-events-auto">
+                <div className="relative z-10 flex flex-col flex-1 overflow-hidden max-w-full">
                   {/* Header compact */}
                   <div className="px-4 pt-3 pb-2 shrink-0">
                     <SheetHeader className="text-left p-0">

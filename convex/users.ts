@@ -298,6 +298,8 @@ export const updateUserProfile = mutation({
       deciderTypes: v.optional(v.array(v.string())),
       types: v.optional(v.array(v.string())),
     })),
+    // ✅ Gamification Municipales 2026
+    municipales2026Region: v.optional(v.string()), // Région sélectionnée pour les municipales
   },
   handler: async (ctx, args) => {
     const betterAuthUser = await betterAuthComponent.safeGetAuthUser(ctx as any);
@@ -371,6 +373,22 @@ export const updateUserProfile = mutation({
 
     if (args.preferredLanguage !== undefined) {
       updates.preferredLanguage = args.preferredLanguage;
+    }
+
+    // ✅ Gérer municipales2026
+    if (args.municipales2026Region !== undefined) {
+      // Initialiser ou mettre à jour municipales2026
+      const currentMunicipales = appUser.municipales2026 || {
+        selectedRegion: undefined,
+        correctPredictions: 0,
+        totalPredictions: 0,
+        regionRank: undefined,
+      };
+      
+      updates.municipales2026 = {
+        ...currentMunicipales,
+        selectedRegion: args.municipales2026Region || undefined,
+      };
     }
 
     await ctx.db.patch(appUser._id, updates);

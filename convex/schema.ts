@@ -78,6 +78,13 @@ export default defineSchema({
     isFounderMember: v.optional(v.boolean()), // Badge fondateur (coût: 5000 Seeds)
     // 🎨 VOTE SKINS: Skin de vote sélectionné
     selectedVoteSkin: v.optional(v.string()), // Skin de vote sélectionné (ex: "default", "gold", "silver", etc.)
+    // 🗳️ GAMIFICATION MUNICIPALES 2026 (optionnel)
+    municipales2026: v.optional(v.object({
+      selectedRegion: v.optional(v.string()), // Région choisie par l'utilisateur (ex: "Île-de-France")
+      correctPredictions: v.number(), // Nombre de prédictions correctes
+      totalPredictions: v.number(), // Nombre total de prédictions
+      regionRank: v.optional(v.number()), // Classement dans sa région
+    })),
     // 💳 STRIPE: Paiements
     stripeCustomerId: v.optional(v.string()), // ID client Stripe
     // Timestamps
@@ -1403,6 +1410,22 @@ export default defineSchema({
     )),
     badgeColor: v.string(), // Couleur du badge (hex) : bleu → vert → rouge selon heat
 
+    // ✅ ÉVÉNEMENTS SPÉCIAUX : Municipales, Présidentielles, etc.
+    specialEvent: v.optional(v.union(
+      v.literal("municipales_2026"), // Municipales 2026
+      v.literal("presidentielles_2027"), // Présidentielles 2027 (futur)
+      // ... autres événements spéciaux
+    )),
+    specialEventMetadata: v.optional(v.object({
+      region: v.optional(v.string()), // Ex: "Île-de-France", "Auvergne-Rhône-Alpes"
+      city: v.optional(v.string()), // Ex: "Paris", "Lyon", "Marseille"
+      eventCategory: v.optional(v.union(
+        v.literal("blockbuster"), // Paris, Lyon, Marseille (marchés stars)
+        v.literal("tendance"), // Tendances nationales
+        v.literal("insolite") // Marchés insolites/buzz
+      )),
+    })),
+
     // Timestamps
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -1414,7 +1437,8 @@ export default defineSchema({
     .index("decider", ["decider"])
     .index("type", ["type"])
     .index("impactedDomains", ["impactedDomains"])
-    .index("contentHash", ["contentHash"]), // ✅ Index pour déduplication optimisée
+    .index("contentHash", ["contentHash"]) // ✅ Index pour déduplication optimisée
+    .index("specialEvent", ["specialEvent"]), // ✅ Index pour filtrer les événements spéciaux
 
   // ============================================
   // DECISION TRANSLATIONS (Traductions Decision Cards)

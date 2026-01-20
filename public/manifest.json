@@ -75,6 +75,15 @@
   "categories": ["news", "education", "lifestyle"],
   "lang": "fr-FR",
   "dir": "ltr",
-  "prefer_related_applications": false
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "Décisions",
+      "short_name": "Décisions",
+      "description": "Voir les décisions importantes",
+      "url": "/",
+      "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192" }]
+    }
+  ]
 }
 

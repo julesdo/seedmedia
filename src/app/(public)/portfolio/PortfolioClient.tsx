@@ -778,58 +778,7 @@ function SellMoreSectionPortfolio({
               {formatSeedAmount(estimatedSellAmount.net)}
             </span>
           </div>
-          
-          {/* Profit/Perte simple */}
-          {(() => {
-            if (!selectedPosition.averageBuyPrice || currentPrice === undefined) return null;
-            const sharesToSell = parseFloat(sellSharesAmount) || 0;
-            const investedForShares = (selectedPosition.averageBuyPrice || 0) * sharesToSell;
-            const profitForShares = estimatedSellAmount.net - investedForShares;
-            
-            if (profitForShares > 0) {
-              return (
-                <p className="text-sm font-semibold text-green-500 mt-2">
-                  Gain : +{formatSeedAmount(profitForShares)}
-                </p>
-              );
-            } else if (profitForShares < 0) {
-              return (
-                <p className="text-sm font-semibold text-red-500 mt-2">
-                  Perte : {formatSeedAmount(profitForShares)}
-                </p>
-              );
-            }
-            return null;
-          })()}
         </div>
-
-        {/* Message d'avertissement simplifié (seulement si perte) - sans card */}
-        {(() => {
-          if (!selectedPosition.averageBuyPrice || currentPrice === undefined) return null;
-          const sharesToSell = parseFloat(sellSharesAmount) || 0;
-          const investedForShares = (selectedPosition.averageBuyPrice || 0) * sharesToSell;
-          const profitForShares = estimatedSellAmount.net - investedForShares;
-          
-          if (profitForShares < 0) {
-            const priceHasDropped = currentPrice < selectedPosition.averageBuyPrice;
-            const lossAmount = Math.abs(profitForShares);
-            const lossMessage = priceHasDropped 
-              ? "Le prix a baissé depuis votre achat."
-              : "Les frais sont supérieurs à la plus-value.";
-            
-            return (
-              <div className="py-2">
-                <p className="text-xs text-red-500 font-semibold mb-1">
-                  ⚠️ Vous perdrez {formatSeedAmount(lossAmount)} Seeds
-                </p>
-                <p className="text-[10px] text-muted-foreground">
-                  {lossMessage}
-                </p>
-              </div>
-            );
-          }
-          return null;
-        })()}
 
         {/* Bouton pour voir les détails */}
         <Button
@@ -854,6 +803,62 @@ function SellMoreSectionPortfolio({
         {/* Détails techniques (dépliables) */}
         {showDetails && (
           <div className="space-y-2 pt-2 border-t border-border/20">
+            {/* Profit/Perte */}
+            {(() => {
+              if (!selectedPosition.averageBuyPrice || currentPrice === undefined) return null;
+              const sharesToSell = parseFloat(sellSharesAmount) || 0;
+              const investedForShares = (selectedPosition.averageBuyPrice || 0) * sharesToSell;
+              const profitForShares = estimatedSellAmount.net - investedForShares;
+              
+              if (profitForShares > 0) {
+                return (
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-xs text-muted-foreground">Gain</span>
+                    <span className="text-xs font-semibold text-green-500">
+                      +{formatSeedAmount(profitForShares)}
+                    </span>
+                  </div>
+                );
+              } else if (profitForShares < 0) {
+                return (
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-xs text-muted-foreground">Perte</span>
+                    <span className="text-xs font-semibold text-red-500">
+                      {formatSeedAmount(profitForShares)}
+                    </span>
+                  </div>
+                );
+              }
+              return null;
+            })()}
+            
+            {/* Message d'avertissement (seulement si perte) */}
+            {(() => {
+              if (!selectedPosition.averageBuyPrice || currentPrice === undefined) return null;
+              const sharesToSell = parseFloat(sellSharesAmount) || 0;
+              const investedForShares = (selectedPosition.averageBuyPrice || 0) * sharesToSell;
+              const profitForShares = estimatedSellAmount.net - investedForShares;
+              
+              if (profitForShares < 0) {
+                const priceHasDropped = currentPrice < selectedPosition.averageBuyPrice;
+                const lossAmount = Math.abs(profitForShares);
+                const lossMessage = priceHasDropped 
+                  ? "Le prix a baissé depuis votre achat."
+                  : "Les frais sont supérieurs à la plus-value.";
+                
+                return (
+                  <div className="py-2">
+                    <p className="text-xs text-red-500 font-semibold mb-1">
+                      ⚠️ Vous perdrez {formatSeedAmount(lossAmount)} Seeds
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {lossMessage}
+                    </p>
+                  </div>
+                );
+              }
+              return null;
+            })()}
             {/* Explication des frais progressifs */}
             {(() => {
               const holdingDurationMs = (selectedPosition.createdAt !== undefined && selectedPosition.createdAt !== null)
@@ -1482,7 +1487,7 @@ export function PortfolioClient() {
                 </div>
 
                 {/* Contenu scrollable compact - Design épuré sans cards */}
-                <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-20 space-y-4 max-w-full flex flex-col">
+                <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-4 space-y-4 max-w-full flex flex-col">
                   {/* Gains - Design minimaliste avec pourcentage comme sur les lignes */}
                   <div className="space-y-1">
                     <p className="text-xs text-muted-foreground font-medium">
@@ -1651,7 +1656,7 @@ export function PortfolioClient() {
                 </div>
 
                 {/* Contenu scrollable compact */}
-                <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-20 space-y-4 max-w-full flex flex-col">
+                <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-4 space-y-4 max-w-full flex flex-col">
                   {/* Slider pour choisir le nombre de parts */}
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">

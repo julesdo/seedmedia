@@ -14,6 +14,7 @@ import { getLocale, getMessages } from 'next-intl/server';
 import { DynamicIntlProvider } from '@/components/providers/DynamicIntlProvider';
 import { ServiceWorkerRegistration } from '@/components/service-worker/ServiceWorkerRegistration';
 import { SeedsGainManager } from "@/components/seeds/SeedsGainManager";
+import { InstallPrompt } from '@/components/pwa/InstallPrompt';
 
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono",
@@ -156,6 +157,7 @@ export default async function RootLayout({
                     <LanguageProvider>
                       <ServiceWorkerRegistration />
                       <SeedsGainManager />
+                      <InstallPrompt />
                       <main>
                         {children}
                       </main>

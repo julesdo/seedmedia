@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useDebounce } from "@/hooks/use-debounce";
 import { cn } from "@/lib/utils";
@@ -723,6 +724,87 @@ function SettingsContent() {
                   onCheckedChange={setNotificationsEnabled}
                 />
               </div>
+            </CardContent>
+          </Card>
+
+          {/* ✅ Gamification Municipales 2026 */}
+          <Card>
+            <CardHeader>
+              <CardTitle>🗳️ Municipales 2026</CardTitle>
+              <CardDescription>
+                Choisissez votre région pour participer à la "Bataille des Régions"
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="font-semibold">Votre région</div>
+                  <div className="text-sm text-muted-foreground">
+                    Rejoignez votre équipe régionale et défiez les autres régions !
+                  </div>
+                </div>
+                <Select
+                  value={user?.municipales2026?.selectedRegion || ""}
+                  onValueChange={async (value) => {
+                    try {
+                      await updateProfile({ municipales2026Region: value || undefined });
+                      toast.success("Région mise à jour", {
+                        description: value 
+                          ? `Vous avez rejoint Team ${value} !` 
+                          : "Région désélectionnée",
+                      });
+                    } catch (error) {
+                      console.error("Error updating region:", error);
+                      toast.error("Erreur", {
+                        description: "Impossible de mettre à jour la région",
+                      });
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Sélectionner une région" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Aucune région</SelectItem>
+                    <SelectItem value="Auvergne-Rhône-Alpes">Auvergne-Rhône-Alpes</SelectItem>
+                    <SelectItem value="Bourgogne-Franche-Comté">Bourgogne-Franche-Comté</SelectItem>
+                    <SelectItem value="Bretagne">Bretagne</SelectItem>
+                    <SelectItem value="Centre-Val de Loire">Centre-Val de Loire</SelectItem>
+                    <SelectItem value="Corse">Corse</SelectItem>
+                    <SelectItem value="Grand Est">Grand Est</SelectItem>
+                    <SelectItem value="Hauts-de-France">Hauts-de-France</SelectItem>
+                    <SelectItem value="Île-de-France">Île-de-France</SelectItem>
+                    <SelectItem value="Normandie">Normandie</SelectItem>
+                    <SelectItem value="Nouvelle-Aquitaine">Nouvelle-Aquitaine</SelectItem>
+                    <SelectItem value="Occitanie">Occitanie</SelectItem>
+                    <SelectItem value="Pays de la Loire">Pays de la Loire</SelectItem>
+                    <SelectItem value="Provence-Alpes-Côte d'Azur">Provence-Alpes-Côte d'Azur</SelectItem>
+                    <SelectItem value="Guadeloupe">Guadeloupe</SelectItem>
+                    <SelectItem value="Martinique">Martinique</SelectItem>
+                    <SelectItem value="Guyane">Guyane</SelectItem>
+                    <SelectItem value="La Réunion">La Réunion</SelectItem>
+                    <SelectItem value="Mayotte">Mayotte</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {user?.municipales2026?.selectedRegion && (
+                <div className="mt-4 p-3 bg-muted rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm font-medium">
+                      🏆 Team {user.municipales2026.selectedRegion}
+                    </div>
+                    <Link 
+                      href="/municipales"
+                      className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                      Voir le classement →
+                    </Link>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Prédictions correctes : {user.municipales2026.correctPredictions || 0} / {user.municipales2026.totalPredictions || 0}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 

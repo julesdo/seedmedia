@@ -675,14 +675,14 @@ function PositionDetailDrawer({
   
   return (
     <Sheet open={open} onOpenChange={onOpenChange} side="bottom">
-      <SheetContent side="bottom" className="h-[90vh] rounded-t-3xl p-0 overflow-hidden w-full max-w-full [&>button]:hidden">
-        <SheetHeader className="px-4 pt-4 pb-2 border-b border-border/50">
+      <SheetContent side="bottom" className="h-[90vh] rounded-t-3xl p-0 overflow-hidden w-full max-w-full [&>button]:hidden flex flex-col">
+        <SheetHeader className="px-4 pt-4 pb-2 border-b border-border/50 flex-shrink-0">
           <SheetTitle className="text-lg font-bold line-clamp-2">
             {decision.title}
           </SheetTitle>
         </SheetHeader>
         
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 pb-24">
           {/* Position de l'utilisateur */}
           <div className={cn(
             "rounded-lg p-4 border-2",
@@ -822,41 +822,42 @@ function PositionDetailDrawer({
                   </div>
                 </div>
                 
-                {/* Coût estimé */}
-                <div className="rounded-lg bg-muted/50 p-3 border border-border/50">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs text-muted-foreground">Coût total estimé</span>
-                    <SeedDisplay amount={estimatedCost} variant="compact" />
+                {/* Coût estimé - Simplifié */}
+                <div className="rounded-lg bg-muted/50 p-3 border border-border/50 text-center">
+                  <div className="flex items-center justify-center gap-1.5 mb-1">
+                    <span className="text-xs text-muted-foreground">Coût total:</span>
+                    <SeedDisplay amount={estimatedCost} variant="compact" className="text-base font-bold" />
                   </div>
-                  <p className="text-[10px] text-muted-foreground">
-                    Vous payez en Seeds, pas en probabilité
-                  </p>
                 </div>
-                
-                {/* Bouton d'achat */}
-                <Button
-                  onClick={() => handleBuy(selectedPosition)}
-                  disabled={isSubmitting || partsNum <= 0}
-                  className={cn(
-                    "w-full h-12 font-bold text-base",
-                    selectedPosition === "yes"
-                      ? cn("bg-gradient-to-r", YES_COLORS.gradient.from, YES_COLORS.gradient.via, YES_COLORS.gradient.to, "text-white")
-                      : cn("bg-gradient-to-r", NO_COLORS.gradient.from, NO_COLORS.gradient.via, NO_COLORS.gradient.to, "text-white")
-                  )}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <SolarIcon icon="loading" className="size-4 mr-2 animate-spin" />
-                      Traitement...
-                    </>
-                  ) : (
-                    `Prendre position ${selectedPosition === "yes" ? "OUI" : "NON"} (${partsNum} parts)`
-                  )}
-                </Button>
               </div>
             )}
           </div>
         </div>
+        
+        {/* Footer fixe pour le bouton d'achat */}
+        {selectedPosition && (
+          <div className="px-4 py-4 border-t border-border/50 bg-background/95 backdrop-blur-sm flex-shrink-0">
+            <Button
+              onClick={() => handleBuy(selectedPosition)}
+              disabled={isSubmitting || partsNum <= 0}
+              className={cn(
+                "w-full h-12 font-bold text-base",
+                selectedPosition === "yes"
+                  ? cn("bg-gradient-to-r", YES_COLORS.gradient.from, YES_COLORS.gradient.via, YES_COLORS.gradient.to, "text-white")
+                  : cn("bg-gradient-to-r", NO_COLORS.gradient.from, NO_COLORS.gradient.via, NO_COLORS.gradient.to, "text-white")
+              )}
+            >
+              {isSubmitting ? (
+                <>
+                  <SolarIcon icon="loading" className="size-4 mr-2 animate-spin" />
+                  Traitement...
+                </>
+              ) : (
+                `Prendre position ${selectedPosition === "yes" ? "OUI" : "NON"} (${partsNum} parts)`
+              )}
+            </Button>
+          </div>
+        )}
       </SheetContent>
     </Sheet>
   );
@@ -976,51 +977,29 @@ function BuyMoreSection({
     }
   };
   
+  const [showDetails, setShowDetails] = useState(false);
+  
   if (!selectedPosition) return null;
   
   return (
     <div className="space-y-3">
-      {/* Probabilité actuelle - Compact (style reels) */}
-      <div className="bg-muted/50 rounded-lg p-3 text-center border border-border/20 space-y-2">
-        <div>
-          <p className="text-[10px] text-muted-foreground mb-1 font-medium">Probabilité actuelle</p>
-          <div className="text-lg font-bold">
-            {probability !== undefined ? (
-              <span className={selectedPosition.position === "yes" ? YES_COLORS.text.light : NO_COLORS.text.light}>
-                {selectedPosition.position === "yes" ? probability.toFixed(1) : (100 - probability).toFixed(1)}%
-              </span>
-            ) : (
-              <SolarIcon icon="loading" className="size-4 animate-spin mx-auto" />
-            )}
-          </div>
-          <p className="text-[9px] text-muted-foreground mt-1">
-            {probability !== undefined && selectedPosition.position === "yes"
-              ? `${probability.toFixed(1)}% pensent que ça va arriver`
-              : probability !== undefined && selectedPosition.position === "no"
-              ? `${(100 - probability).toFixed(1)}% pensent que ça n'arrivera pas`
-              : ""}
-          </p>
+      {/* 🎯 VERSION SIMPLIFIÉE : Focus sur l'essentiel */}
+      
+      {/* Probabilité actuelle - Simplifiée */}
+      <div className="bg-muted/50 rounded-lg p-3 text-center border border-border/20">
+        <p className="text-[10px] text-muted-foreground mb-1 font-medium">Probabilité actuelle</p>
+        <div className="text-2xl font-bold">
+          {probability !== undefined ? (
+            <span className={selectedPosition.position === "yes" ? YES_COLORS.text.light : NO_COLORS.text.light}>
+              {selectedPosition.position === "yes" ? probability.toFixed(1) : (100 - probability).toFixed(1)}%
+            </span>
+          ) : (
+            <SolarIcon icon="loading" className="size-5 animate-spin mx-auto" />
+          )}
         </div>
-        {/* Coût estimé en Seeds - Plus visible */}
-        {estimatedCost > 0 && (
-          <div className="pt-2 border-t border-border/30">
-            <p className="text-[9px] text-muted-foreground mb-1">Coût estimé</p>
-            <div className="flex items-center justify-center gap-1.5">
-              <SeedDisplay 
-                amount={estimatedCost} 
-                variant="default" 
-                className="text-base font-bold"
-                iconSize="size-3"
-              />
-            </div>
-            <p className="text-[9px] text-muted-foreground mt-1">
-              pour {partsNum} part{partsNum > 1 ? "s" : ""}
-            </p>
-          </div>
-        )}
       </div>
 
-      {/* Contrôle nombre de parts - Compact (style reels) */}
+      {/* Contrôle nombre de parts */}
       <div className="space-y-2">
         <label className="text-[10px] text-muted-foreground font-medium block">Nombre de parts</label>
         <div className="flex items-center justify-center gap-3">
@@ -1073,67 +1052,68 @@ function BuyMoreSection({
         </div>
       </div>
 
-      {/* Prix total - Compact avec explication (style reels) */}
-      <div className="bg-background/60 backdrop-blur-sm border border-border/20 rounded-lg p-3 space-y-2">
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] text-muted-foreground font-medium">Probabilité</span>
-          <span className="text-[10px] font-semibold">
-            {probability !== undefined ? (
-              <span className={selectedPosition.position === "yes" ? YES_COLORS.text.light : NO_COLORS.text.light}>
-                {selectedPosition.position === "yes" ? probability.toFixed(1) : (100 - probability).toFixed(1)}%
+      {/* Coût total - Simplifié */}
+      <div className="text-center space-y-2 py-3">
+        <p className="text-xs text-muted-foreground font-medium">Coût total</p>
+        <div className="flex items-center justify-center gap-1.5">
+          <SeedDisplay 
+            amount={estimatedCost} 
+            variant="default" 
+            className="text-2xl font-bold"
+            iconSize="size-4"
+          />
+        </div>
+      </div>
+
+      {/* Bouton pour voir les détails */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setShowDetails(!showDetails)}
+        className="w-full text-xs text-muted-foreground hover:text-foreground"
+      >
+        {showDetails ? (
+          <>
+            <ChevronUp className="size-3 mr-1" />
+            Masquer les détails
+          </>
+        ) : (
+          <>
+            <ChevronDown className="size-3 mr-1" />
+            Voir les détails
+          </>
+        )}
+      </Button>
+
+      {/* Détails techniques (dépliables) */}
+      {showDetails && (
+        <div className="space-y-2 pt-2 border-t border-border/20">
+          {currentPrice > 0 && currentPrice < 100 && (
+            <div className="flex items-center justify-between py-2">
+              <span className="text-xs text-muted-foreground">Multiplicateur max</span>
+              <span className="text-xs font-semibold text-primary">
+                {currentMultiplier.toFixed(2)}x
               </span>
-            ) : (
-              "-"
-            )}
-          </span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] text-muted-foreground font-medium">Quantité</span>
-          <span className="text-[10px] font-semibold">{partsNum} part{partsNum > 1 ? "s" : ""}</span>
-        </div>
-        {/* 🎯 Multiplicateur théorique */}
-        {currentPrice > 0 && currentPrice < 100 && (
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] text-muted-foreground font-medium">Multiplicateur max</span>
-            <span className="text-[10px] font-semibold text-primary">
-              {currentMultiplier.toFixed(2)}x
-            </span>
-          </div>
-        )}
-        {priceAfterPurchase > 0 && priceAfterPurchase < 100 && partsNum > 0 && (
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] text-muted-foreground font-medium">Après votre achat</span>
-            <span className="text-[10px] font-semibold text-muted-foreground">
-              {multiplierAfterPurchase.toFixed(2)}x
-            </span>
-          </div>
-        )}
-        {currentPrice > 0 && currentPrice < 100 && (
-          <p className="text-[9px] text-muted-foreground/80 italic">
-            Si l'événement se produit et que personne n'achète après
-          </p>
-        )}
-        <div className="border-t border-border/30 pt-2 space-y-1">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold">Coût total</span>
-            <div className="text-base font-bold">
-              {estimatedCost > 0 ? (
-                <SeedDisplay
-                  amount={estimatedCost}
-                  variant="default"
-                  className="text-foreground"
-                  iconSize="size-3"
-                />
-              ) : (
-                <SolarIcon icon="loading" className="size-3.5 animate-spin" />
-              )}
             </div>
-          </div>
-          <p className="text-[9px] text-muted-foreground/80 italic">
+          )}
+          {priceAfterPurchase > 0 && priceAfterPurchase < 100 && partsNum > 0 && (
+            <div className="flex items-center justify-between py-2">
+              <span className="text-xs text-muted-foreground">Après votre achat</span>
+              <span className="text-xs font-semibold text-muted-foreground">
+                {multiplierAfterPurchase.toFixed(2)}x
+              </span>
+            </div>
+          )}
+          {currentPrice > 0 && currentPrice < 100 && (
+            <p className="text-[10px] text-muted-foreground italic pt-1">
+              Si l'événement se produit et que personne n'achète après
+            </p>
+          )}
+          <p className="text-[10px] text-muted-foreground italic pt-1">
             Vous payez en Seeds, pas en probabilité
           </p>
         </div>
-      </div>
+      )}
       
       {/* Bouton d'achat */}
       <Button
@@ -1481,6 +1461,7 @@ function PublicProfileView({ user, userId }: { user: any; userId: string | Id<"u
   } | null>(null);
   const [sellSharesAmount, setSellSharesAmount] = useState<string>("1");
   const [isSelling, setIsSelling] = useState(false);
+  const [showSellDetails, setShowSellDetails] = useState(false);
   
   // États pour l'achat depuis le drawer de détail
   const [buyMoreMode, setBuyMoreMode] = useState<"buy" | "sell">("sell");
@@ -1884,7 +1865,7 @@ function PublicProfileView({ user, userId }: { user: any; userId: string | Id<"u
           }}
         >
           {/* Header Profil - Collé directement sous le header mobile */}
-          <div className="px-4 pb-4 bg-background/95 backdrop-blur-xl lg:pt-6">
+          <div className="px-4 pb-4 pt-6 bg-background/95 backdrop-blur-xl lg:pt-8">
               {/* Ligne 1: Avatar + Nom + Niveau + Bouton Suivre */}
               <div className="flex items-start gap-3 mb-4">
                 <Avatar className="size-14 shrink-0 ring-2 ring-primary/20">
@@ -2394,7 +2375,7 @@ function PublicProfileView({ user, userId }: { user: any; userId: string | Id<"u
                     </div>
 
                     {/* Contenu scrollable compact */}
-                    <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-4 space-y-4 max-w-full flex flex-col min-h-0">
+                    <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-2 space-y-4 max-w-full flex flex-col min-h-0">
                       {/* Gains */}
                       <div className="space-y-1">
                         <p className="text-xs text-muted-foreground font-medium">
@@ -2446,7 +2427,7 @@ function PublicProfileView({ user, userId }: { user: any; userId: string | Id<"u
                     </div>
 
                     {/* Footer fixe avec onglets Acheter/Revendre */}
-                    <div className="shrink-0 px-4 pb-4 pt-2.5 bg-background/95 backdrop-blur-sm border-t border-border/30 space-y-3">
+                    <div className="shrink-0 px-4 pb-6 pt-2.5 bg-background/95 backdrop-blur-sm border-t border-border/30 space-y-3 max-h-[50vh] overflow-y-auto">
                       {/* Onglets */}
                       <div className="flex gap-2">
                       <Button
@@ -2558,7 +2539,7 @@ function PublicProfileView({ user, userId }: { user: any; userId: string | Id<"u
                     </div>
 
                     {/* Contenu scrollable compact */}
-                    <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-20 space-y-4 max-w-full flex flex-col">
+                    <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-4 space-y-4 max-w-full flex flex-col">
                       {/* Slider pour choisir le nombre de parts */}
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
@@ -2625,34 +2606,58 @@ function PublicProfileView({ user, userId }: { user: any; userId: string | Id<"u
                         </Button>
                       </div>
 
-                      {/* Détails de la vente */}
-                      <div className="space-y-2 pt-2">
-                        <div className="flex items-center justify-between py-2">
-                          <span className="text-xs text-muted-foreground">Montant brut</span>
-                          <div className="flex items-center gap-1">
-                            <SolarIcon icon="leaf-bold" className="size-3 text-primary shrink-0" />
-                            <span className="text-sm font-semibold">{formatSeedAmount(estimatedSellAmount.gross)}</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between py-2">
-                          <span className="text-xs text-muted-foreground">Frais (5%)</span>
-                          <span className="text-xs text-muted-foreground">
-                            -{formatSeedAmount(estimatedSellAmount.fee)}
+                      {/* 🎯 VERSION SIMPLIFIÉE : Focus sur l'essentiel */}
+                      <div className="text-center space-y-2 py-4">
+                        <p className="text-xs text-muted-foreground font-medium">Vous recevrez</p>
+                        <div className="flex items-center justify-center gap-2">
+                          <SolarIcon icon="leaf-bold" className="size-6 text-primary shrink-0" />
+                          <span className={cn(
+                            "text-3xl font-bold tracking-tight",
+                            selectedSellItem.position === "yes" ? YES_COLORS.text.light : NO_COLORS.text.light
+                          )}>
+                            {formatSeedAmount(estimatedSellAmount.net)}
                           </span>
                         </div>
-                        <div className="border-t border-border/20 pt-3 flex items-center justify-between">
-                          <span className="text-sm font-bold">Vous recevez</span>
-                          <div className="flex items-center gap-1">
-                            <SolarIcon icon="leaf-bold" className="size-4 text-primary shrink-0" />
-                            <span className={cn(
-                              "text-xl font-bold",
-                              selectedSellItem.position === "yes" ? YES_COLORS.text.light : NO_COLORS.text.light
-                            )}>
-                              {formatSeedAmount(estimatedSellAmount.net)}
+                      </div>
+
+                      {/* Bouton pour voir les détails */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowSellDetails(!showSellDetails)}
+                        className="w-full text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        {showSellDetails ? (
+                          <>
+                            <ChevronUp className="size-3 mr-1" />
+                            Masquer les détails
+                          </>
+                        ) : (
+                          <>
+                            <ChevronDown className="size-3 mr-1" />
+                            Voir les détails
+                          </>
+                        )}
+                      </Button>
+
+                      {/* Détails techniques (dépliables) */}
+                      {showSellDetails && (
+                        <div className="space-y-2 pt-2 border-t border-border/20">
+                          <div className="flex items-center justify-between py-2">
+                            <span className="text-xs text-muted-foreground">Valeur avant frais</span>
+                            <div className="flex items-center gap-1">
+                              <SolarIcon icon="leaf-bold" className="size-3 text-primary shrink-0" />
+                              <span className="text-sm font-semibold">{formatSeedAmount(estimatedSellAmount.gross)}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between py-2">
+                            <span className="text-xs text-muted-foreground">Frais</span>
+                            <span className="text-xs text-muted-foreground">
+                              -{formatSeedAmount(estimatedSellAmount.fee)}
                             </span>
                           </div>
                         </div>
-                      </div>
+                      )}
                     </div>
 
                     {/* Footer avec bouton de vente */}

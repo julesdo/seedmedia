@@ -1,6 +1,6 @@
 import { action } from "../_generated/server";
 import { v } from "convex/values";
-import { api } from "../_generated/api";
+import { api, internal } from "../_generated/api";
 import { Id } from "../_generated/dataModel";
 
 /**
@@ -103,6 +103,18 @@ export const resolveAnticipationsForDecision = action({
           result: isCorrect ? "won" : "lost",
           seedsEarned: seedsEarned,
         });
+
+        // ✅ Mettre à jour les stats municipales si c'est une municipale
+        const decision = await ctx.runQuery(api.decisions.getDecisionById, {
+          decisionId: anticipation.decisionId,
+        });
+        if (decision?.specialEvent === "municipales_2026") {
+          await ctx.runMutation(internal.municipalesRankings.updateUserMunicipalesStats, {
+            userId: anticipation.userId,
+            decisionId: anticipation.decisionId,
+            isCorrect,
+          });
+        }
 
         // Mettre à jour la balance de Seeds de l'utilisateur (si seedsEarned > 0)
         if (seedsEarned !== 0) {

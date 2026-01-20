@@ -4,6 +4,45 @@ import { api } from "../_generated/api";
 import { Id } from "../_generated/dataModel";
 import { updateBotActivity } from "./helpers";
 
+/**
+ * Catégories de contenu selon la stratégie Seed
+ */
+type ContentCategory = "geopolitics" | "pop_culture" | "tech_future_sport";
+
+/**
+ * Détecte la catégorie de contenu d'un événement
+ */
+function detectContentCategory(
+  title: string,
+  description: string,
+  articles: Array<{ title: string; content?: string }>
+): ContentCategory {
+  const fullText = `${title} ${description} ${articles.map(a => `${a.title} ${a.content || ""}`).join(" ")}`.toLowerCase();
+  
+  // Pop Culture (40%)
+  const popCultureKeywords = [
+    "film", "cinéma", "série", "télévision", "album", "musique", "influenceur", "abonnés",
+    "oscars", "césars", "miss france", "eurovision", "jeu vidéo", "créateur contenu",
+    "célébrité", "divertissement", "hype", "trending", "box office", "casting",
+    "charts", "top charts", "cérémonie récompenses", "réseau social", "viral", "partageable"
+  ];
+  
+  // Tech & Sport Narratif (40%)
+  const techSportKeywords = [
+    "entreprise tech", "intelligence artificielle", "lancement fusée", "nouveau produit tech",
+    "transfert", "joueur", "coach", "record du monde", "joueur football", "météo",
+    "réglementation", "cyberattaque", "découverte", "innovation", "avancée médicale",
+    "breakthrough", "sport narratif", "mercato", "découverte scientifique"
+  ];
+  
+  const hasPopCulture = popCultureKeywords.some(kw => fullText.includes(kw));
+  const hasTechSport = techSportKeywords.some(kw => fullText.includes(kw));
+  
+  if (hasPopCulture) return "pop_culture";
+  if (hasTechSport) return "tech_future_sport";
+  return "geopolitics"; // Par défaut : géopolitique
+}
+
 interface DetectedDecision {
   title: string;
   url: string;
@@ -93,6 +132,9 @@ export const generateDecision = action({
     let eventTitle = mainArticle.title; // Par défaut
     let eventDescription = ""; // À générer par IA
 
+    // Détecter la catégorie de contenu pour adapter le tone of voice
+    const contentCategory = detectContentCategory(mainArticle.title, "", articles);
+
     // Générer un titre et une description journalistiques AVANT l'extraction
     const openaiKeyForSynthesis = process.env.OPENAI_API_KEY;
     if (openaiKeyForSynthesis) {
@@ -102,7 +144,14 @@ export const generateDecision = action({
           .map((a, i) => `Article ${i + 1} (${a.source}): ${a.title}\n${a.content || ""}`)
           .join("\n\n---\n\n");
 
-        const eventSynthesisPrompt = `Tu es un journaliste expert en actualité internationale. Analyse cet ENSEMBLE D'ARTICLES qui couvrent le MÊME ÉVÉNEMENT MAJEUR et génère un titre journalistique clair et une description factuelle.
+        // Adapter le prompt selon la catégorie
+        const categoryPrompts: Record<ContentCategory, string> = {
+          geopolitics: `Tu es un journaliste expert en actualité internationale. Analyse cet ENSEMBLE D'ARTICLES qui couvrent le MÊME ÉVÉNEMENT MAJEUR et génère un titre journalistique clair et une description factuelle.`,
+          pop_culture: `Tu es un journaliste expert en pop culture et divertissement. Analyse cet ENSEMBLE D'ARTICLES qui couvrent le MÊME ÉVÉNEMENT MAJEUR et génère un titre accrocheur et une description engageante pour le grand public.`,
+          tech_future_sport: `Tu es un journaliste expert en tech, futur et sport narratif. Analyse cet ENSEMBLE D'ARTICLES qui couvrent le MÊME ÉVÉNEMENT MAJEUR et génère un titre clair et une description factuelle qui engage la communauté curieuse.`,
+        };
+
+        const eventSynthesisPrompt = `${categoryPrompts[contentCategory]}
 
 ARTICLES (${articles.length} articles couvrant le même événement):
 ${articlesText}
@@ -110,28 +159,27 @@ ${articlesText}
 INSTRUCTIONS STRICTES:
 
 1. TITRE (max 80 caractères):
-   - Style journalistique professionnel, factuel et clair
+   ${contentCategory === "geopolitics" ? `- Style journalistique professionnel, factuel et clair
    - Doit expliquer l'événement de manière compréhensible pour le grand public
    - Mentionne l'acteur principal (personne, pays, institution) et l'action/événement
+   - Exemples: "Maduro plaide non coupable devant un tribunal de New York", "L'ONU lève les sanctions contre la Syrie"` : contentCategory === "pop_culture" ? `- Style accrocheur et viral, adapté au grand public (Gen Z / Millennials)
+   - Doit être partageable sur Instagram/TikTok
+   - Mentionne l'acteur principal (artiste, influenceur, événement) et l'action/événement
+   - Exemples: "Ce jeu vidéo très attendu sortira-t-il dans les 6 prochains mois ?", "Cet album numéro 1 en France"` : `- Style clair et factuel, adapté à la communauté tech/sport
+   - Doit engager les passionnés de tech, futur et sport narratif
+   - Mentionne l'acteur principal (entreprise, joueur, événement) et l'action/événement
+   - Exemples: "Ce joueur marquera-t-il plus de 30 buts cette saison ?", "Cette fusée réussira-t-elle son amerrissage ?"`}
    - Pas de citation d'article, juste les faits essentiels
-   - Exemples de BONS titres:
-     * "Maduro plaide non coupable devant un tribunal de New York"
-     * "L'ONU lève les sanctions contre la Syrie"
-     * "Accord de paix signé entre Israël et la Palestine"
-   - Exemples de MAUVAIS titres (trop génériques ou citant un article):
-     * "Le président syrien salue la décision du Conseil de sécurité"
-     * "Événement majeur en Syrie"
-     * "Décision importante prise"
 
 2. DESCRIPTION (2-3 phrases, max 250 caractères):
-   - Style journalistique factuel et neutre
+   ${contentCategory === "geopolitics" ? `- Style journalistique factuel et neutre
    - Résume l'événement de manière claire et compréhensible
-   - Mentionne les acteurs principaux, le contexte et l'impact
+   - Mentionne les acteurs principaux, le contexte et l'impact` : contentCategory === "pop_culture" ? `- Style engageant et accessible au grand public
+   - Résume l'événement de manière claire et partageable
+   - Mentionne les acteurs principaux et l'impact viral/communautaire` : `- Style factuel et technique, adapté aux passionnés
+   - Résume l'événement de manière claire et engageante
+   - Mentionne les acteurs principaux et l'impact tech/sport`}
    - Pas de citation d'article, juste les faits essentiels
-   - Exemple de BONNE description:
-     "Nicolás Maduro, président du Venezuela, a plaidé non coupable devant un tribunal fédéral de New York. Il se déclare 'prisonnier de guerre' dans le cadre de son procès pour trafic de drogue. Cette affaire pourrait avoir des conséquences majeures sur les relations entre le Venezuela et les États-Unis."
-   - Exemple de MAUVAISE description (trop vague):
-     "Un événement important s'est produit concernant le Venezuela."
 
 Réponds UNIQUEMENT avec du JSON valide:
 {
@@ -284,8 +332,59 @@ Réponds UNIQUEMENT avec du JSON valide (format json_object):
           }
         }
 
-        // Génération de question prédictive BINAIRE (OUI/NON) uniquement
-        const questionPrompt = `Tu es un journaliste expert qui explique l'actualité internationale au grand public. Analyse cet ÉVÉNEMENT MAJEUR et génère une PRÉDICTION BINAIRE (OUI/NON) sous forme de question.
+        // Génération de question prédictive BINAIRE (OUI/NON) selon la stratégie de contenu
+        const categoryQuestionPrompts: Record<ContentCategory, string> = {
+          geopolitics: `Tu es un journaliste expert qui explique l'actualité internationale au grand public.`,
+          pop_culture: `Tu es un journaliste expert en pop culture qui explique l'actualité divertissement au grand public (Gen Z / Millennials).`,
+          tech_future_sport: `Tu es un journaliste expert en tech, futur et sport narratif qui explique l'actualité à une communauté passionnée.`,
+        };
+
+        // Calculer les dates dynamiques pour les exemples
+        const now = Date.now();
+        const currentYear = new Date(now).getFullYear();
+        const nextYear = currentYear + 1;
+        const currentMonth = new Date(now).getMonth() + 1; // 1-12
+        const isSummer = currentMonth >= 6 && currentMonth <= 8;
+        const summerMonths = isSummer ? "cet été" : "l'été prochain";
+        const nextYearMonth = currentMonth <= 6 ? "dans les 6 prochains mois" : `avant ${nextYear}`;
+
+        const categoryExamples: Record<ContentCategory, { good: string[]; bad: string[] }> = {
+          geopolitics: {
+            good: [
+              "Est-ce que la situation va s'améliorer au Venezuela dans les 3 prochains mois ?",
+              "La Syrie va-t-elle bénéficier de la levée des sanctions dans les 6 prochains mois ?",
+              "L'Iran va-t-il subir des conséquences négatives dans les 3 prochains mois ?",
+            ],
+            bad: [
+              "Que va-t-il se passer au Venezuela dans les 3 prochains mois ?",
+              "Comment la Syrie va-t-elle réagir à la levée des sanctions ?",
+            ],
+          },
+          pop_culture: {
+            good: [
+              "Ce jeu vidéo très attendu sortira-t-il dans les 6 prochains mois ?",
+              "Cet album sera-t-il numéro 1 en France la semaine de sa sortie ?",
+              "Cet influenceur atteindra-t-il 10M d'abonnés avant l'été prochain ?",
+            ],
+            bad: [
+              "Que va-t-il se passer avec ce jeu vidéo ?",
+              "Comment cet album va-t-il se vendre ?",
+            ],
+          },
+          tech_future_sport: {
+            good: [
+              "Ce joueur de football marquera-t-il plus de 30 buts cette saison ?",
+              "Cette fusée réussira-t-elle son amerrissage lors du prochain test ?",
+              "Cette entreprise tech annoncera-t-elle un nouveau produit dans les 6 prochains mois ?",
+            ],
+            bad: [
+              "Que va-t-il se passer avec ce joueur cette saison ?",
+              "Comment cette entreprise va-t-elle progresser ?",
+            ],
+          },
+        };
+
+        const questionPrompt = `${categoryQuestionPrompts[contentCategory]} Analyse cet ÉVÉNEMENT MAJEUR et génère une PRÉDICTION BINAIRE (OUI/NON) sous forme de question.
 
 ═══════════════════════════════════════════════════════════════
 ÉVÉNEMENT MAJEUR À ANALYSER:
@@ -305,23 +404,33 @@ Articles (${articles.length}): ${articles.map((a) => a.title).join("; ")}
 - NE JAMAIS générer de questions sur des morts, décès, victimes, pertes humaines
 - NE JAMAIS demander "Y aura-t-il plus de X morts ?" ou "Combien de morts ?"
 - NE JAMAIS faire de prédictions morbides ou exploitant des tragédies humaines
-- NE JAMAIS utiliser des formulations comme "plus de X morts", "au moins X décès", "nombre de victimes"
 
 ✅ À PRIVILÉGIER:
 - Questions sur les conséquences politiques, économiques, diplomatiques
 - Questions sur les impacts positifs ou négatifs (sans mentionner les morts)
 - Questions sur les décisions, accords, sanctions, politiques
-- Questions sur les améliorations ou dégradations de situation (sans morbidité)
 
-EXEMPLES DE QUESTIONS INTERDITES:
-❌ "Y aura-t-il plus de 200 morts au Mozambique dans les 3 prochains mois ?"
-❌ "Combien de victimes y aura-t-il dans cette catastrophe ?"
-❌ "Le nombre de décès va-t-il dépasser X ?"
+═══════════════════════════════════════════════════════════════
+📋 RÈGLES D'OR POUR LA RÉDACTION (STRATÉGIE SEED):
+═══════════════════════════════════════════════════════════════
 
-EXEMPLES DE QUESTIONS AUTORISÉES:
-✅ "La situation humanitaire va-t-elle s'améliorer au Mozambique dans les 3 prochains mois ?"
-✅ "Les secours vont-ils être efficaces dans les 3 prochains mois ?"
-✅ "La reconstruction va-t-elle progresser dans les 3 prochains mois ?"
+1. CLARTÉ ABSOLUE : 
+   - Pas de jargon. Une question doit être comprise par un enfant de 12 ans.
+   - Ton simple et direct, comme une conversation.
+
+2. DATE LIMITE PRÉCISE (OBLIGATOIRE) :
+   - Toujours inclure une échéance temporelle dans la question.
+   - Utiliser des dates dynamiques basées sur la date actuelle (${new Date(now).toLocaleDateString("fr-FR")}).
+   - Exemples: "dans les 3 prochains mois", "dans les 6 prochains mois", "cette saison", "${summerMonths}", "la semaine de sa sortie", "avant ${nextYear}"
+   - Pour Flash Markets (résolution 24-48h): "demain", "ce soir", "dans les 24h"
+
+3. SOURCE DE VÉRITÉ (ORACLE) :
+   - Dans la description, toujours préciser QUI décide du résultat.
+   - Exemples: "Selon les chiffres officiels de l'INSEE", "Selon le compte Twitter officiel de l'artiste", "Selon Météo France"
+
+4. TITRES COURTS :
+   - Optimisés pour le mobile (maximum 12-15 mots).
+   - Formulation typique: "Est-ce que... ?", "Va-t-il... ?", "Sera-t-il... ?", "Y aura-t-il... ?"
 
 ═══════════════════════════════════════════════════════════════
 INSTRUCTIONS STRICTES:
@@ -331,33 +440,15 @@ INSTRUCTIONS STRICTES:
    ✓ Doit être une QUESTION FERMÉE qui appelle une réponse OUI ou NON
    ✓ Doit être COURTE et DIRECTE (maximum 12-15 mots)
    ✓ Doit être SPÉCIFIQUE à cet événement précis (pas générique)
-   ✓ Doit mentionner le décideur OU le pays/région (pas besoin des deux)
-   ✓ Doit avoir un horizon temporel: "dans les 3 prochains mois" ou "dans les 6 prochains mois"
-   ✓ Ton simple et direct, comme une conversation (éviter les formulations pompeuses)
-   ✓ Éviter les énumérations de pays/acteurs multiples dans la question
-   ✓ Formulation typique: "Est-ce que... ?", "Va-t-il... ?", "Sera-t-il... ?", "Y aura-t-il... ?"
+   ✓ Doit avoir un horizon temporel PRÉCIS (OBLIGATOIRE)
+   ✓ Doit être COMPRÉHENSIBLE par un enfant de 12 ans (pas de jargon)
+   ✓ Ton simple et direct, comme une conversation
    
-   ✅ EXEMPLES BONS (prédictions binaires claires):
-   - "Est-ce que la situation va s'améliorer au Venezuela dans les 3 prochains mois ?"
-   - "La Syrie va-t-elle bénéficier de la levée des sanctions dans les 6 prochains mois ?"
-   - "L'Iran va-t-il subir des conséquences négatives dans les 3 prochains mois ?"
-   - "Cette découverte va-t-elle changer les choses positivement dans les 6 prochains mois ?"
-   - "Cet accord de paix va-t-il avoir un impact positif dans les 3 prochains mois ?"
-   - "Kim Jong Un va-t-il utiliser ce tir de missiles de manière constructive dans les 6 prochains mois ?"
+   ✅ EXEMPLES BONS (${contentCategory}):
+${categoryExamples[contentCategory].good.map(ex => `   - "${ex}"`).join("\n")}
    
-   ❌ EXEMPLES MAUVAIS (questions ouvertes, pas binaires):
-   - "Que va-t-il se passer au Venezuela dans les 3 prochains mois ?" (question ouverte)
-   - "Comment la Syrie va-t-elle réagir à la levée des sanctions ?" (question ouverte)
-   - "Quelles seront les conséquences pour l'Iran dans les 3 prochains mois ?" (question ouverte)
-   - "Comment cette découverte va-t-elle changer les choses ?" (question ouverte)
-   
-   ❌ EXEMPLES MAUVAIS (trop longs et pompeux):
-   - "Dans les 3 prochains mois, est-ce que Kim Jong Un et la Corée du Nord vont-ils utiliser ce tir de missiles hypersoniques pour influencer positivement la sécurité et la diplomatie dans la péninsule coréenne et les relations avec la Corée du Sud, le Japon et les États-Unis ?"
-   
-   ❌ EXEMPLES MAUVAIS (trop génériques):
-   - "Quelles seront les conséquences ?"
-   - "Que va-t-il se passer ?"
-   - "Quels seront les impacts ?"
+   ❌ EXEMPLES MAUVAIS:
+${categoryExamples[contentCategory].bad.map(ex => `   - "${ex}"`).join("\n")}
 
 2. PAS DE SCÉNARIO NÉCESSAIRE:
 

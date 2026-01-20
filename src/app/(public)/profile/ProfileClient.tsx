@@ -88,7 +88,7 @@ export function ProfileClient() {
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       {/* Header Profil */}
       <Card className="mb-6">
-        <CardContent className="p-6">
+        <CardContent className="p-6 pt-8">
           <div className="flex items-start gap-4">
             {user.image ? (
               <img
@@ -123,6 +123,16 @@ export function ProfileClient() {
                     <SolarIcon icon="check-circle-bold" className="size-3" />
                     {stats.accuracy}% précision
                   </Badge>
+                )}
+                {user?.municipales2026?.selectedRegion && (
+                  <Link href="/municipales">
+                    <Badge 
+                      variant="outline" 
+                      className="gap-1 border-blue-500 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 transition-colors cursor-pointer"
+                    >
+                      🏆 Team {user.municipales2026.selectedRegion}
+                    </Badge>
+                  </Link>
                 )}
                 <FounderBadgeButton />
               </div>
@@ -197,6 +207,31 @@ export function ProfileClient() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Stats Municipales (si région sélectionnée) */}
+      {user?.municipales2026?.selectedRegion && (
+        <Card className="mb-6">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="text-sm font-medium">🗳️ Municipales 2026</p>
+                  <Link 
+                    href="/municipales"
+                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                  >
+                    Voir le classement →
+                  </Link>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Team {user.municipales2026.selectedRegion} • {user.municipales2026.correctPredictions || 0} / {user.municipales2026.totalPredictions || 0} prédictions correctes
+                  {user.municipales2026.regionRank && ` • Classé #${user.municipales2026.regionRank}`}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* 🎯 FEATURE 2: LE TRADING - Portefeuille d'Opinions */}
       <Card className="mb-6">

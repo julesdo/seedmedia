@@ -35,6 +35,13 @@ interface DecisionCardProps {
     heat: number;
     impactLevel: 1 | 2 | 3 | 4 | 5; // ✅ Échelle d'impact décisionnel (remplace emoji)
     badgeColor: string;
+    // ✅ ÉVÉNEMENTS SPÉCIAUX
+    specialEvent?: "municipales_2026" | "presidentielles_2027";
+    specialEventMetadata?: {
+      region?: string;
+      city?: string;
+      eventCategory?: "blockbuster" | "tendance" | "insolite";
+    };
   };
   className?: string;
   isSaved?: boolean; // Passé depuis DecisionList pour éviter les requêtes multiples
@@ -188,7 +195,16 @@ export function DecisionCard({
           </p>
         </Link>
         <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Badge spécial Municipales 2026 */}
+            {decision.specialEvent === "municipales_2026" && (
+              <Badge 
+                variant="outline" 
+                className="text-xs border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/20"
+              >
+                🗳️ Municipales 2026
+              </Badge>
+            )}
             <Badge variant="outline" className="text-xs">
               {typeLabels[decision.type]}
             </Badge>
