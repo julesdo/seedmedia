@@ -8,6 +8,7 @@ import { SolarIcon } from "@/components/icons/SolarIcon";
 import { useUser } from "@/contexts/UserContext";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { LanguageSelectorCompact } from "@/components/translation/LanguageSelectorCompact";
