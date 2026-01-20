@@ -25,14 +25,15 @@ function generateContentHash(title: string, sourceUrl: string): string {
 }
 
 /**
- * Évalue l'importance d'un événement selon la stratégie de contenu Seed (20/40/40)
- * Retourne un score d'importance (0-10) et un booléen indiquant si c'est un événement majeur
+ * Évalue le potentiel de pari d'un événement selon la stratégie Seed (20/40/40)
+ * Cherche la CONTROVERSE et l'INCERTITUDE plutôt que juste l'importance
+ * Retourne un score de pari (0-10), un score viral (0-100) et un booléen indiquant si c'est un bon pari
  */
 async function evaluateDecisionImportance(
   title: string,
   summary: string | undefined,
   openaiKey: string | undefined
-): Promise<{ isImportant: boolean; score: number; reason: string }> {
+): Promise<{ isImportant: boolean; score: number; reason: string; viralPotential?: number }> {
   // Si pas de clé OpenAI, utiliser un filtre basique adapté aux 3 catégories
   if (!openaiKey) {
     const titleLower = title.toLowerCase();
@@ -64,17 +65,29 @@ async function evaluateDecisionImportance(
     return {
       isImportant: hasEventKeywords,
       score: hasEventKeywords ? 5 : 2,
-      reason: hasEventKeywords ? "Contient des mots-clés d'événement majeur" : "Pas de mots-clés d'événement majeur"
+      reason: hasEventKeywords ? "Contient des mots-clés d'événement majeur" : "Pas de mots-clés d'événement majeur",
+      viralPotential: hasEventKeywords ? 50 : 20
     };
   }
 
   try {
-    const prompt = `Tu es un expert en actualité mondiale couvrant la géopolitique, l'économie, la technologie, la pop culture, le sport narratif et les affaires mondiales. Évalue l'importance de cette annonce pour déterminer si c'est un ÉVÉNEMENT MAJEUR à impact prédictible (positif ou négatif) selon la stratégie de contenu Seed (20% géopolitique, 40% pop culture, 40% tech/sport narratif).
+    const prompt = `Tu es le "Head of Markets" de l'application Seed. Ton but n'est PAS d'informer, mais de trouver des sujets qui DIVISENT l'opinion et créent du DÉBAT.
 
 Titre: ${title}
 Résumé: ${summary || "Aucun résumé disponible"}
 
-Critères d'importance (score 0-10) - APPLIQUÉS AUX 3 CATÉGORIES :
+Analyse le potentiel de "Pari" (Betting Potential) selon ces critères :
+
+1. INCERTITUDE : Est-ce que l'issue est incertaine dans les 3-6 mois ? (Si c'est déjà fait, c'est nul).
+2. TRIBALISME : Est-ce que des groupes de gens s'opposent sur ce sujet ? (Fans vs Haters, Gauche vs Droite, Pro-Tech vs Anti-Tech).
+3. CLARTÉ : Peut-on vérifier le résultat avec une source officielle (Oracle) ?
+
+STRATÉGIE 20/40/40 :
+- Géopolitique : Cherche le conflit, l'élection serrée, la sanction contestée.
+- Pop Culture : Cherche la hype, le record à battre, le clash.
+- Tech/Sport : Cherche la performance limite, le lancement risqué, le transfert rumeur.
+
+Critères de scoring (0-10) - APPLIQUÉS AUX 3 CATÉGORIES :
 
 - 8-10: Événement majeur avec impact mondial/régional significatif
   Géopolitique: "Trump décide d'envahir le Venezuela", "Séisme majeur au Japon", "Krach boursier", "Coup d'État", "Accord de paix historique", "Élection démocratique majeure"
@@ -112,9 +125,10 @@ IMPORTANT - STRATÉGIE SEED (20/40/40):
 
 Réponds UNIQUEMENT avec du JSON valide:
 {
-  "isImportant": true/false,
-  "score": 0-10,
-  "reason": "explication courte"
+  "isBetable": true/false, // Vrai si le sujet permet un pari OUI/NON incertain
+  "score": 0-10, // Score global d'intérêt
+  "viralPotential": 0-100, // Score de "Hype" pour l'algo de tri
+  "reason": "Pourquoi c'est un bon pari (ex: 'Issue incertaine car opposition forte...')"
 }`;
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -128,7 +142,7 @@ Réponds UNIQUEMENT avec du JSON valide:
         messages: [
           {
             role: "system",
-            content: "Tu es un expert en actualité mondiale couvrant la géopolitique, la pop culture, la tech et le sport narratif. Tu évalues objectivement l'importance des événements selon la stratégie Seed (20/40/40). Réponds UNIQUEMENT avec du JSON valide, sans texte avant ou après.",
+            content: "Tu es le 'Head of Markets' de Seed. Tu cherches des sujets qui divisent l'opinion et créent du débat, pas juste des informations. Tu évalues le potentiel de pari selon la stratégie Seed (20/40/40). Réponds UNIQUEMENT avec du JSON valide, sans texte avant ou après.",
           },
           {
             role: "user",
@@ -160,7 +174,7 @@ Réponds UNIQUEMENT avec du JSON valide:
               messages: [
                 {
                   role: "system",
-                  content: "Tu es un expert en actualité mondiale couvrant la géopolitique, la pop culture, la tech et le sport narratif. Tu évalues objectivement l'importance des événements selon la stratégie Seed (20/40/40). Réponds UNIQUEMENT avec du JSON valide.",
+                  content: "Tu es le 'Head of Markets' de Seed. Tu cherches des sujets qui divisent l'opinion et créent du débat, pas juste des informations. Tu évalues le potentiel de pari selon la stratégie Seed (20/40/40). Réponds UNIQUEMENT avec du JSON valide.",
                 },
                 {
                   role: "user",
@@ -183,9 +197,10 @@ Réponds UNIQUEMENT avec du JSON valide:
                 if (jsonMatch) {
                   const parsed = JSON.parse(jsonMatch[0]);
                   return {
-                    isImportant: parsed.isImportant === true && parsed.score >= 3, // Seuil abaissé à 3/10 pour capturer les décisions concrètes
+                    isImportant: parsed.isBetable === true && parsed.score >= 3, // Seuil abaissé à 3/10 pour capturer les décisions concrètes
                     score: parsed.score || 0,
                     reason: parsed.reason || "Non évalué",
+                    viralPotential: parsed.viralPotential || 50,
                   };
                 }
               } catch (parseError) {
@@ -216,13 +231,14 @@ Réponds UNIQUEMENT avec du JSON valide:
     
     const parsed = JSON.parse(jsonString);
     return {
-      isImportant: parsed.isImportant === true && parsed.score >= 3, // Seuil abaissé à 3/10 pour capturer les décisions concrètes
+      isImportant: parsed.isBetable === true && parsed.score >= 3, // Seuil abaissé à 3/10 pour capturer les décisions concrètes
       score: parsed.score || 0,
       reason: parsed.reason || "Non évalué",
+      viralPotential: parsed.viralPotential || 50,
     };
   } catch (error) {
     console.error("Error evaluating decision importance:", error);
-    return { isImportant: false, score: 0, reason: "Erreur d'évaluation" };
+    return { isImportant: false, score: 0, reason: "Erreur d'évaluation", viralPotential: 0 };
   }
 }
 

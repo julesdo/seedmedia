@@ -231,6 +231,10 @@ Réponds UNIQUEMENT avec du JSON valide:
     // ✅ Système binaire : seulement OUI/NON, pas besoin de scénario détaillé
     let question = `Est-ce que cette décision aura des conséquences positives dans les 3 prochains mois ?`;
     let answer1 = `OUI`; // Valeur minimale (requis par le schéma mais non utilisé dans l'UI binaire)
+    
+    // 🚀 Paramètres IPO (seront calculés par le Master Prompt ou par défaut)
+    let targetPrice = 50; // Par défaut : probabilité moyenne
+    let depthFactor = 5000; // Par défaut : profondeur modérée
 
     // Utiliser l'IA si disponible (OpenAI)
     try {
@@ -332,13 +336,7 @@ Réponds UNIQUEMENT avec du JSON valide (format json_object):
           }
         }
 
-        // Génération de question prédictive BINAIRE (OUI/NON) selon la stratégie de contenu
-        const categoryQuestionPrompts: Record<ContentCategory, string> = {
-          geopolitics: `Tu es un journaliste expert qui explique l'actualité internationale au grand public.`,
-          pop_culture: `Tu es un journaliste expert en pop culture qui explique l'actualité divertissement au grand public (Gen Z / Millennials).`,
-          tech_future_sport: `Tu es un journaliste expert en tech, futur et sport narratif qui explique l'actualité à une communauté passionnée.`,
-        };
-
+        // 🚀 MASTER PROMPT : Génération complète du marché en une seule fois
         // Calculer les dates dynamiques pour les exemples
         const now = Date.now();
         const currentYear = new Date(now).getFullYear();
@@ -348,210 +346,80 @@ Réponds UNIQUEMENT avec du JSON valide (format json_object):
         const summerMonths = isSummer ? "cet été" : "l'été prochain";
         const nextYearMonth = currentMonth <= 6 ? "dans les 6 prochains mois" : `avant ${nextYear}`;
 
-        const categoryExamples: Record<ContentCategory, { good: string[]; bad: string[] }> = {
-          geopolitics: {
-            good: [
-              "Est-ce que la situation va s'améliorer au Venezuela dans les 3 prochains mois ?",
-              "La Syrie va-t-elle bénéficier de la levée des sanctions dans les 6 prochains mois ?",
-              "L'Iran va-t-il subir des conséquences négatives dans les 3 prochains mois ?",
-            ],
-            bad: [
-              "Que va-t-il se passer au Venezuela dans les 3 prochains mois ?",
-              "Comment la Syrie va-t-elle réagir à la levée des sanctions ?",
-            ],
-          },
-          pop_culture: {
-            good: [
-              "Ce jeu vidéo très attendu sortira-t-il dans les 6 prochains mois ?",
-              "Cet album sera-t-il numéro 1 en France la semaine de sa sortie ?",
-              "Cet influenceur atteindra-t-il 10M d'abonnés avant l'été prochain ?",
-            ],
-            bad: [
-              "Que va-t-il se passer avec ce jeu vidéo ?",
-              "Comment cet album va-t-il se vendre ?",
-            ],
-          },
-          tech_future_sport: {
-            good: [
-              "Ce joueur de football marquera-t-il plus de 30 buts cette saison ?",
-              "Cette fusée réussira-t-elle son amerrissage lors du prochain test ?",
-              "Cette entreprise tech annoncera-t-elle un nouveau produit dans les 6 prochains mois ?",
-            ],
-            bad: [
-              "Que va-t-il se passer avec ce joueur cette saison ?",
-              "Comment cette entreprise va-t-elle progresser ?",
-            ],
-          },
+        const categoryTones: Record<ContentCategory, string> = {
+          geopolitics: "Sérieux & Précis",
+          pop_culture: "Provocateur & Hype",
+          tech_future_sport: "Sérieux & Précis",
         };
 
-        const questionPrompt = `${categoryQuestionPrompts[contentCategory]} Analyse cet ÉVÉNEMENT MAJEUR et génère une PRÉDICTION BINAIRE (OUI/NON) sous forme de question.
+        const masterPrompt = `Tu es l'architecte des marchés de prédiction Seed. Crée un marché binaire (OUI/NON) équilibré et captivant.
 
-═══════════════════════════════════════════════════════════════
-ÉVÉNEMENT MAJEUR À ANALYSER:
-═══════════════════════════════════════════════════════════════
+SOURCE:
 Titre: ${eventTitle}
 Description: ${eventDescription}
+Contexte: ${articles.map(a => a.title).join(" | ")}
 Acteur/Décideur: ${extracted.decider}
 Type d'événement: ${extracted.type}
 Domaines impactés: ${extracted.impactedDomains.join(", ") || "À déterminer"}
-Articles (${articles.length}): ${articles.map((a) => a.title).join("; ")}
 
-═══════════════════════════════════════════════════════════════
-🛡️ RÈGLES ÉTHIQUES ABSOLUES (À RESPECTER IMPÉRATIVEMENT):
-═══════════════════════════════════════════════════════════════
+TA MISSION :
+Transforme cette news en un marché financier ludique.
 
-❌ INTERDICTIONS STRICTES:
-- NE JAMAIS générer de questions sur des morts, décès, victimes, pertes humaines
-- NE JAMAIS demander "Y aura-t-il plus de X morts ?" ou "Combien de morts ?"
-- NE JAMAIS faire de prédictions morbides ou exploitant des tragédies humaines
+1. LA QUESTION (Crucial) :
+   - Doit avoir une date limite explicite (ex: "avant le 31 décembre ${nextYear}").
+   - Doit être résolvable par OUI ou NON sans ambiguïté.
+   - Ton : ${categoryTones[contentCategory]}.
+   - Maximum 12-15 mots, compréhensible par un enfant de 12 ans.
 
-✅ À PRIVILÉGIER:
-- Questions sur les conséquences politiques, économiques, diplomatiques
-- Questions sur les impacts positifs ou négatifs (sans mentionner les morts)
-- Questions sur les décisions, accords, sanctions, politiques
+2. LES CRITÈRES DE RÉSOLUTION (L'Oracle) :
+   - Précise EXACTEMENT quelle source validera le résultat (ex: "Compte Instagram officiel de X", "Site de l'INSEE", "Communiqué de la Maison Blanche").
 
-═══════════════════════════════════════════════════════════════
-📋 RÈGLES D'OR POUR LA RÉDACTION (STRATÉGIE SEED):
-═══════════════════════════════════════════════════════════════
+3. PARAMÈTRES IPO (Psychologie de marché) :
+   - initialProbability: Quelle est la probabilité actuelle (0-100%) que le OUI l'emporte selon le sentiment public ?
+   - volatilityScore: Est-ce un sujet stable (loi) ou explosif (clash/crypto) ? (Score 0-100).
 
-1. CLARTÉ ABSOLUE : 
-   - Pas de jargon. Une question doit être comprise par un enfant de 12 ans.
-   - Ton simple et direct, comme une conversation.
+4. MÉTADONNÉES :
+   - sentiment: "positive" (progrès, découverte), "negative" (crise, conflit), ou "neutral"
+   - heat: Score d'urgence/importance (0-100)
+   - emoji: Un emoji unique représentatif
 
-2. DATE LIMITE PRÉCISE (OBLIGATOIRE) :
-   - Toujours inclure une échéance temporelle dans la question.
-   - Utiliser des dates dynamiques basées sur la date actuelle (${new Date(now).toLocaleDateString("fr-FR")}).
-   - Exemples: "dans les 3 prochains mois", "dans les 6 prochains mois", "cette saison", "${summerMonths}", "la semaine de sa sortie", "avant ${nextYear}"
-   - Pour Flash Markets (résolution 24-48h): "demain", "ce soir", "dans les 24h"
+🛡️ RÈGLES ÉTHIQUES :
+- NE JAMAIS générer de questions sur des morts, décès, victimes
+- Privilégier les conséquences politiques, économiques, diplomatiques
 
-3. SOURCE DE VÉRITÉ (ORACLE) :
-   - Dans la description, toujours préciser QUI décide du résultat.
-   - Exemples: "Selon les chiffres officiels de l'INSEE", "Selon le compte Twitter officiel de l'artiste", "Selon Météo France"
-
-4. TITRES COURTS :
-   - Optimisés pour le mobile (maximum 12-15 mots).
-   - Formulation typique: "Est-ce que... ?", "Va-t-il... ?", "Sera-t-il... ?", "Y aura-t-il... ?"
-
-═══════════════════════════════════════════════════════════════
-INSTRUCTIONS STRICTES:
-═══════════════════════════════════════════════════════════════
-
-1. PRÉDICTION BINAIRE SOUS FORME DE QUESTION (OBLIGATOIRE):
-   ✓ Doit être une QUESTION FERMÉE qui appelle une réponse OUI ou NON
-   ✓ Doit être COURTE et DIRECTE (maximum 12-15 mots)
-   ✓ Doit être SPÉCIFIQUE à cet événement précis (pas générique)
-   ✓ Doit avoir un horizon temporel PRÉCIS (OBLIGATOIRE)
-   ✓ Doit être COMPRÉHENSIBLE par un enfant de 12 ans (pas de jargon)
-   ✓ Ton simple et direct, comme une conversation
-   
-   ✅ EXEMPLES BONS (${contentCategory}):
-${categoryExamples[contentCategory].good.map(ex => `   - "${ex}"`).join("\n")}
-   
-   ❌ EXEMPLES MAUVAIS:
-${categoryExamples[contentCategory].bad.map(ex => `   - "${ex}"`).join("\n")}
-
-2. PAS DE SCÉNARIO NÉCESSAIRE:
-
-   ⚠️ IMPORTANT: Le système est binaire (OUI/NON). Pas besoin de générer un scénario détaillé.
-   Les utilisateurs répondront simplement OUI ou NON à la question prédictive.
-   La question doit être suffisamment claire pour que les utilisateurs comprennent ce qu'ils prédisent.
-
-═══════════════════════════════════════════════════════════════
-RÈGLES ABSOLUES:
-═══════════════════════════════════════════════════════════════
-- La question doit être formulée pour une réponse BINAIRE (OUI/NON), pas une question ouverte
-- La question doit être suffisamment claire pour que les utilisateurs comprennent ce qu'ils prédisent
-- Style journalistique grand public (comme un article de presse généraliste)
-- Mentionner les pays/régions de manière claire si pertinent
-- Sois FACTUEL et OBJECTIF, pas idéologique
-
-Réponds UNIQUEMENT avec du JSON valide (format json_object):
+Réponds en JSON strict :
 {
-  "question": "question prédictive BINAIRE (OUI/NON) COURTE (max 12-15 mots), directe et simple, avec horizon temporel"
-}
-
-IMPORTANT: 
-- La question doit être formulée pour une réponse binaire (OUI/NON)
-- Pas besoin de générer de scénario : le système est binaire (OUI ou NON)
-- La question suffit, les utilisateurs répondront OUI ou NON directement`;
-
-        const questionResult = await callOpenAI(openaiKeyForSynthesis, questionPrompt, {
-          maxTokens: 150, // ✅ OPTIMISÉ: Réduit à 150 (suffisant pour une question courte uniquement)
-        });
-
-        if (questionResult) {
-          try {
-            // Parser le JSON (peut être dans un bloc markdown ou texte brut)
-            let jsonString = questionResult.trim();
-            const jsonMatch = jsonString.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-              jsonString = jsonMatch[0];
-            }
-            const parsed = JSON.parse(jsonString);
-            
-            if (parsed.question) question = parsed.question;
-            // ✅ Pas besoin de answer1 : système binaire (OUI/NON uniquement)
-            // answer1 reste à sa valeur par défaut
-          } catch (parseError) {
-            console.error("Error parsing AI question result:", parseError);
-            console.error("Raw response:", questionResult);
-            // En cas d'erreur de parsing, utiliser des valeurs par défaut binaires
-            question = `Est-ce que cette décision aura des conséquences positives pour ${extracted.decider} dans les 3 prochains mois ?`;
-            answer1 = `OUI`; // Valeur minimale (requis par le schéma mais non utilisé)
-          }
-        } else {
-          // Si l'IA ne retourne rien, utiliser des valeurs par défaut binaires
-          question = `Est-ce que cette décision aura des conséquences positives pour ${extracted.decider} dans les 3 prochains mois ?`;
-          answer1 = `OUI`; // Valeur minimale (requis par le schéma mais non utilisé)
-        }
-      }
-    } catch (error) {
-      console.error("Error using AI for decision generation:", error);
-      // Continuer avec les valeurs par défaut
-    }
-
-    // Génération des métadonnées de gamification avec IA
-    try {
-      if (openaiKeyForSynthesis) {
-        const gamificationPrompt = `Analyse cet événement majeur et génère des métadonnées pour la gamification:
-
-Titre: ${eventTitle}
-Description: ${eventDescription}
-Type: ${extracted.type}
-Décideur: ${extracted.decider}
-Articles: ${articles.length} articles couvrant cet événement
-
-INSTRUCTIONS:
-1. Sentiment: "positive" (progrès, découverte, accord de paix, innovation), "negative" (crise, conflit, catastrophe), ou "neutral"
-2. Heat (0-100): Score d'urgence/importance
-   - 0-30: Froid (événement passé, peu d'impact actuel)
-   - 31-60: Tiède (événement récent, impact modéré)
-   - 61-80: Chaud (événement très récent, impact important)
-   - 81-100: Brûlant (événement en cours, impact majeur et urgent)
-3. Emoji: Un emoji unique et représentatif de l'événement (ex: 🚨 pour crise, 🎉 pour découverte, ⚔️ pour conflit, 🌍 pour accord, 💰 pour économique, etc.)
-   - Utilise UNIQUEMENT un emoji (pas de texte)
-   - Choisis un emoji qui représente bien l'événement
-
-Réponds UNIQUEMENT avec du JSON valide:
-{
+  "marketTitle": "Titre court et percutant (max 50 chars)",
+  "marketQuestion": "La question précise avec deadline ?",
+  "marketDescription": "Contexte court + mention de l'Oracle/Source de vérité.",
+  "resolutionCriteria": "Le OUI l'emporte si [Source] annonce X avant le [Date].",
+  "initialProbability": 45,
+  "volatilityScore": 80,
   "sentiment": "positive|negative|neutral",
   "heat": 0-100,
-  "emoji": "un seul emoji"
+  "emoji": "🔥"
 }`;
 
-        const gamificationResult = await callOpenAI(openaiKeyForSynthesis, gamificationPrompt, {
-          maxTokens: 150, // ✅ OPTIMISÉ: Réduit de 200 à 150 (JSON court suffisant)
+        const masterResult = await callOpenAI(openaiKeyForSynthesis, masterPrompt, {
+          responseFormat: "json_object",
+          maxTokens: 500,
         });
 
-        if (gamificationResult) {
+        if (masterResult) {
           try {
-            let jsonString = gamificationResult.trim();
+            let jsonString = masterResult.trim();
             const jsonMatch = jsonString.match(/\{[\s\S]*\}/);
             if (jsonMatch) {
               jsonString = jsonMatch[0];
             }
             const parsed = JSON.parse(jsonString);
             
+            // Extraire les données du Master Prompt
+            if (parsed.marketQuestion) question = parsed.marketQuestion;
+            if (parsed.marketDescription) eventDescription = parsed.marketDescription;
+            if (parsed.marketTitle) eventTitle = parsed.marketTitle;
+            
+            // Métadonnées de gamification
             if (parsed.sentiment && ["positive", "negative", "neutral"].includes(parsed.sentiment)) {
               sentiment = parsed.sentiment as "positive" | "negative" | "neutral";
             }
@@ -561,25 +429,44 @@ Réponds UNIQUEMENT avec du JSON valide:
             if (parsed.emoji) {
               emoji = parsed.emoji.trim();
             }
+            
+            // 🚀 CALCUL DYNAMIQUE IPO 2.0 basé sur les données du Master Prompt
+            targetPrice = typeof parsed.initialProbability === "number" 
+              ? Math.max(1, Math.min(99, Math.round(parsed.initialProbability))) 
+              : 50;
+            
+            // La profondeur dépend de la volatilité
+            // Plus c'est volatil, MOINS on met de profondeur (permet variations rapides = Gamification)
+            // Moins c'est volatil, PLUS on met de profondeur (stabilise)
+            const volatilityScore = typeof parsed.volatilityScore === "number" 
+              ? Math.max(0, Math.min(100, parsed.volatilityScore)) 
+              : 50;
+            
+            depthFactor = 10000 - (volatilityScore * 80);
+            depthFactor = Math.max(2000, Math.min(10000, Math.round(depthFactor)));
 
-            // Calculer la couleur du badge selon le heat (bleu → vert → rouge)
+            // Calculer la couleur du badge
             badgeColor = calculateBadgeColor(heat, sentiment);
+            
+            // Stocker les critères de résolution pour utilisation future
+            const resolutionCriteria = parsed.resolutionCriteria || "";
+            
           } catch (parseError) {
-            console.error("Error parsing AI gamification result:", parseError);
-            // Utiliser les valeurs par défaut
+            console.error("Error parsing AI master result:", parseError);
+            console.error("Raw response:", masterResult);
+            // En cas d'erreur, utiliser les valeurs par défaut
+            question = `Est-ce que cette décision aura des conséquences positives pour ${extracted.decider} dans les 3 prochains mois ?`;
             badgeColor = calculateBadgeColor(heat, sentiment);
           }
         } else {
-          // Calculer la couleur même sans réponse IA
+          // Si l'IA ne retourne rien, utiliser les valeurs par défaut
+          question = `Est-ce que cette décision aura des conséquences positives pour ${extracted.decider} dans les 3 prochains mois ?`;
           badgeColor = calculateBadgeColor(heat, sentiment);
         }
-      } else {
-        // Pas de clé OpenAI, utiliser les valeurs par défaut
-        badgeColor = calculateBadgeColor(heat, sentiment);
       }
     } catch (error) {
-      console.error("Error generating gamification metadata:", error);
-      // Utiliser les valeurs par défaut en cas d'erreur
+      console.error("Error using AI for decision generation:", error);
+      // Continuer avec les valeurs par défaut
       badgeColor = calculateBadgeColor(heat, sentiment);
     }
 
@@ -854,12 +741,18 @@ Chaque requête doit être 2-4 mots-clés en anglais, sans guillemets.`;
       return null;
     }
 
-    // 🚀 Calculer dynamiquement les paramètres IPO (Initial Political Offering)
-    const { targetPrice, depthFactor } = calculateIPOParameters({
-      heat,
-      sentiment,
-      type: extracted.type,
-    });
+    // 🚀 Les paramètres IPO sont déjà calculés par le Master Prompt
+    // Si pas de Master Prompt (pas d'IA), utiliser calculateIPOParameters en fallback
+    if (targetPrice === 50 && depthFactor === 5000) {
+      // Fallback : utiliser l'ancienne méthode si pas de Master Prompt
+      const fallbackIPO = calculateIPOParameters({
+        heat,
+        sentiment,
+        type: extracted.type,
+      });
+      targetPrice = fallbackIPO.targetPrice;
+      depthFactor = fallbackIPO.depthFactor;
+    }
 
     // Créer la Decision Card
     const decisionId = await ctx.runMutation(api.decisions.createDecision, {
@@ -1400,7 +1293,8 @@ export const searchFreeImage = action({
 });
 
 /**
- * Construit une requête de recherche d'image pertinente basée sur la décision
+ * Construit une requête de recherche d'image contextuelle et abstraite
+ * Évite les images génériques en privilégiant l'abstraction et le style
  */
 function buildImageSearchQuery(
   decider: string,
@@ -1409,6 +1303,9 @@ function buildImageSearchQuery(
   impactedDomains: string[],
   title: string
 ): string {
+  // Mots-clés de style pour Pexels/Unsplash (éviter les images génériques)
+  const styleKeywords = ["cinematic", "moody", "dark", "neon", "abstract", "atmospheric", "dramatic"];
+  const randomStyle = styleKeywords[Math.floor(Math.random() * styleKeywords.length)];
   // PRIORITÉ ABSOLUE: Le décideur/acteur principal (personne, pays, institution)
   const keywords: string[] = [];
 
@@ -1508,17 +1405,41 @@ function buildImageSearchQuery(
     }
   }
 
-  // Ne PAS ajouter de mots-clés génériques selon le type (trop vague)
-  // Ne PAS ajouter de domaines impactés (trop générique)
-  // Ne PAS extraire du titre (peut être trop vague)
-
-  // Construire la requête finale (maximum 2 mots-clés, priorité au décideur)
-  const finalQuery = keywords
-    .filter((k) => k && k.length > 2)
-    .slice(0, 2) // Limiter à 2 mots-clés maximum pour plus de précision
-    .join(" ");
-
-  return finalQuery || "international news"; // Fallback minimal si aucune requête valide
+  // Adapter selon la catégorie de contenu et le type d'événement
+  // Pop Culture : vibrant, énergique (priorité)
+  if (impactedDomains.includes("divertissement") || impactedDomains.includes("musique")) {
+    if (keywords.length > 0) {
+      return `${keywords[0]} concert crowd atmosphere neon`;
+    }
+    return "concert crowd atmosphere neon";
+  }
+  
+  // Adapter selon le type d'événement
+  switch (type) {
+    case "conflict":
+    case "crisis":
+    case "sanction":
+      // Géopolitique / Conflit : sérieux, sombre, abstrait
+      if (keywords.length > 0) {
+        return `${keywords[0]} city street night ${randomStyle} abstract`;
+      }
+      return `city street night ${randomStyle} abstract`;
+    
+    case "discovery":
+    case "economic_event":
+      // Tech/Sport / Découverte : moderne, dynamique
+      if (keywords.length > 0) {
+        return `${keywords[0]} technology innovation ${randomStyle}`;
+      }
+      return `technology innovation ${randomStyle}`;
+    
+    default:
+      // Fallback intelligent : décideur + style
+      if (keywords.length > 0) {
+        return `${keywords[0]} ${randomStyle}`;
+      }
+      return `international news ${randomStyle}`;
+  }
 }
 
 /**
