@@ -6,6 +6,7 @@ import { ReelHeader } from "@/components/navigation/ReelHeader";
 import { DesktopSidebar } from "@/components/layout/DesktopSidebar";
 import { DesktopRightSidebar } from "@/components/layout/DesktopRightSidebar";
 import { DesktopTopBar } from "@/components/layout/DesktopTopBar";
+import { MobileCategoriesBar } from "@/components/layout/MobileCategoriesBar";
 import { BreakingNewsBanner } from "@/components/breaking-news/BreakingNewsBanner";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -26,9 +27,23 @@ export function SimplifiedLayout({
   const pathname = usePathname();
   const isSubPage = pathname !== "/";
   const [isReelMode, setIsReelMode] = useState(false);
+  const [rightSidebarWidth, setRightSidebarWidth] = useState(319); // Largeur par défaut
+  const [isMounted, setIsMounted] = useState(false); // Pour éviter l'erreur d'hydratation
+  const [isMobile, setIsMobile] = useState(false); // Détecter si on est sur mobile
   
   // Précharger automatiquement les liens visibles dans le viewport
   usePrefetchVisibleLinks();
+
+  // Marquer comme monté après l'hydratation et détecter mobile
+  useEffect(() => {
+    setIsMounted(true);
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024); // lg breakpoint
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Détecter si on est en mode reels (body a la classe hide-mobile-nav)
   useEffect(() => {
@@ -47,6 +62,54 @@ export function SimplifiedLayout({
     
     return () => observer.disconnect();
   }, []);
+
+  // Détecter la largeur de la sidebar droite (pour ajuster le padding du main)
+  // Sur mobile, ne pas compter la sidebar (elle est cachée)
+  useEffect(() => {
+    const updateSidebarWidth = () => {
+      // Ne pas compter la sidebar sur mobile (< 1024px)
+      if (window.innerWidth < 1024) {
+        setRightSidebarWidth(0);
+        return;
+      }
+      
+      const sidebar = document.querySelector('[data-sidebar="right"]');
+      if (sidebar) {
+        const width = sidebar.getBoundingClientRect().width;
+        if (width > 0) {
+          setRightSidebarWidth(width);
+        } else {
+          setRightSidebarWidth(0);
+        }
+      } else {
+        setRightSidebarWidth(0);
+      }
+    };
+
+    // Utiliser ResizeObserver pour détecter les changements de taille
+    const sidebar = document.querySelector('[data-sidebar="right"]');
+    let resizeObserver: ResizeObserver | null = null;
+    
+    if (sidebar) {
+      updateSidebarWidth(); // Initialiser
+      
+      // Observer les changements de taille
+      resizeObserver = new ResizeObserver(() => {
+        updateSidebarWidth();
+      });
+      resizeObserver.observe(sidebar);
+    }
+
+    // Observer aussi les changements de taille de fenêtre
+    window.addEventListener('resize', updateSidebarWidth);
+
+    return () => {
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
+      window.removeEventListener('resize', updateSidebarWidth);
+    };
+  }, [pathname]); // Re-vérifier quand on change de page
 
   // Note: Les barres de navigation sont cachées uniquement en mode feed reels
   // Cette logique est gérée dans DecisionDetailClient.tsx
@@ -67,6 +130,8 @@ export function SimplifiedLayout({
         <BreakingNewsBanner />
         {/* Header - Sticky juste en dessous du breaking news */}
         <SimplifiedHeader />
+        {/* Barre de catégories mobile - Uniquement sur la page d'accueil */}
+        {pathname === "/" && <MobileCategoriesBar />}
       </div>
       
       {/* Desktop Breaking News Banner */}
@@ -83,13 +148,14 @@ export function SimplifiedLayout({
       {/* Main Content */}
       <main 
         className={cn(
-          "flex-1 pb-16 lg:pb-0 lg:pl-[244px] xl:pr-[319px] min-h-screen",
+          "flex-1 pb-16 lg:pb-0 lg:pl-[244px] min-h-screen",
           isSubPage && "lg:[padding-top:calc(56px+var(--breaking-news-height,0px)+32px)]",
           !isSubPage && "lg:[padding-top:calc(var(--header-height,56px)+var(--breaking-news-height,0px))]" // Desktop seulement pour la page d'accueil
         )}
-        style={{ 
-          paddingTop: undefined // Mobile: pas de padding-top via style, géré par les classes Tailwind en desktop
-        }}
+        style={isMounted && !isMobile ? { 
+          // Ne pas appliquer le padding sur mobile (lg et plus seulement)
+          paddingRight: rightSidebarWidth > 0 ? `${rightSidebarWidth}px` : undefined
+        } : undefined}
       >
         {children}
       </main>

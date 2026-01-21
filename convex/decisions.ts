@@ -48,11 +48,17 @@ export const getDecisions = query({
     regions: v.optional(v.array(v.string())), // ["EU", "US", "FR", etc.]
     deciderTypes: v.optional(v.array(v.string())), // ["country", "enterprise", etc.]
     types: v.optional(v.array(v.string())), // ["law", "sanction", etc.]
-    // ✅ Filtre pour événements spéciaux
+    // ✅ Filtre pour événements spéciaux (⚠️ DEPRECATED - Utiliser categoryIds)
     specialEvent: v.optional(v.union(
       v.literal("municipales_2026"),
       v.literal("presidentielles_2027"),
     )),
+    // ✅ NOUVEAU - Filtre par catégories (remplace impactedDomain, type, specialEvent)
+    categoryIds: v.optional(v.array(v.id("categories"))),
+    // Filtre par slug de catégorie (plus pratique pour l'UI)
+    categorySlugs: v.optional(v.array(v.string())),
+    // ✅ NOUVEAU - Filtre par événement spécial (utilise les règles de cohorte)
+    specialEventId: v.optional(v.id("specialEvents")),
   },
   handler: async (ctx, args) => {
     let decisionsQuery;
@@ -117,9 +123,52 @@ export const getDecisions = query({
       );
     }
 
-    // ✅ Filtrer par événement spécial si fourni
+    // ✅ Filtrer par événement spécial si fourni (⚠️ DEPRECATED - Utiliser categoryIds)
     if (args.specialEvent) {
       decisions = decisions.filter((d) => d.specialEvent === args.specialEvent);
+    }
+
+    // ✅ NOUVEAU - Filtrer par catégories (IDs) si fourni
+    if (args.categoryIds && args.categoryIds.length > 0) {
+      decisions = decisions.filter((d) => {
+        // Si la décision n'a pas de categoryIds, on l'exclut (pas encore migrée)
+        if (!d.categoryIds || d.categoryIds.length === 0) {
+          return false;
+        }
+        // Vérifier qu'au moins une catégorie correspond
+        return args.categoryIds!.some((categoryId) => d.categoryIds!.includes(categoryId));
+      });
+    }
+
+    // ✅ NOUVEAU - Filtrer par catégories (slugs) si fourni
+    if (args.categorySlugs && args.categorySlugs.length > 0) {
+      // Récupérer les catégories correspondant aux slugs
+      const categories = await Promise.all(
+        args.categorySlugs.map((slug) =>
+          ctx.db
+            .query("categories")
+            .withIndex("slug", (q) => q.eq("slug", slug))
+            .first()
+        )
+      );
+
+      const categoryIds = categories
+        .filter((cat) => cat !== null && cat.appliesTo.includes("decisions"))
+        .map((cat) => cat!._id);
+
+      if (categoryIds.length > 0) {
+        decisions = decisions.filter((d) => {
+          // Si la décision n'a pas de categoryIds, on l'exclut (pas encore migrée)
+          if (!d.categoryIds || d.categoryIds.length === 0) {
+            return false;
+          }
+          // Vérifier qu'au moins une catégorie correspond
+          return categoryIds.some((categoryId) => d.categoryIds!.includes(categoryId));
+        });
+      } else {
+        // Si aucune catégorie trouvée, retourner un tableau vide
+        decisions = [];
+      }
     }
 
     // 🎯 FEATURE 4: LE MÉGAPHONE - Prioriser les décisions boostées
@@ -448,6 +497,78 @@ export const getBreakingNews = query({
 
     // Limiter à 3 breaking news max
     return breakingNews.slice(0, 3);
+  },
+});
+
+/**
+ * Récupère les top prédictions basées sur la liquidité totale
+ * Utilisé pour le bandeau défilant amélioré
+ */
+export const getTopPredictions = query({
+  args: {
+    limit: v.optional(v.number()),
+    minLiquidity: v.optional(v.number()), // Liquidité minimum en Seeds
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit || 3;
+    const minLiquidity = args.minLiquidity || 100; // Minimum 100 Seeds de liquidité
+    const now = Date.now();
+    const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000; // 7 jours
+
+    // Récupérer toutes les décisions en cours de suivi
+    const trackingDecisions = await ctx.db
+      .query("decisions")
+      .withIndex("status", (q) => q.eq("status", "tracking"))
+      .collect();
+
+    // Filtrer les décisions récentes (7 derniers jours)
+    const recentDecisions = trackingDecisions.filter(
+      (decision) => decision.date >= sevenDaysAgo
+    );
+
+    // Calculer la liquidité totale pour chaque décision
+    const decisionsWithLiquidity = await Promise.all(
+      recentDecisions.map(async (decision) => {
+        // Récupérer les pools de trading
+        const yesPool = await ctx.db
+          .query("tradingPools")
+          .withIndex("decisionId_position", (q) =>
+            q.eq("decisionId", decision._id).eq("position", "yes")
+          )
+          .first();
+
+        const noPool = await ctx.db
+          .query("tradingPools")
+          .withIndex("decisionId_position", (q) =>
+            q.eq("decisionId", decision._id).eq("position", "no")
+          )
+          .first();
+
+        // Calculer la liquidité totale (somme des réserves)
+        const yesReserve = yesPool?.reserve || 0;
+        const noReserve = noPool?.reserve || 0;
+        const totalLiquidity = yesReserve + noReserve;
+
+        return {
+          ...decision,
+          totalLiquidity,
+        };
+      })
+    );
+
+    // Filtrer par liquidité minimum et trier par liquidité décroissante
+    const topPredictions = decisionsWithLiquidity
+      .filter((d) => d.totalLiquidity >= minLiquidity)
+      .sort((a, b) => {
+        // Trier par liquidité décroissante, puis par date
+        if (b.totalLiquidity !== a.totalLiquidity) {
+          return b.totalLiquidity - a.totalLiquidity;
+        }
+        return b.date - a.date;
+      })
+      .slice(0, limit);
+
+    return topPredictions;
   },
 });
 

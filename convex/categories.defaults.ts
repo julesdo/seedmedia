@@ -10,7 +10,7 @@ export interface DefaultCategory {
   description?: string;
   icon?: string;
   color?: string;
-  appliesTo: Array<"articles" | "dossiers" | "debates" | "projects" | "organizations" | "actions">;
+  appliesTo: Array<"articles" | "dossiers" | "debates" | "projects" | "organizations" | "actions" | "decisions">;
 }
 
 export const DEFAULT_CATEGORIES: DefaultCategory[] = [
@@ -148,7 +148,7 @@ export function getDefaultCategory(slug: string): DefaultCategory | undefined {
  * Récupère toutes les catégories par défaut applicables à un type de contenu
  */
 export function getDefaultCategoriesFor(
-  appliesTo: "articles" | "dossiers" | "debates" | "projects" | "organizations" | "actions"
+  appliesTo: "articles" | "dossiers" | "debates" | "projects" | "organizations" | "actions" | "decisions"
 ): DefaultCategory[] {
   return DEFAULT_CATEGORIES.filter((cat) => cat.appliesTo.includes(appliesTo));
 }

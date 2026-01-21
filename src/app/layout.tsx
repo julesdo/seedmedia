@@ -15,6 +15,7 @@ import { DynamicIntlProvider } from '@/components/providers/DynamicIntlProvider'
 import { ServiceWorkerRegistration } from '@/components/service-worker/ServiceWorkerRegistration';
 import { SeedsGainManager } from "@/components/seeds/SeedsGainManager";
 import { InstallPrompt } from '@/components/pwa/InstallPrompt';
+import NextTopLoader from 'nextjs-toploader';
 
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono",
@@ -124,6 +125,12 @@ export default async function RootLayout({
         <body
           className={`${jetbrainsMono.variable} antialiased font-mono`}
         >
+        <NextTopLoader
+          color="#246BFD"
+          showSpinner={false}
+          height={3}
+          shadow="0 0 10px #246BFD,0 0 5px #246BFD"
+        />
         {/* SVG Gradients pour les icônes */}
         <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
           <defs>

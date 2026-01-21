@@ -443,92 +443,27 @@ export function OpinionCourseChart({ decisionId, compact = false, hideLabels = f
     );
   }
 
-  // Mode desktop complet
+  // Mode desktop complet - Sans card, juste le graphique
   return (
-    <div className="w-full space-y-4">
-      <div className="flex items-center gap-2">
-        <SolarIcon icon="chart-line-up-bold" className="size-5 text-primary" />
-        <h3 className="text-lg font-bold">Cours des Opinions</h3>
-      </div>
-      <div className="space-y-4">
-        {/* Légende avec probabilité actuelle */}
-        <div className="flex items-center gap-2 p-3 rounded-lg border bg-muted/50">
-          <div className={cn(
-            "size-3 rounded-full bg-gradient-to-br",
-            position === "yes" 
-              ? cn(YES_COLORS.gradient.from, YES_COLORS.gradient.via, YES_COLORS.gradient.to)
-              : cn(NO_COLORS.gradient.from, NO_COLORS.gradient.via, NO_COLORS.gradient.to)
-          )} />
-          <div className="flex-1 min-w-0">
-            <p className="text-xs text-muted-foreground">Probabilité actuelle</p>
-            <div className="flex items-center gap-2">
-              <span className={cn(
-                "text-lg font-bold",
-                position === "yes" ? YES_COLORS.text.light : NO_COLORS.text.light
-              )}>
-                {currentProbability.toFixed(1)}%
-              </span>
-              {probabilityVariationPercent !== 0 && (
-                <span className={cn(
-                  "text-sm font-semibold",
-                  probabilityVariationPercent > 0 ? "text-green-500" : "text-red-500"
-                )}>
-                  ({probabilityVariationPercent > 0 ? "+" : ""}{probabilityVariationPercent}%)
-                </span>
-              )}
-            </div>
-            <p className="text-[10px] text-muted-foreground mt-1">
-              {position === "yes"
-                ? `${currentProbability.toFixed(1)}% pensent que ça va arriver`
-                : `${currentProbability.toFixed(1)}% pensent que ça n'arrivera pas`}
-            </p>
-          </div>
-        </div>
-
-        {/* Graphique ECharts avec zoom, pan et toutes les features */}
-        <div className="w-full" style={{ minHeight: "400px" }}>
+    <div className={cn("w-full", fullHeight ? "h-full" : "h-[400px]")}>
           {chartOption ? (
             <ReactECharts
               option={chartOption}
-              style={{ height: "400px", width: "100%" }}
+          style={{ height: "100%", width: "100%" }}
               opts={{ 
                 renderer: "canvas", 
                 locale: "FR",
-                // Optimisations mobile
                 devicePixelRatio: typeof window !== "undefined" ? window.devicePixelRatio : 2,
-                useDirtyRect: true, // Performance améliorée
+            useDirtyRect: true,
               }}
               notMerge={true}
               lazyUpdate={false}
-              onChartReady={(chart) => {
-                // Optimisations pour mobile : interactions tactiles améliorées
-                if (typeof window !== "undefined" && "ontouchstart" in window) {
-                  // Activer le zoom tactile
-                  chart.getZr().on("touchstart", () => {
-                    chart.getZr().setCursorStyle("move");
-                  });
-                  chart.getZr().on("touchend", () => {
-                    chart.getZr().setCursorStyle("default");
-                  });
-                }
-                console.log("OpinionCourseChart: Chart ready", chart);
-              }}
             />
           ) : (
-            <div className="h-96 flex items-center justify-center text-muted-foreground">
+        <div className="h-full flex items-center justify-center text-muted-foreground">
               Chargement du graphique...
             </div>
           )}
-        </div>
-
-        {/* Info supplémentaire */}
-        <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
-          <span>{current.total || 0} anticipation{(current.total || 0) > 1 ? "s" : ""}</span>
-          <span>
-            {history.length} point{history.length > 1 ? "s" : ""} de données
-          </span>
-        </div>
-      </div>
     </div>
   );
 }

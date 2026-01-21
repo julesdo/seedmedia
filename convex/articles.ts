@@ -616,6 +616,10 @@ export const createArticle = mutation({
               icon: defaultCat.icon,
               color: defaultCat.color,
               appliesTo: defaultCat.appliesTo,
+              categoryType: "topic", // Par défaut pour rétrocompatibilité
+              featured: false,
+              priority: 0,
+              tags: [],
               status: "active",
               usageCount: 0,
               proposedBy: appUser._id, // L'utilisateur qui crée l'article
@@ -795,6 +799,10 @@ export const updateArticle = mutation({
                 icon: defaultCat.icon,
                 color: defaultCat.color,
                 appliesTo: defaultCat.appliesTo,
+                categoryType: "topic", // Par défaut pour rétrocompatibilité
+                featured: false,
+                priority: 0,
+                tags: [],
                 status: "active",
                 usageCount: 0,
                 proposedBy: appUser._id, // L'utilisateur qui modifie l'article

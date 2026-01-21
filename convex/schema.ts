@@ -1068,8 +1068,18 @@ export default defineSchema({
     name: v.string(), // Nom de la catégorie (ex: "Climat", "Santé", "Technologie")
     slug: v.string(), // Slug unique
     description: v.optional(v.string()), // Description de la catégorie
+    shortDescription: v.optional(v.string()), // Description courte pour hero/affichage compact
     icon: v.optional(v.string()), // Nom de l'icône Solar
     color: v.optional(v.string()), // Couleur hexadécimale
+    // Type de catégorie
+    categoryType: v.optional(v.union(
+      v.literal("domain"), // Domaine (ex: Géopolitique, Économie, Technologie)
+      v.literal("event_type"), // Type d'événement (ex: Loi, Élection, Découverte)
+      v.literal("special_event"), // Événement spécial (ex: Municipales 2026)
+      v.literal("topic") // Sujet/thème général
+    )), // Par défaut: "topic" pour rétrocompatibilité
+    // Hiérarchie
+    parentCategoryId: v.optional(v.id("categories")), // Catégorie parente (pour hiérarchie)
     // Applicable à
     appliesTo: v.array(
       v.union(
@@ -1078,9 +1088,35 @@ export default defineSchema({
         v.literal("debates"),
         v.literal("projects"),
         v.literal("organizations"),
-        v.literal("actions")
+        v.literal("actions"),
+        v.literal("decisions") // ✅ NOUVEAU - Applicable aux décisions
       )
     ), // Types de contenus auxquels cette catégorie peut être appliquée
+    // Mise en avant
+    featured: v.optional(v.boolean()), // Mise en avant (affichée dans hero, etc.) - Par défaut: false
+    priority: v.optional(v.number()), // Ordre d'affichage (0 = priorité la plus haute) - Par défaut: 0
+    coverImage: v.optional(v.string()), // URL de l'image de cover
+    coverImageAlt: v.optional(v.string()), // Texte alternatif pour l'image
+    // Tags et métadonnées
+    tags: v.optional(v.array(v.string())), // Tags libres (ex: ["politique", "france", "élections"]) - Par défaut: []
+    metadata: v.optional(v.object({
+      // Pour événements spéciaux
+      region: v.optional(v.string()),
+      city: v.optional(v.string()),
+      eventCategory: v.optional(v.union(
+        v.literal("blockbuster"),
+        v.literal("tendance"),
+        v.literal("insolite")
+      )),
+      // Pour domaines
+      relatedDomains: v.optional(v.array(v.string())), // Domaines liés
+      // Champs personnalisés flexibles
+      customFields: v.optional(v.any()), // N'importe quoi (Record<string, any>)
+    })),
+    // Événements spéciaux
+    isSpecialEvent: v.optional(v.boolean()), // Marquer comme événement spécial
+    eventStartDate: v.optional(v.number()), // Date de début de l'événement (timestamp)
+    eventEndDate: v.optional(v.number()), // Date de fin de l'événement (timestamp)
     // Gouvernance
     proposedBy: v.id("users"), // Utilisateur qui a proposé la catégorie
     proposalId: v.optional(v.id("governanceProposals")), // Proposition de gouvernance associée
@@ -1101,7 +1137,100 @@ export default defineSchema({
     .index("slug", ["slug"])
     .index("status", ["status"])
     .index("appliesTo", ["appliesTo"])
-    .index("proposedBy", ["proposedBy"]),
+    .index("proposedBy", ["proposedBy"])
+    .index("categoryType", ["categoryType"]) // ⚠️ DEPRECATED - À supprimer après migration
+    .index("isSpecialEvent", ["isSpecialEvent"]) // ⚠️ DEPRECATED - À supprimer après migration
+    .index("featured", ["featured"]) // ✅ NOUVEAU - Index pour catégories mises en avant
+    .index("parentCategoryId", ["parentCategoryId"]), // ✅ NOUVEAU - Index pour hiérarchie
+
+  // ============================================
+  // SPECIAL EVENTS (Événements spéciaux - Cohortes dynamiques de décisions)
+  // ============================================
+  specialEvents: defineTable({
+    // Identité
+    name: v.string(), // Nom de l'événement (ex: "Municipales 2026", "Élections présidentielles 2027")
+    slug: v.string(), // Slug unique
+    description: v.optional(v.string()), // Description complète de l'événement
+    shortDescription: v.optional(v.string()), // Description courte pour hero/affichage compact
+    
+    // Apparence
+    coverImage: v.optional(v.string()), // URL de l'image de couverture
+    coverImageAlt: v.optional(v.string()), // Texte alternatif pour l'image
+    
+    // Dates
+    startDate: v.optional(v.number()), // Date de début de l'événement (timestamp)
+    endDate: v.optional(v.number()), // Date de fin de l'événement (timestamp)
+    
+    // Localisation (optionnel)
+    region: v.optional(v.string()), // Région (ex: "Île-de-France", "Auvergne-Rhône-Alpes")
+    city: v.optional(v.string()), // Ville (ex: "Paris", "Lyon")
+    eventCategory: v.optional(v.union(
+      v.literal("blockbuster"), // Événements majeurs (Paris, Lyon, Marseille)
+      v.literal("tendance"), // Tendances nationales
+      v.literal("insolite") // Événements insolites/buzz
+    )),
+    
+    // 🎯 RÈGLES DE COHORTE (Filtrage automatique des décisions)
+    cohortRules: v.object({
+      // Filtres par catégories (optionnel - les catégories ne sont pas obligatoires)
+      categoryIds: v.optional(v.array(v.id("categories"))), // Catégories requises
+      
+      // Filtres par texte (mots-clés dans titre/description)
+      titleKeywords: v.optional(v.array(v.string())), // Mots-clés à rechercher dans le titre
+      titleContains: v.optional(v.string()), // Texte exact à rechercher dans le titre
+      descriptionKeywords: v.optional(v.array(v.string())), // Mots-clés à rechercher dans la description
+      descriptionContains: v.optional(v.string()), // Texte exact à rechercher dans la description
+      
+      // Filtres par propriétés de décision
+      decisionType: v.optional(v.array(v.union(
+        v.literal("law"),
+        v.literal("sanction"),
+        v.literal("tax"),
+        v.literal("agreement"),
+        v.literal("policy"),
+        v.literal("regulation"),
+        v.literal("crisis"),
+        v.literal("disaster"),
+        v.literal("conflict"),
+        v.literal("discovery"),
+        v.literal("election"),
+        v.literal("economic_event"),
+        v.literal("other")
+      ))), // Types de décisions
+      decider: v.optional(v.string()), // Décideur spécifique (ex: "France", "Emmanuel Macron")
+      sentiment: v.optional(v.array(v.union(
+        v.literal("positive"),
+        v.literal("negative"),
+        v.literal("neutral")
+      ))), // Sentiments
+      
+      // Filtres par domaines impactés (⚠️ DEPRECATED - pour compatibilité)
+      impactedDomains: v.optional(v.array(v.string())), // Domaines impactés (ex: ["économie", "politique"])
+      
+      // Filtres par date de création de la décision
+      decisionCreatedAfter: v.optional(v.number()), // Décisions créées après cette date (timestamp)
+      decisionCreatedBefore: v.optional(v.number()), // Décisions créées avant cette date (timestamp)
+      
+      // Opérateur logique (AND ou OR)
+      operator: v.optional(v.union(
+        v.literal("AND"), // Toutes les conditions doivent être remplies
+        v.literal("OR") // Au moins une condition doit être remplie
+      )), // Par défaut: "AND"
+    }),
+    
+    // Mise en avant
+    featured: v.optional(v.boolean()), // Mise en avant (affichée dans hero, etc.) - Par défaut: false
+    priority: v.optional(v.number()), // Ordre d'affichage (0 = priorité la plus haute) - Par défaut: 0
+    
+    // Timestamps
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("slug", ["slug"]) // Index pour recherche par slug
+    .index("featured", ["featured"]) // Index pour événements mis en avant
+    .index("startDate", ["startDate"]) // Index pour tri par date de début
+    .index("endDate", ["endDate"]) // Index pour tri par date de fin
+    .index("startDate_endDate", ["startDate", "endDate"]), // Index composite pour filtrage par période
 
   // ============================================
   // CONFIGURABLE RULES (Règles configurables par gouvernance)
@@ -1353,8 +1482,10 @@ export default defineSchema({
     sourceUrl: v.string(), // URL de la source officielle
     sourceName: v.optional(v.string()), // Nom de la source
 
-    // Domaines impactés
+    // Domaines impactés (⚠️ DEPRECATED - Utiliser categoryIds à la place)
     impactedDomains: v.array(v.string()), // ["économie", "énergie", "diplomatie", etc.]
+    // ✅ NOUVEAU - Catégories unifiées
+    categoryIds: v.optional(v.array(v.id("categories"))), // Catégories associées (remplace impactedDomains, type, specialEvent)
 
     // Indicateurs associés
     indicatorIds: v.array(v.id("indicators")), // Indicateurs à suivre
@@ -1437,8 +1568,9 @@ export default defineSchema({
     .index("decider", ["decider"])
     .index("type", ["type"])
     .index("impactedDomains", ["impactedDomains"])
+    .index("categoryIds", ["categoryIds"]) // ✅ NOUVEAU - Index pour filtrer par catégories
     .index("contentHash", ["contentHash"]) // ✅ Index pour déduplication optimisée
-    .index("specialEvent", ["specialEvent"]), // ✅ Index pour filtrer les événements spéciaux
+    .index("specialEvent", ["specialEvent"]), // ✅ Index pour filtrer les événements spéciaux (⚠️ DEPRECATED)
 
   // ============================================
   // DECISION TRANSLATIONS (Traductions Decision Cards)

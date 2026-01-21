@@ -9,21 +9,11 @@ import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from 'next-intl';
-import dynamic from "next/dynamic";
 import { SeedsDisplayWithShop } from "@/components/ui/SeedsDisplayWithShop";
-
-// Lazy load SearchModal (modal, pas besoin au chargement initial)
-const SearchModal = dynamic(
-  () => import("@/components/search/SearchModal").then((mod) => ({ default: mod.SearchModal })),
-  {
-    ssr: false, // Modal, pas besoin de SSR
-  }
-);
 
 export function SimplifiedHeader() {
   const { isAuthenticated, user } = useUser();
   const router = useRouter();
-  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const t = useTranslations('navigation');
   const unreadNotifications = useQuery(
     api.notifications.getUnreadNotificationsCount,
@@ -120,13 +110,6 @@ export function SimplifiedHeader() {
           </div>
         </div>
       </div>
-
-      {/* Modale de recherche */}
-      <SearchModal
-        open={isSearchModalOpen}
-        onOpenChange={setIsSearchModalOpen}
-        initialQuery=""
-      />
     </header>
   );
 }

@@ -1,6 +1,5 @@
 import { Suspense } from "react";
-import { DecisionList } from "@/components/decisions/DecisionList";
-import { DecisionStories } from "@/components/decisions/DecisionStories";
+import { HomePageClient } from "./HomePageClient";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SolarIcon } from "@/components/icons/SolarIcon";
 import { getTranslations } from 'next-intl/server';
@@ -13,7 +12,7 @@ async function HomePageHeader() {
   
   return (
     <div className="hidden lg:sticky lg:top-0 z-20 border-b border-border/50 bg-background/95 backdrop-blur-xl">
-      <div className="max-w-[614px] mx-auto px-4 py-4">
+      <div className="w-full px-4 md:px-6 lg:px-8 py-4">
         <div className="flex items-center gap-3">
           <SolarIcon icon="document-text-bold" className="size-6 text-primary" />
           <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
@@ -50,8 +49,8 @@ function HomePageSkeleton() {
 }
 
 export default async function HomePage() {
-  // ✅ Simplifié : Le chargement des données est géré côté client par DecisionList
-  // Cela évite les erreurs 404 si NEXT_PUBLIC_CONVEX_URL n'est pas défini ou si Convex est indisponible
+  // ✅ Nouveau design : MarketGrid avec grille responsive
+  // Desktop : 3 colonnes | Tablet : 2 colonnes | Mobile : 1 colonne
 
   return (
     <div className="min-h-screen bg-background">
@@ -60,13 +59,10 @@ export default async function HomePage() {
         <HomePageHeader />
       </Suspense>
 
-      {/* Stories horizontales - Style Instagram */}
-      <DecisionStories />
-
-      {/* Feed vertical - Style Instagram */}
-      <div className="max-w-[614px] mx-auto">
-        <DecisionList initialDecisions={undefined} limit={20} />
-      </div>
+      {/* Contenu principal - Grille de marchés */}
+      <Suspense fallback={<HomePageSkeleton />}>
+        <HomePageClient />
+      </Suspense>
 
       {/* Espace pour la bottom nav mobile */}
       <div className="h-16 lg:hidden" />

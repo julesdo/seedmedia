@@ -288,6 +288,10 @@ export const createAction = mutation({
               icon: defaultCat.icon,
               color: defaultCat.color,
               appliesTo: defaultCat.appliesTo,
+              categoryType: "topic", // Par défaut pour rétrocompatibilité
+              featured: false,
+              priority: 0,
+              tags: [],
               status: "active",
               usageCount: 0,
               proposedBy: appUser._id, // L'utilisateur qui crée l'action
@@ -433,6 +437,10 @@ export const updateAction = mutation({
                 icon: defaultCat.icon,
                 color: defaultCat.color,
                 appliesTo: defaultCat.appliesTo,
+                categoryType: "topic", // Par défaut pour rétrocompatibilité
+                featured: false,
+                priority: 0,
+                tags: [],
                 status: "active",
                 usageCount: 0,
                 proposedBy: appUser._id, // L'utilisateur qui modifie l'action

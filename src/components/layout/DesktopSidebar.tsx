@@ -36,7 +36,7 @@ export function DesktopSidebar() {
   const t = useTranslations();
 
   return (
-    <aside className="hidden lg:flex flex-col w-[244px] border-r border-border/50 bg-background fixed left-0 top-0 bottom-0 overflow-y-auto">
+    <aside className="hidden lg:flex flex-col w-[244px] border-r border-border/50 bg-background fixed left-0 top-0 bottom-0 overflow-y-auto z-30">
       <div className="flex flex-col h-full px-4 py-6">
         {/* Logo */}
         <Link href="/" prefetch={true} data-prefetch="viewport" className="mb-8">

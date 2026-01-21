@@ -188,6 +188,7 @@ export function DecisionDetailClient({ slug, initialDecisions }: DecisionDetailC
     }
   }, [isMobile]);
 
+
   // Afficher immédiatement le skeleton (navigation optimiste)
   // Ne pas attendre que decision soit défini
   if (decision === undefined) {
@@ -221,9 +222,9 @@ export function DecisionDetailClient({ slug, initialDecisions }: DecisionDetailC
     );
   }
 
-  // Sur desktop : utiliser la vue détail classique
+  // Sur desktop : utiliser la vue détail full width
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="w-full">
       <DecisionDetail decisionId={decision._id} />
     </div>
   );

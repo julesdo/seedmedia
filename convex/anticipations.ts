@@ -378,7 +378,7 @@ export const createAnticipation = mutation({
     // 🎯 FEATURE 2: LE TRADING - Enregistrer le cours en temps réel (à chaque vote)
     // On enregistre un "tick" pour avoir l'historique complet jusqu'à la seconde
     try {
-      // @ts-expect-error - Type instantiation is excessively deep due to complex return type
+      // @ts-ignore - Type instantiation is excessively deep due to complex return type
       await ctx.scheduler.runAfter(0, internal.trading.recordCourseTickAction, {
         decisionId: args.decisionId,
         timestamp: now,

@@ -20,7 +20,6 @@ import { TradingInterfaceReels } from "./TradingInterfaceReels";
 import { useTranslations } from 'next-intl';
 import { TopArgumentsList } from "./TopArgumentsList";
 import { VoteSkinShop } from "@/components/vote-skins/VoteSkinShop";
-import { RelatedNewsClient } from "./RelatedNewsClient";
 
 interface DecisionDetailProps {
   decisionId: Id<"decisions">;
@@ -106,38 +105,9 @@ export function DecisionDetail({
 
 
   return (
-    <div className={cn("space-y-4 pb-24", className)}>
-      {/* Image */}
-      {decision.imageUrl && (
-        <div className="relative aspect-video w-full overflow-hidden rounded-lg">
-          <Image
-            src={decision.imageUrl}
-            alt={decision.title}
-            fill
-            className="object-cover"
-            sizes="100vw"
-            priority
-          />
-        </div>
-      )}
+    <div className={cn("pb-16 lg:pb-24", className)}>
 
-      {/* Header allégé */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 flex-wrap">
-          <EventBadge
-            impactLevel={decision.impactLevel}
-            emoji={decision.emoji}
-            heat={decision.heat}
-            sentiment={decision.sentiment}
-            badgeColor={decision.badgeColor}
-            size="sm"
-          />
-          <Badge variant="secondary" className="text-xs">{typeLabels[decision.type]}</Badge>
-        </div>
-        <h1 className="text-xl sm:text-2xl font-bold leading-tight">{decision.title}</h1>
-      </div>
-
-      {/* Trading Interface - Style reels sur mobile, classique sur desktop */}
+      {/* Trading Interface - Style reels sur mobile, premium amélioré sur desktop */}
       {decision.status !== "resolved" && (
         <>
           {isMobile ? (
@@ -148,28 +118,16 @@ export function DecisionDetail({
               status={decision.status}
             />
           ) : (
-            <>
-              <TradingInterface
-                decisionId={decision._id}
-                question={decision.question}
-                answer1={decision.answer1}
-                status={decision.status}
-              />
-              {/* Commentaires - Desktop uniquement */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 px-1">
-                  <SolarIcon icon="chat-round-bold" className="size-4 text-primary" />
-                  <h2 className="text-sm font-semibold">Commentaires</h2>
-                </div>
-                <TopArgumentsList decisionId={decision._id} />
-              </div>
-            </>
+            <TradingInterface
+              decisionId={decision._id}
+              question={decision.question}
+              answer1={decision.answer1}
+              status={decision.status}
+            />
           )}
         </>
       )}
 
-      {/* Actualités liées (client-side via RSS) */}
-      <RelatedNewsClient decisionId={decision._id} />
 
       {/* Résolution */}
       {decision.resolution && (

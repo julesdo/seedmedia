@@ -1498,6 +1498,45 @@ export const getUserPortfolio = query({
 });
 
 /**
+ * Récupère toutes les anticipations pour une décision (pour Top Holders)
+ */
+export const getDecisionAnticipations = query({
+  args: {
+    decisionId: v.id("decisions"),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit || 20;
+    
+    const anticipations = await ctx.db
+      .query("anticipations")
+      .withIndex("decisionId", (q) => q.eq("decisionId", args.decisionId))
+      .collect();
+
+    // Enrichir avec les infos utilisateur
+    const enriched = await Promise.all(
+      anticipations.map(async (anticipation) => {
+        const user = await ctx.db.get(anticipation.userId);
+        return {
+          ...anticipation,
+          user: user
+            ? {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                image: user.image,
+                username: user.username,
+              }
+            : null,
+        };
+      })
+    );
+
+    return enriched.slice(0, limit);
+  },
+});
+
+/**
  * 🎯 PHASE 2.4: Récupère l'historique des transactions de trading
  * 
  * @param decisionId - ID de la décision (optionnel)
@@ -1520,7 +1559,7 @@ export const getTradingHistory = query({
         .withIndex("decisionId_timestamp", (q) =>
           q.eq("decisionId", decisionId)
         )
-        .order("asc") // Ordre croissant pour le graphique (plus anciennes en premier)
+        .order("desc") // Ordre décroissant pour l'activité (plus récent en premier)
         .take(limit);
     } else {
       transactions = await ctx.db

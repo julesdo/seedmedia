@@ -368,7 +368,7 @@ export function TradingInterfaceReels({
       return;
     }
     if (partsNum <= 0) {
-      toast.error("Nombre de parts invalide");
+      toast.error("Nombre d'actions invalide");
       return;
     }
     setIsSubmitting(true);
@@ -1142,7 +1142,7 @@ export function TradingInterfaceReels({
                             />
                           </div>
                           <p className="text-[9px] text-muted-foreground mt-1">
-                            pour {partsNum} part{partsNum > 1 ? "s" : ""}
+                            pour {partsNum} action{partsNum > 1 ? "s" : ""}
                           </p>
                         </div>
                       )}
@@ -1150,7 +1150,7 @@ export function TradingInterfaceReels({
 
                     {/* Contrôle nombre de parts - Compact */}
                     <div className="space-y-2">
-                      <label className="text-[10px] text-muted-foreground font-medium block">Nombre de parts</label>
+                      <label className="text-[10px] text-muted-foreground font-medium block">Nombre d'actions</label>
                       <div className="flex items-center justify-center gap-3">
                         <motion.button
                           onClick={() => {
@@ -1176,7 +1176,7 @@ export function TradingInterfaceReels({
                             {partsNum}
                           </span>
                           <span className="text-[9px] text-muted-foreground leading-none mt-0.5">
-                            part{partsNum > 1 ? "s" : ""}
+                            action{partsNum > 1 ? "s" : ""}
                           </span>
                         </div>
                         
@@ -1217,9 +1217,9 @@ export function TradingInterfaceReels({
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] text-muted-foreground font-medium">Quantité</span>
-                        <span className="text-[10px] font-semibold">{partsNum} part{partsNum > 1 ? "s" : ""}</span>
+                        <span className="text-[10px] font-semibold">{partsNum} action{partsNum > 1 ? "s" : ""}</span>
                       </div>
-                      {/* Temps ajouté dynamique - Progressif selon le nombre de parts */}
+                      {/* Temps ajouté dynamique - Progressif selon le nombre d'actions */}
                       {partsNum > 0 && (() => {
                         const timeAddedMs = calculateTimeAdded(partsNum);
                         const formatTimeAdded = (ms: number): string => {
@@ -1319,7 +1319,7 @@ export function TradingInterfaceReels({
                       ) : (
                         <>
                           <SolarIcon icon="cart-bold" className="size-3.5 mr-2" />
-                          Prendre position ({partsNum} part{partsNum > 1 ? "s" : ""})
+                          Prendre position ({partsNum} action{partsNum > 1 ? "s" : ""})
                         </>
                       )}
                     </Button>

@@ -17,7 +17,8 @@ export const getActiveCategories = query({
         v.literal("debates"),
         v.literal("projects"),
         v.literal("organizations"),
-        v.literal("actions")
+        v.literal("actions"),
+        v.literal("decisions") // ✅ NOUVEAU
       )
     ),
   },
@@ -177,6 +178,10 @@ export const createCategoryInternal = internalMutation({
       icon: args.icon,
       color: args.color,
       appliesTo: args.appliesTo,
+      categoryType: "topic", // Par défaut pour rétrocompatibilité
+      featured: false,
+      priority: 0,
+      tags: [],
       status: "active", // Créée directement comme active (pas de pending)
       usageCount: 0,
       proposedBy: args.executedBy, // L'utilisateur qui a exécuté la proposition
@@ -312,6 +317,228 @@ export const updateArticleCategories = mutation({
     // Le usageCount est maintenant calculé dynamiquement, pas besoin de le mettre à jour
 
     return { success: true };
+  },
+});
+
+/**
+ * Récupère toutes les catégories actives pour décisions
+ */
+export const getCategoriesForDecisions = query({
+  args: {
+    categoryType: v.optional(v.union(
+      v.literal("domain"),
+      v.literal("event_type"),
+      v.literal("special_event"),
+      v.literal("topic")
+    )),
+    featured: v.optional(v.boolean()),
+    isSpecialEvent: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    let categories = await ctx.db
+      .query("categories")
+      .withIndex("status", (q) => q.eq("status", "active"))
+      .collect();
+
+    // Filtrer par appliesTo incluant "decisions"
+    categories = categories.filter((cat) => cat.appliesTo.includes("decisions"));
+
+    // Filtrer par categoryType si fourni
+    if (args.categoryType) {
+      categories = categories.filter((cat) => cat.categoryType === args.categoryType);
+    }
+
+    // Filtrer par featured si fourni
+    if (args.featured !== undefined) {
+      categories = categories.filter((cat) => cat.featured === args.featured);
+    }
+
+    // Filtrer par isSpecialEvent si fourni
+    if (args.isSpecialEvent !== undefined) {
+      categories = categories.filter((cat) => cat.isSpecialEvent === args.isSpecialEvent);
+    }
+
+    // Trier par priority (croissant), puis par nom
+    return categories.sort((a, b) => {
+      const priorityA = a.priority ?? 0;
+      const priorityB = b.priority ?? 0;
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB;
+      }
+      return a.name.localeCompare(b.name);
+    });
+  },
+});
+
+/**
+ * Récupère les catégories mises en avant pour décisions (pour hero, etc.)
+ */
+export const getFeaturedCategoriesForDecisions = query({
+  args: {
+    limit: v.optional(v.number()),
+    categoryType: v.optional(v.union(
+      v.literal("domain"),
+      v.literal("event_type"),
+      v.literal("special_event"),
+      v.literal("topic")
+    )),
+  },
+  handler: async (ctx, args) => {
+    let categories = await ctx.db
+      .query("categories")
+      .withIndex("status", (q) => q.eq("status", "active"))
+      .collect();
+
+    // Filtrer par appliesTo incluant "decisions" et featured = true
+    categories = categories.filter(
+      (cat) => cat.appliesTo.includes("decisions") && cat.featured === true
+    );
+
+    // Filtrer par categoryType si fourni
+    if (args.categoryType) {
+      categories = categories.filter((cat) => cat.categoryType === args.categoryType);
+    }
+
+    // Trier par priority (croissant), puis par nom
+    categories.sort((a, b) => {
+      const priorityA = a.priority ?? 0;
+      const priorityB = b.priority ?? 0;
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB;
+      }
+      return a.name.localeCompare(b.name);
+    });
+
+    // Limiter si spécifié
+    if (args.limit) {
+      return categories.slice(0, args.limit);
+    }
+
+    return categories;
+  },
+});
+
+/**
+ * Récupère une catégorie par son slug (pour décisions)
+ */
+export const getCategoryBySlugForDecisions = query({
+  args: {
+    slug: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const category = await ctx.db
+      .query("categories")
+      .withIndex("slug", (q) => q.eq("slug", args.slug))
+      .first();
+
+    if (!category) {
+      return null;
+    }
+
+    // Vérifier que la catégorie s'applique aux décisions
+    if (!category.appliesTo.includes("decisions")) {
+      return null;
+    }
+
+    return category;
+  },
+});
+
+/**
+ * Récupère plusieurs catégories par leurs slugs (pour migration/synchronisation)
+ */
+export const getCategoriesBySlugs = query({
+  args: {
+    slugs: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const categories = await ctx.db
+      .query("categories")
+      .withIndex("status", (q) => q.eq("status", "active"))
+      .collect();
+
+    // Filtrer par slugs et appliesTo incluant "decisions"
+    return categories.filter(
+      (cat) => args.slugs.includes(cat.slug) && cat.appliesTo.includes("decisions")
+    );
+  },
+});
+
+/**
+ * Récupère les catégories avec leur liquidité totale (pour top bar)
+ * Triées par liquidité décroissante
+ */
+export const getCategoriesWithLiquidity = query({
+  args: {
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    // Récupérer toutes les catégories actives pour décisions
+    let categories = await ctx.db
+      .query("categories")
+      .withIndex("status", (q) => q.eq("status", "active"))
+      .collect();
+
+    categories = categories.filter((cat) => cat.appliesTo.includes("decisions"));
+
+    // Pour chaque catégorie, calculer la liquidité totale
+    const categoriesWithLiquidity = await Promise.all(
+      categories.map(async (category) => {
+        // Si la catégorie n'a pas d'ID (catégorie par défaut), liquidité = 0
+        if (!category._id || category._id === "") {
+          return {
+            ...category,
+            totalLiquidity: 0,
+          };
+        }
+
+        // Récupérer toutes les décisions de cette catégorie
+        const allDecisions = await ctx.db.query("decisions").collect();
+        const categoryDecisions = allDecisions.filter(
+          (d) => d.categoryIds && d.categoryIds.includes(category._id)
+        );
+
+        // Calculer la liquidité totale pour toutes les décisions de cette catégorie
+        let totalLiquidity = 0;
+
+        for (const decision of categoryDecisions) {
+          // Récupérer les pools de trading pour cette décision
+          const yesPool = await ctx.db
+            .query("tradingPools")
+            .withIndex("decisionId_position", (q) =>
+              q.eq("decisionId", decision._id).eq("position", "yes")
+            )
+            .first();
+
+          const noPool = await ctx.db
+            .query("tradingPools")
+            .withIndex("decisionId_position", (q) =>
+              q.eq("decisionId", decision._id).eq("position", "no")
+            )
+            .first();
+
+          // Calculer la liquidité (somme des réserves)
+          const yesReserve = yesPool?.reserve || 0;
+          const noReserve = noPool?.reserve || 0;
+          totalLiquidity += yesReserve + noReserve;
+        }
+
+        return {
+          ...category,
+          totalLiquidity,
+        };
+      })
+    );
+
+    // Trier par liquidité décroissante
+    categoriesWithLiquidity.sort((a, b) => b.totalLiquidity - a.totalLiquidity);
+
+    // Limiter si spécifié
+    if (args.limit) {
+      return categoriesWithLiquidity.slice(0, args.limit);
+    }
+
+    return categoriesWithLiquidity;
   },
 });
 
