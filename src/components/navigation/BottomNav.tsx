@@ -9,36 +9,39 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTranslations } from 'next-intl';
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { useBottomNav } from "@/contexts/BottomNavContext";
+import dynamic from "next/dynamic";
+
+// Lazy load Framer Motion pour réduire le bundle initial
+const MotionButton = dynamic(
+  () => import("motion/react").then((mod) => mod.motion.button),
+  { 
+    ssr: false,
+    loading: () => <button />,
+  }
+);
+import { useInstantNavigation } from "@/hooks/useInstantNavigation";
+import { useEffect } from "react";
 
 interface BottomNavProps {
   transparent?: boolean; // Mode transparent pour les reels
 }
 
 export function BottomNav({ transparent = false }: BottomNavProps) {
+  const { fabs, investButton } = useBottomNav();
+  const hasCustomContent = fabs.length > 0 || investButton !== null;
   const pathname = usePathname();
   const router = useRouter();
+  const { navigate } = useInstantNavigation();
   const { user, isAuthenticated } = useUser();
   const t = useTranslations('navigation');
 
-  // Récupérer la dernière décision pour rediriger vers son détail
-  // ✅ Protection : skip si Convex n'est pas disponible
-  // @ts-ignore - Type instantiation is excessively deep (known Convex type issue)
-  const latestDecision = useQuery(api.decisions.getDecisions, { 
-    limit: 1
-  }) || undefined;
 
   const navItems = [
     {
       label: t('home'),
       href: "/",
       icon: "home-2-bold",
-    },
-    {
-      label: t('trending'),
-      href: latestDecision && latestDecision.length > 0 
-        ? `/${latestDecision[0].slug}` 
-        : "#",
-      icon: "fire-bold",
     },
     {
       label: t('portfolio'),
@@ -67,6 +70,65 @@ export function BottomNav({ transparent = false }: BottomNavProps) {
   // Déterminer l'URL du profil
   const profileHref = username ? `/u/${username}` : "/profile";
 
+  // Précharger agressivement toutes les routes principales au montage
+  useEffect(() => {
+    const routes = ["/", "/portfolio", "/challenges", "/profile", profileHref];
+    routes.forEach(route => {
+      if (route && route !== "#") {
+        router.prefetch(route);
+      }
+    });
+  }, [router, profileHref]);
+
+  // Si on a des FABs ou un bouton Investir, afficher le mode personnalisé
+  if (hasCustomContent) {
+    return (
+      <nav className={cn(
+        "fixed bottom-0 left-0 right-0 z-50 lg:hidden",
+        "border-t border-border/50 bg-background/95 backdrop-blur-xl supports-backdrop-filter:bg-background/80"
+      )}>
+        <div className="flex items-center gap-2 px-2 py-2 h-20 pb-safe">
+          {/* Bouton Investir */}
+          {investButton && (
+            <div className="flex-1 min-w-0">
+              {investButton}
+            </div>
+          )}
+          
+          {/* FABs à droite */}
+          {fabs.length > 0 && (
+            <div className="flex items-center gap-2">
+              {fabs.map((fab) => (
+                <MotionButton
+                  key={fab.id}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={fab.onClick}
+                  className={cn(
+                    "size-12 rounded-xl flex flex-col items-center justify-center gap-0.5",
+                    "border border-border/50 bg-background/80 backdrop-blur-md",
+                    "text-muted-foreground hover:border-primary/50 hover:bg-primary/5",
+                    "hover:shadow-lg hover:shadow-primary/20 hover:text-primary",
+                    "transition-all duration-300 relative"
+                  )}
+                >
+                  <SolarIcon icon={fab.icon as any} className="size-5" />
+                  <span className="text-[9px] font-medium leading-tight">{fab.label}</span>
+                  {fab.badge !== undefined && fab.badge > 0 && (
+                    <span className="absolute -top-1 -right-1 size-4 rounded-full bg-primary text-white text-[9px] font-bold flex items-center justify-center">
+                      {fab.badge > 9 ? '9+' : fab.badge}
+                    </span>
+                  )}
+                </MotionButton>
+              ))}
+            </div>
+          )}
+        </div>
+      </nav>
+    );
+  }
+
+  // Mode navigation normale
   return (
     <nav className={cn(
       "fixed bottom-0 left-0 right-0 z-50 lg:hidden",
@@ -74,20 +136,23 @@ export function BottomNav({ transparent = false }: BottomNavProps) {
         ? "border-t border-white/20 bg-white/10 backdrop-blur-md supports-backdrop-filter:bg-white/5"
         : "border-t border-border/50 bg-background/95 backdrop-blur-xl supports-backdrop-filter:bg-background/80"
     )}>
-      <div className="grid grid-cols-5 h-16">
+      <div className="grid grid-cols-4 h-16">
         {navItems.map((item) => {
           const isProfile = item.isProfile;
           const href = isProfile ? profileHref : item.href;
           const isActive = pathname === href || (isProfile && username && pathname === `/u/${username}`);
           
           return (
-            <Link
+            <button
               key={item.href}
-              href={href}
-              prefetch={true}
-              data-prefetch="viewport"
+              onClick={(e) => {
+                e.preventDefault();
+                if (href && href !== "#") {
+                  navigate(href);
+                }
+              }}
               className={cn(
-                "flex flex-col items-center justify-center gap-1.5 transition-all duration-200 active:scale-95 w-full h-full",
+                "flex flex-col items-center justify-center gap-1.5 transition-colors duration-150 active:opacity-70 w-full h-full",
                 transparent
                   ? isActive
                     ? "text-white"
@@ -134,14 +199,14 @@ export function BottomNav({ transparent = false }: BottomNavProps) {
                 )}
               </div>
               <span className={cn(
-                "text-[11px] font-medium transition-all leading-tight text-center h-[14px] flex items-center",
+                "text-[11px] font-medium transition-colors leading-tight text-center h-[14px] flex items-center",
                 transparent
                   ? isActive ? "font-semibold text-white" : "font-normal text-white/70"
                   : isActive ? "font-semibold text-foreground" : "font-normal text-muted-foreground"
               )}>
                 {item.label}
               </span>
-            </Link>
+            </button>
           );
         })}
       </div>

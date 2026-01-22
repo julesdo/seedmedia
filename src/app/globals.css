@@ -51,6 +51,16 @@
   navigation: auto;
 }
 
+/* Désactiver la conservation du scroll entre les pages */
+@view-transition {
+  scroll-behavior: auto;
+}
+
+/* Réinitialiser le scroll lors des transitions */
+::view-transition-new(root) {
+  scroll-behavior: auto;
+}
+
 /* Animations fluides pour les transitions de pages - Plus rapides */
 ::view-transition-old(root),
 ::view-transition-new(root) {
@@ -2683,10 +2693,6 @@
     background-clip: text;
   }
 
-  /* Cacher les éléments de navigation mobile quand on est sur une page reel */
-  body.hide-mobile-nav [data-hide-on-reel] {
-    display: none !important;
-  }
 
   [data-slot="tabs-trigger"][data-state="active"] svg,
   [data-slot="tabs-trigger"][data-state="active"] [class*="SolarIcon"] svg {

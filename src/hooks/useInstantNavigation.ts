@@ -15,13 +15,9 @@ export function useInstantNavigation() {
   const [isPending, startTransition] = useTransition();
 
   const navigate = (href: string) => {
-    // Précharger la page avant de naviguer
-    router.prefetch(href);
-    
-    // Naviguer de manière non-bloquante
-    startTransition(() => {
-      router.push(href);
-    });
+    // Naviguer immédiatement sans attendre le prefetch
+    // Le prefetch est déjà fait au montage du composant
+    router.push(href);
   };
 
   return { navigate, isPending };

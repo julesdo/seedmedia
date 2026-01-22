@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, memo } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -27,7 +27,7 @@ interface TopArgumentsListProps {
  * 🎯 FEATURE 3: Commentaires en vedette - Liste des commentaires (style Instagram)
  * Formulaire inline en bas, pas de modal
  */
-export function TopArgumentsList({ decisionId }: TopArgumentsListProps) {
+export const TopArgumentsList = memo(function TopArgumentsList({ decisionId }: TopArgumentsListProps) {
   const { user } = useUser();
   const [content, setContent] = useState("");
   const [mentionedUserIds, setMentionedUserIds] = useState<Id<"users">[]>([]);
@@ -476,7 +476,7 @@ export function TopArgumentsList({ decisionId }: TopArgumentsListProps) {
       })()}
     </div>
   );
-}
+});
 
 // Fonction pour rendre le contenu avec les mentions cliquables
 function renderContentWithMentions(content: string, mentionedUsers?: any[]) {

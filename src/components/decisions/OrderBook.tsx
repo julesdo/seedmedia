@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
@@ -15,7 +16,7 @@ interface OrderBookProps {
  * Order Book style Polymarket
  * Affiche les ordres d'achat (bids) et de vente (asks) basés sur les transactions récentes
  */
-export function OrderBook({ decisionId }: OrderBookProps) {
+export const OrderBook = memo(function OrderBook({ decisionId }: OrderBookProps) {
   const tradingHistory = useQuery(api.trading.getTradingHistory, { 
     decisionId, 
     limit: 100 
@@ -194,5 +195,5 @@ export function OrderBook({ decisionId }: OrderBookProps) {
       </div>
     </div>
   );
-}
+});
 

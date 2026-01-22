@@ -63,7 +63,20 @@ export function TradingWidget({ decisionId }: TradingWidgetProps) {
     return () => clearInterval(interval);
   }, [decision?.createdAt, investmentWindow]);
 
-  const [selectedPosition, setSelectedPosition] = useState<"yes" | "no" | null>(null);
+  // Pré-sélectionner automatiquement OUI si probabilité >= 50%, sinon NON
+  const defaultPosition = useMemo(() => {
+    if (probability === undefined) return null;
+    return probability >= 50 ? "yes" : "no";
+  }, [probability]);
+  
+  const [selectedPosition, setSelectedPosition] = useState<"yes" | "no" | null>(defaultPosition);
+  
+  // Mettre à jour la sélection quand la probabilité change
+  useEffect(() => {
+    if (probability !== undefined && selectedPosition === null) {
+      setSelectedPosition(probability >= 50 ? "yes" : "no");
+    }
+  }, [probability, selectedPosition]);
   const [seedAmount, setSeedAmount] = useState<string>("1");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
@@ -253,12 +266,18 @@ export function TradingWidget({ decisionId }: TradingWidgetProps) {
 
   if (!decision || decision.status === "resolved") return null;
 
+  // Détecter si on est dans un Sheet mobile
+  const isInMobileSheet = typeof window !== 'undefined' && window.innerWidth < 1024;
+  
   return (
     <>
-      <div className="space-y-4 p-4 rounded-xl border-2 border-border/50 bg-gradient-to-br from-background via-background to-muted/20 shadow-lg">
+      <div className={cn(
+        "space-y-3 rounded-xl border-2 border-border/50 bg-gradient-to-br from-background via-background to-muted/20 shadow-lg",
+        isInMobileSheet ? "p-3 space-y-2.5" : "p-4 space-y-4"
+      )}>
         {/* Header avec probabilité et variation - Style Polymarket attractif */}
-        <div className="space-y-2">
-          <h2 className="text-sm font-bold text-foreground">Prendre position</h2>
+        <div className={cn("space-y-1.5", isInMobileSheet && "space-y-1")}>
+          {!isInMobileSheet && <h2 className="text-sm font-bold text-foreground">Prendre position</h2>}
           {probability !== undefined ? (
             <div className="space-y-1.5">
               <div className="flex items-baseline gap-2">
@@ -292,7 +311,7 @@ export function TradingWidget({ decisionId }: TradingWidgetProps) {
         </div>
 
         {/* Boutons OUI/NON horizontaux - Style Polymarket attractif */}
-        <div className="grid grid-cols-2 gap-2.5">
+        <div className={cn("grid grid-cols-2", isInMobileSheet ? "gap-2" : "gap-2.5")}>
           <motion.button
             whileHover={!isInvestmentExpired ? { scale: 1.03, y: -1 } : {}}
             whileTap={!isInvestmentExpired ? { scale: 0.97 } : {}}
@@ -309,8 +328,9 @@ export function TradingWidget({ decisionId }: TradingWidgetProps) {
             }}
             disabled={isInvestmentExpired}
             className={cn(
-              "p-3 rounded-lg border-2 transition-all relative overflow-hidden",
+              "rounded-lg border-2 transition-all relative overflow-hidden",
               "shadow-sm hover:shadow-md",
+              isInMobileSheet ? "p-2.5" : "p-3",
               selectedPosition === "yes"
                 ? cn(
                     "bg-gradient-to-br", YES_COLORS.gradient.from, YES_COLORS.gradient.via, YES_COLORS.gradient.to,
@@ -343,16 +363,16 @@ export function TradingWidget({ decisionId }: TradingWidgetProps) {
                 />
               </>
             )}
-            <div className="relative flex flex-col items-center gap-1">
+            <div className="relative flex flex-col items-center gap-0.5">
               <SolarIcon 
                 icon="check-circle-bold" 
-                className={cn("size-7", selectedPosition === "yes" ? "text-white drop-shadow-lg" : "text-muted-foreground")} 
+                className={cn(isInMobileSheet ? "size-6" : "size-7", selectedPosition === "yes" ? "text-white drop-shadow-lg" : "text-muted-foreground")} 
               />
-              <span className={cn("text-sm font-bold", selectedPosition === "yes" ? "text-white drop-shadow-md" : "text-foreground")}>
+              <span className={cn(isInMobileSheet ? "text-xs" : "text-sm", "font-bold", selectedPosition === "yes" ? "text-white drop-shadow-md" : "text-foreground")}>
                 OUI
               </span>
               {probability !== undefined && (
-                <span className={cn("text-[10px] font-semibold", selectedPosition === "yes" ? "text-white/90" : "text-muted-foreground")}>
+                <span className={cn("text-[9px] font-semibold", selectedPosition === "yes" ? "text-white/90" : "text-muted-foreground")}>
                   {probability.toFixed(1)}%
                 </span>
               )}
@@ -375,8 +395,9 @@ export function TradingWidget({ decisionId }: TradingWidgetProps) {
             }}
             disabled={isInvestmentExpired}
             className={cn(
-              "p-3 rounded-lg border-2 transition-all relative overflow-hidden",
+              "rounded-lg border-2 transition-all relative overflow-hidden",
               "shadow-sm hover:shadow-md",
+              isInMobileSheet ? "p-2.5" : "p-3",
               selectedPosition === "no"
                 ? cn(
                     "bg-gradient-to-br", NO_COLORS.gradient.from, NO_COLORS.gradient.via, NO_COLORS.gradient.to,
@@ -409,16 +430,16 @@ export function TradingWidget({ decisionId }: TradingWidgetProps) {
                 />
               </>
             )}
-            <div className="relative flex flex-col items-center gap-1">
+            <div className="relative flex flex-col items-center gap-0.5">
               <SolarIcon 
                 icon="close-circle-bold" 
-                className={cn("size-7", selectedPosition === "no" ? "text-white drop-shadow-lg" : "text-muted-foreground")} 
+                className={cn(isInMobileSheet ? "size-6" : "size-7", selectedPosition === "no" ? "text-white drop-shadow-lg" : "text-muted-foreground")} 
               />
-              <span className={cn("text-sm font-bold", selectedPosition === "no" ? "text-white drop-shadow-md" : "text-foreground")}>
+              <span className={cn(isInMobileSheet ? "text-xs" : "text-sm", "font-bold", selectedPosition === "no" ? "text-white drop-shadow-md" : "text-foreground")}>
                 NON
               </span>
               {probability !== undefined && (
-                <span className={cn("text-[10px] font-semibold", selectedPosition === "no" ? "text-white/90" : "text-muted-foreground")}>
+                <span className={cn("text-[9px] font-semibold", selectedPosition === "no" ? "text-white/90" : "text-muted-foreground")}>
                   {(100 - probability).toFixed(1)}%
                 </span>
               )}
@@ -431,7 +452,7 @@ export function TradingWidget({ decisionId }: TradingWidgetProps) {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="space-y-3 pt-3 border-t border-border/30"
+            className={cn("pt-2.5 border-t border-border/30", isInMobileSheet ? "space-y-2" : "space-y-3")}
           >
             {/* Input montant en Seed - Style Polymarket */}
             <div className="space-y-1.5">
@@ -644,50 +665,80 @@ export function TradingWidget({ decisionId }: TradingWidgetProps) {
             )}
 
             <motion.div
-              whileHover={!isSubmitting && seedNum > 0 && selectedPosition && !isInvestmentExpired ? { scale: 1.01 } : {}}
-              whileTap={!isSubmitting && seedNum > 0 && selectedPosition && !isInvestmentExpired ? { scale: 0.99 } : {}}
+              whileHover={!isSubmitting && seedNum > 0 && selectedPosition && !isInvestmentExpired ? { scale: 1.02 } : {}}
+              whileTap={!isSubmitting && seedNum > 0 && selectedPosition && !isInvestmentExpired ? { scale: 0.98 } : {}}
+              className="relative"
             >
               <Button
                 onClick={() => selectedPosition && handleBuy(selectedPosition)}
                 disabled={isSubmitting || seedNum <= 0 || !selectedPosition || isInvestmentExpired}
                 className={cn(
-                  "w-full h-10 text-sm font-bold rounded-lg transition-all shadow-md hover:shadow-lg",
+                  "w-full relative overflow-hidden transition-all",
+                  isInMobileSheet 
+                    ? "h-14 text-base font-bold rounded-xl shadow-xl" 
+                    : "h-10 text-sm font-bold rounded-lg shadow-md hover:shadow-lg",
                   selectedPosition === "yes"
-                    ? cn("bg-gradient-to-r", YES_COLORS.gradient.from, YES_COLORS.gradient.via, YES_COLORS.gradient.to, "hover:opacity-95 text-white ring-2 ring-primary/30")
+                    ? cn(
+                        "bg-gradient-to-r", YES_COLORS.gradient.from, YES_COLORS.gradient.via, YES_COLORS.gradient.to, 
+                        "text-white ring-2 ring-primary/30",
+                        !isSubmitting && !isInvestmentExpired && "hover:ring-primary/50 hover:shadow-2xl"
+                      )
                     : selectedPosition === "no"
-                    ? cn("bg-gradient-to-r", NO_COLORS.gradient.from, NO_COLORS.gradient.via, NO_COLORS.gradient.to, "hover:opacity-95 text-white ring-2 ring-zinc-400/30")
+                    ? cn(
+                        "bg-gradient-to-r", NO_COLORS.gradient.from, NO_COLORS.gradient.via, NO_COLORS.gradient.to, 
+                        "text-white ring-2 ring-zinc-400/30",
+                        !isSubmitting && !isInvestmentExpired && "hover:ring-zinc-400/50 hover:shadow-2xl"
+                      )
                     : "bg-muted",
                   (isSubmitting || seedNum <= 0 || !selectedPosition || isInvestmentExpired) && "opacity-50 cursor-not-allowed"
                 )}
               >
-                {isSubmitting ? (
+                {/* Effet de brillance animé - Mobile uniquement */}
+                {isInMobileSheet && selectedPosition && !isSubmitting && seedNum > 0 && !isInvestmentExpired && (
                   <>
-                    <SolarIcon icon="loading" className="size-3.5 mr-1.5 animate-spin" />
-                    Achat en cours...
-                  </>
-                ) : (
-                  <>
-                    <SolarIcon icon="cart-bold" className="size-3.5 mr-1.5" />
-                    Investir <SeedDisplay amount={seedNum} variant="default" className="text-sm font-bold" iconSize="size-3.5" showIcon={false} /> Seed
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                      initial={{ x: "-100%" }}
+                      animate={{ x: "200%" }}
+                      transition={{
+                        repeat: Infinity,
+                        duration: 2.5,
+                        ease: "easeInOut",
+                        repeatDelay: 0.5,
+                      }}
+                    />
+                    <motion.div
+                      className="absolute inset-0 bg-white/20"
+                      animate={{
+                        opacity: [0.1, 0.3, 0.1],
+                      }}
+                      transition={{
+                        repeat: Infinity,
+                        duration: 2,
+                        ease: "easeInOut",
+                      }}
+                    />
                   </>
                 )}
+                
+                <span className="relative z-10 flex items-center justify-center gap-2">
+                  {isSubmitting ? (
+                    <>
+                      <SolarIcon icon="loading" className={cn(isInMobileSheet ? "size-5" : "size-3.5", "animate-spin")} />
+                      <span>Achat en cours...</span>
+                    </>
+                  ) : (
+                    <>
+                      <SolarIcon icon="cart-bold" className={cn(isInMobileSheet ? "size-5" : "size-3.5")} />
+                      <span>
+                        Investir <SeedDisplay amount={seedNum} variant="default" className={cn(isInMobileSheet ? "text-base" : "text-sm", "font-bold")} iconSize={isInMobileSheet ? "size-4" : "size-3.5"} showIcon={false} /> Seed
+                      </span>
+                    </>
+                  )}
+                </span>
               </Button>
             </motion.div>
           </motion.div>
-        )}
-
-        {/* Countdown FOMO - Style Polymarket */}
-        {timeRemaining && !timeRemaining.isExpired && (
-          <div className="pt-3 border-t border-border/30">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-primary/15 via-primary/10 to-primary/15 border border-primary/40 shadow-sm">
-              <SolarIcon icon="clock-circle-bold" className="size-3.5 text-primary" />
-              <span className="text-[10px] font-mono text-primary font-bold">
-                {timeRemaining.days > 0
-                  ? `${timeRemaining.days}j ${String(timeRemaining.hours).padStart(2, '0')}:${String(timeRemaining.minutes).padStart(2, '0')}`
-                  : `${String(timeRemaining.hours).padStart(2, '0')}:${String(timeRemaining.minutes).padStart(2, '0')}:${String(timeRemaining.seconds).padStart(2, '0')}`}
-              </span>
-            </div>
-          </div>
         )}
       </div>
 

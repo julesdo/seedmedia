@@ -33,7 +33,7 @@ export function LeaderboardWidget() {
     <div className="rounded-lg border border-border/50 bg-card/50 p-4 space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <SolarIcon icon="trophy-bold" className="size-4 text-primary" />
+          <SolarIcon icon="cup-star" className="size-4 text-primary" />
           <span className="text-sm font-semibold text-foreground">
             {t('title')}
           </span>

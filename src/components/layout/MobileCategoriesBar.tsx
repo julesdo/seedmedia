@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { SolarIcon } from "@/components/icons/SolarIcon";
@@ -20,13 +21,25 @@ export function MobileCategoriesBar() {
     limit: 10, // Top 10 catégories par liquidité
   });
 
+  // Définir la hauteur de la barre de catégories en CSS variable
+  useEffect(() => {
+    const bar = document.getElementById("mobile-categories-bar");
+    if (bar) {
+      const height = bar.offsetHeight;
+      document.documentElement.style.setProperty("--mobile-categories-height", `${height}px`);
+    }
+  }, [categoriesWithLiquidity]);
+
   // Ne pas afficher si pas de catégories
   if (!categoriesWithLiquidity || categoriesWithLiquidity.length === 0) {
     return null;
   }
 
   return (
-    <div className="lg:hidden border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 sticky top-[calc(var(--header-height,56px)+var(--breaking-news-height,0px))] z-30">
+    <div 
+      id="mobile-categories-bar"
+      className="lg:hidden border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 sticky top-[calc(var(--header-height,56px)+var(--breaking-news-height,0px))] z-30"
+    >
       <div className="px-4 py-2.5">
         <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide pb-1">
           {/* Bouton "Tous" */}

@@ -2,7 +2,6 @@
 
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { SimplifiedHeader } from "@/components/navigation/SimplifiedHeader";
-import { ReelHeader } from "@/components/navigation/ReelHeader";
 import { DesktopSidebar } from "@/components/layout/DesktopSidebar";
 import { DesktopRightSidebar } from "@/components/layout/DesktopRightSidebar";
 import { DesktopTopBar } from "@/components/layout/DesktopTopBar";
@@ -26,7 +25,6 @@ export function SimplifiedLayout({
 }) {
   const pathname = usePathname();
   const isSubPage = pathname !== "/";
-  const [isReelMode, setIsReelMode] = useState(false);
   const [rightSidebarWidth, setRightSidebarWidth] = useState(319); // Largeur par défaut
   const [isMounted, setIsMounted] = useState(false); // Pour éviter l'erreur d'hydratation
   const [isMobile, setIsMobile] = useState(false); // Détecter si on est sur mobile
@@ -45,23 +43,7 @@ export function SimplifiedLayout({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Détecter si on est en mode reels (body a la classe hide-mobile-nav)
-  useEffect(() => {
-    const checkReelMode = () => {
-      setIsReelMode(document.body.classList.contains('hide-mobile-nav'));
-    };
-    
-    checkReelMode();
-    
-    // Observer les changements de classe sur le body
-    const observer = new MutationObserver(checkReelMode);
-    observer.observe(document.body, {
-      attributes: true,
-      attributeFilter: ['class']
-    });
-    
-    return () => observer.disconnect();
-  }, []);
+  // Plus de mode reels - navigation toujours visible
 
   // Détecter la largeur de la sidebar droite (pour ajuster le padding du main)
   // Sur mobile, ne pas compter la sidebar (elle est cachée)
@@ -111,21 +93,10 @@ export function SimplifiedLayout({
     };
   }, [pathname]); // Re-vérifier quand on change de page
 
-  // Note: Les barres de navigation sont cachées uniquement en mode feed reels
-  // Cette logique est gérée dans DecisionDetailClient.tsx
-  // Les barres restent visibles sur toutes les autres pages
-
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Reel Header - Affiché uniquement en mode reel (mobile) */}
-      {isReelMode && (
-        <div className="lg:hidden">
-          <ReelHeader />
-        </div>
-      )}
-
-      {/* Mobile Header - Caché si body a la classe hide-mobile-nav */}
-      <div data-hide-on-reel className="lg:hidden sticky top-0 z-50">
+      {/* Mobile Header */}
+      <div className="lg:hidden sticky top-0 z-50">
         {/* Breaking News Banner (au-dessus du header) - Sticky */}
         <BreakingNewsBanner />
         {/* Header - Sticky juste en dessous du breaking news */}

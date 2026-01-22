@@ -12,16 +12,20 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Toaster } from "@/components/ui/sonner";
 import { getLocale, getMessages } from 'next-intl/server';
 import { DynamicIntlProvider } from '@/components/providers/DynamicIntlProvider';
-import { ServiceWorkerRegistration } from '@/components/service-worker/ServiceWorkerRegistration';
-import { SeedsGainManager } from "@/components/seeds/SeedsGainManager";
-import { InstallPrompt } from '@/components/pwa/InstallPrompt';
 import NextTopLoader from 'nextjs-toploader';
+import { BottomNavProvider } from "@/contexts/BottomNavContext";
+import { LazyComponents } from '@/components/layout/LazyComponents';
+import { ScrollToTop } from '@/components/layout/ScrollToTop';
+import { LCPImagePreloader } from '@/components/layout/LCPImagePreloader';
 
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
+  preload: true,
+  fallback: ["monospace"],
+  adjustFontFallback: true,
 });
 
 export const metadata: Metadata = {
@@ -122,14 +126,32 @@ export default async function RootLayout({
   return (
     <ViewTransitions>
       <html lang={locale} suppressHydrationWarning>
+        <head>
+          {/* Preload fonts critiques - Next.js le fait automatiquement mais on peut optimiser */}
+          {/* DNS prefetch pour les domaines externes */}
+          <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+          <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+          <link rel="dns-prefetch" href="https://judicious-mandrill-471.convex.cloud" />
+          {/* Preconnect pour les domaines critiques */}
+          <link rel="preconnect" href="https://fonts.googleapis.com" crossOrigin="anonymous" />
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+          <link rel="preconnect" href="https://judicious-mandrill-471.convex.cloud" crossOrigin="anonymous" />
+          {/* Resource hints pour améliorer le LCP */}
+          <link rel="preload" as="image" href="/og-image.png" fetchPriority="high" />
+          {/* Preload CSS critique si nécessaire */}
+          <link rel="preload" as="style" href="/globals.css" />
+        </head>
         <body
           className={`${jetbrainsMono.variable} antialiased font-mono`}
         >
         <NextTopLoader
-          color="#246BFD"
           showSpinner={false}
-          height={3}
+          height={2}
+          color="#246BFD"
+          easing="ease"
+          speed={150}
           shadow="0 0 10px #246BFD,0 0 5px #246BFD"
+          zIndex={1600}
         />
         {/* SVG Gradients pour les icônes */}
         <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
@@ -160,17 +182,19 @@ export default async function RootLayout({
             <NuqsAdapter>
               <ConvexClientProvider>
                 <UserProvider>
-                  <DynamicIntlProvider initialLocale={locale} initialMessages={messages}>
-                    <LanguageProvider>
-                      <ServiceWorkerRegistration />
-                      <SeedsGainManager />
-                      <InstallPrompt />
-                      <main>
-                        {children}
-                      </main>
-                      <Toaster />
-                    </LanguageProvider>
-                  </DynamicIntlProvider>
+                  <BottomNavProvider>
+                    <DynamicIntlProvider initialLocale={locale} initialMessages={messages}>
+                      <LanguageProvider>
+                        <ScrollToTop />
+                        <LCPImagePreloader />
+                        <LazyComponents />
+                        <main>
+                          {children}
+                        </main>
+                        <Toaster />
+                      </LanguageProvider>
+                    </DynamicIntlProvider>
+                  </BottomNavProvider>
                 </UserProvider>
               </ConvexClientProvider>
             </NuqsAdapter>

@@ -70,7 +70,8 @@ export function DottedMap({
       className={cn("text-gray-500 dark:text-gray-500", className)}
       style={{ width: "100%", height: "100%", ...style }}
     >
-      {points.map((point, index) => {
+      {/* Optimisé : Limiter le nombre de points rendus pour améliorer les performances */}
+      {points.slice(0, Math.min(points.length, mapSamples)).map((point, index) => {
         const rowIndex = yToRowIndex.get(point.y) ?? 0
         const offsetX = stagger && rowIndex % 2 === 1 ? xStep / 2 : 0
         return (

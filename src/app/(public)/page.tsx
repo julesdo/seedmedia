@@ -1,29 +1,11 @@
 import { Suspense } from "react";
 import { HomePageClient } from "./HomePageClient";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SolarIcon } from "@/components/icons/SolarIcon";
-import { getTranslations } from 'next-intl/server';
+import { CachedHomePageHeader } from "@/components/cache/CachedHomePageHeader";
 
-// ISR: Régénérer toutes les minutes (page très visitée, données qui changent fréquemment)
-export const revalidate = 60;
-
-async function HomePageHeader() {
-  const t = await getTranslations('decisions');
-  
-  return (
-    <div className="hidden lg:sticky lg:top-0 z-20 border-b border-border/50 bg-background/95 backdrop-blur-xl">
-      <div className="w-full px-4 md:px-6 lg:px-8 py-4">
-        <div className="flex items-center gap-3">
-          <SolarIcon icon="document-text-bold" className="size-6 text-primary" />
-          <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
-        </div>
-        <p className="text-sm text-muted-foreground mt-2">
-          {t('description')}
-        </p>
-      </div>
-    </div>
-  );
-}
+// PPR activé : Pas de revalidate/dynamic pour permettre PPR
+// Le cache est géré via unstable_cache avec tags dans les Server Components
+// Cela permet à Next.js de précalculer le shell statique et streamer les données dynamiques
 
 function HomePageSkeleton() {
   return (
@@ -54,9 +36,9 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header - Masqué en mobile */}
+      {/* Header - Masqué en mobile - Cached avec "use cache" */}
       <Suspense fallback={null}>
-        <HomePageHeader />
+        <CachedHomePageHeader />
       </Suspense>
 
       {/* Contenu principal - Grille de marchés */}

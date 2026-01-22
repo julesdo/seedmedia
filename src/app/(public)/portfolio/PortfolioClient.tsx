@@ -188,7 +188,7 @@ function DetailStatsRow({
     <div className="flex items-center justify-between py-3 border-t border-b border-border/20">
       <div className="flex-1">
         <p className="text-xs text-muted-foreground mb-1 font-medium">
-          Parts possédées
+          Seeds investis
         </p>
         <p className="text-lg font-bold">{formatDetailNumber(sharesOwned)}</p>
       </div>
@@ -225,9 +225,9 @@ function DetailStatsRow({
 }
 
 /**
- * Composant de ligne compacte pour une position avec mini graphique
+ * Card de position - Style MarketCard avec image de fond et design premium
  */
-function PositionRow({
+function PositionCard({
   item,
   decision,
   position,
@@ -235,6 +235,7 @@ function PositionRow({
   profitPercentage,
   currentPrice,
   onClick,
+  isMobile,
 }: {
   item: any;
   decision: any;
@@ -243,6 +244,7 @@ function PositionRow({
   profitPercentage: number;
   currentPrice?: number;
   onClick: () => void;
+  isMobile: boolean;
 }) {
   const courseHistory = useQuery(
     api.trading.getDecisionCourseHistory,
@@ -253,8 +255,8 @@ function PositionRow({
   const chartData = useMemo(() => {
     if (!courseHistory?.history?.length) return [];
     
-    // Prendre les 15 derniers points pour le mini graphique
-    const recentHistory = courseHistory.history.slice(-15);
+    // Prendre les 20 derniers points pour le mini graphique
+    const recentHistory = courseHistory.history.slice(-20);
     const priceKey = position === "yes" ? "yes" : "no";
     
     return recentHistory.map((point: any, index: number) => ({
@@ -263,18 +265,16 @@ function PositionRow({
     }));
   }, [courseHistory, position]);
 
-  // Calculer la variation du prix (pas le P&L)
+  // Calculer la variation du prix
   const priceVariation = useMemo(() => {
     if (!courseHistory?.history?.length || currentPrice === undefined) return 0;
     
     const priceKey = position === "yes" ? "yes" : "no";
     const history = courseHistory.history;
     
-    // Prendre le prix d'il y a 24h ou le premier point disponible
     const now = Date.now();
     const oneDayAgo = now - (24 * 60 * 60 * 1000);
     
-    // Trouver le point le plus proche d'il y a 24h
     let previousPrice = currentPrice;
     for (let i = history.length - 1; i >= 0; i--) {
       if (history[i].timestamp <= oneDayAgo) {
@@ -283,7 +283,6 @@ function PositionRow({
       }
     }
     
-    // Si pas de point ancien, utiliser le premier point
     if (previousPrice === currentPrice && history.length > 1) {
       previousPrice = history[0][priceKey] || currentPrice;
     }
@@ -304,90 +303,128 @@ function PositionRow({
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: -10 }}
-      animate={{ opacity: 1, x: 0 }}
-      className="border-b border-border/20 last:border-b-0"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="group relative"
     >
       <button
         onClick={onClick}
-        className="w-full py-3 px-2 flex items-center gap-3 hover:bg-muted/30 transition-colors"
+        className={cn(
+          "relative w-full overflow-hidden rounded-xl",
+          "bg-background border border-border/50",
+          "hover:border-border hover:shadow-lg",
+          "transition-all duration-200",
+          "text-left"
+        )}
+        style={{ 
+          willChange: "transform",
+          transform: "translateZ(0)",
+        }}
       >
-        {/* Icône/Badge */}
-        <div className="shrink-0">
-          <span className={cn(
-            "inline-flex items-center justify-center size-10 rounded-lg text-[10px] font-bold uppercase",
-            position === "yes" 
-              ? cn("bg-gradient-to-r", YES_COLORS.gradient.from, YES_COLORS.gradient.via, YES_COLORS.gradient.to, "text-white")
-              : cn("bg-gradient-to-r", NO_COLORS.gradient.from, NO_COLORS.gradient.via, NO_COLORS.gradient.to, "text-white")
-          )}>
-            {position === "yes" ? "OUI" : "NON"}
-          </span>
-        </div>
-
-        {/* Nom + Tendance */}
-        <div className="flex-1 min-w-0 text-left">
-          <p className="text-sm font-semibold truncate mb-0.5">
-            {decision.title || "Décision"}
-          </p>
-          <div className="flex items-center gap-1.5">
-            <span className={cn(
-              "text-[10px] font-medium uppercase",
-              position === "yes" ? "text-primary" : "text-muted-foreground"
-            )}>
-              {position === "yes" ? "OUI" : "NON"}
-            </span>
-            {priceVariation !== 0 && (
-              <span className={cn(
-                "text-[9px] font-medium",
-                priceVariation > 0 ? "text-green-500" : 
-                priceVariation < 0 ? "text-red-500" : 
-                "text-muted-foreground"
-              )}>
-                {priceVariation > 0 ? "▲" : priceVariation < 0 ? "▼" : ""} {Math.abs(priceVariation).toFixed(1)}%
-              </span>
-            )}
+        {/* Image de fond avec overlay */}
+        {decision.imageUrl && (
+          <div className="absolute inset-0 z-0">
+            <Image
+              src={decision.imageUrl}
+              alt={decision.title || "Décision"}
+              fill
+              className="object-cover opacity-20 group-hover:opacity-30 transition-opacity"
+              sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              loading="lazy"
+              decoding="async"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/85 to-background" />
           </div>
-        </div>
+        )}
 
-        {/* Mini graphique + Valeur */}
-        <div className="shrink-0 flex items-center gap-3">
-          {/* Mini graphique */}
-          <div className="w-16 h-10">
+        {/* Contenu */}
+        <div className="relative z-10 p-4">
+          {/* Header avec badge position */}
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-semibold line-clamp-2 mb-2">
+                {decision.title || "Décision"}
+              </h3>
+              <div className="flex items-center gap-2">
+                <span className={cn(
+                  "inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase",
+                  position === "yes" 
+                    ? cn("bg-gradient-to-r", YES_COLORS.gradient.from, YES_COLORS.gradient.via, YES_COLORS.gradient.to, "text-white")
+                    : cn("bg-gradient-to-r", NO_COLORS.gradient.from, NO_COLORS.gradient.via, NO_COLORS.gradient.to, "text-white")
+                )}>
+                  {position === "yes" ? "OUI" : "NON"}
+                </span>
+                {priceVariation !== 0 && (
+                  <span className={cn(
+                    "text-[10px] font-medium",
+                    priceVariation > 0 ? "text-green-500" : 
+                    priceVariation < 0 ? "text-red-500" : 
+                    "text-muted-foreground"
+                  )}>
+                    {priceVariation > 0 ? "▲" : priceVariation < 0 ? "▼" : ""} {Math.abs(priceVariation).toFixed(1)}%
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Mini graphique - Plus grand et visible */}
+          <div className="h-24 mb-3 rounded-lg overflow-hidden bg-muted/20">
             {chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData}>
                   <defs>
-                    <linearGradient id={`gradient-${decision._id}-${position}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={gradientStart} />
-                      <stop offset="100%" stopColor={gradientEnd} />
+                    <linearGradient id={`gradient-portfolio-${decision._id}-${position}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={gradientStart} stopOpacity={0.8} />
+                      <stop offset="100%" stopColor={gradientEnd} stopOpacity={0.2} />
                     </linearGradient>
                   </defs>
                   <Area
                     type="monotone"
                     dataKey="value"
                     stroke={color}
-                    strokeWidth={1.5}
-                    fill={`url(#gradient-${decision._id}-${position})`}
+                    strokeWidth={2}
+                    fill={`url(#gradient-portfolio-${decision._id}-${position})`}
                   />
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
               <div className="w-full h-full flex items-center justify-center">
-                <div className="text-[8px] text-muted-foreground">—</div>
+                <SolarIcon icon="chart-2-bold" className="size-6 text-muted-foreground/50" />
               </div>
             )}
           </div>
 
-          {/* Valeur */}
-          <div className="text-right min-w-[60px]">
-            <p className={cn(
-              "text-sm font-bold",
-              isProfit ? YES_COLORS.text.light : 
-              profit < 0 ? "text-muted-foreground" : 
-              "text-foreground"
-            )}>
-              {isProfit ? "+" : ""}{formatNumber(profit, false)}
-            </p>
+          {/* Footer avec gains et Seeds investis */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Gains/Pertes</p>
+              <p className={cn(
+                "text-lg font-bold",
+                isProfit ? YES_COLORS.text.light : 
+                profit < 0 ? "text-red-500" : 
+                "text-foreground"
+              )}>
+                {isProfit ? "+" : ""}{formatNumber(profit, isMobile)}
+              </p>
+              {profitPercentage !== 0 && (
+                <p className={cn(
+                  "text-[10px] font-medium mt-0.5",
+                  profitPercentage > 0 ? "text-green-500" : 
+                  profitPercentage < 0 ? "text-red-500" : 
+                  "text-muted-foreground"
+                )}>
+                  {profitPercentage > 0 ? "+" : ""}{profitPercentage.toFixed(1)}%
+                </p>
+              )}
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-muted-foreground mb-1">Seeds investis</p>
+              <div className="flex items-center gap-1">
+                <SolarIcon icon="leaf-bold" className="size-3 text-primary" />
+                <p className="text-base font-bold">{formatNumber((item.totalInvested || 0), isMobile)}</p>
+              </div>
+            </div>
           </div>
         </div>
       </button>
@@ -406,6 +443,7 @@ function BuyMoreSectionPortfolio({
   setIsBuyingMore,
   buyShares,
   setDetailSheetOpen,
+  isMobile,
 }: {
   selectedPosition: {
     decisionId: Id<"decisions">;
@@ -419,6 +457,7 @@ function BuyMoreSectionPortfolio({
   setIsBuyingMore: (value: boolean) => void;
   buyShares: any;
   setDetailSheetOpen: (open: boolean) => void;
+  isMobile: boolean;
 }) {
   const probability = useQuery(
     api.trading.getSingleOdds,
@@ -430,35 +469,74 @@ function BuyMoreSectionPortfolio({
     selectedPosition?.decisionId ? { decisionId: selectedPosition.decisionId } : "skip"
   );
   
-  const partsNum = parseInt(buyMoreAmount) || 0;
-  const calculateBuyCost = (position: "yes" | "no", parts: number): number => {
-    if (!tradingPools || parts <= 0) return 0;
+  const seedAmountNum = parseFloat(buyMoreAmount) || 0;
+  
+  // Calculer combien de shares on peut acheter avec un montant en Seeds (même logique que MarketCard)
+  const calculateSharesFromSeed = (position: "yes" | "no", seedAmount: number): number => {
+    if (!tradingPools || seedAmount <= 0) return 0;
     const pool = position === "yes" ? tradingPools.yes : tradingPools.no;
     if (!pool) return 0;
-    const currentSupply = pool.totalSupply;
+    const currentSupply = pool.totalSupply || 0;
     const slope = pool.slope;
-    const newSupply = currentSupply + parts;
+    
+    let shares = 0;
+    let totalCost = 0;
+    const step = 0.01;
+    const maxIterations = 100000;
+    let iterations = 0;
+    
+    while (totalCost < seedAmount && iterations < maxIterations) {
+      shares += step;
+      const newSupply = currentSupply + shares;
+      totalCost = (slope / 2) * (newSupply * newSupply - currentSupply * currentSupply);
+      iterations++;
+    }
+    
+    if (totalCost > seedAmount && shares > step) {
+      shares -= step;
+    }
+    
+    return Math.round(shares * 100) / 100;
+  };
+
+  // Calculer le coût exact pour un nombre de shares donné
+  const calculateBuyCost = (position: "yes" | "no", shares: number): number => {
+    if (!tradingPools || shares <= 0) return 0;
+    const pool = position === "yes" ? tradingPools.yes : tradingPools.no;
+    if (!pool) return 0;
+    const currentSupply = pool.totalSupply || 0;
+    const slope = pool.slope;
+    const newSupply = currentSupply + shares;
     return Math.round(((slope / 2) * (newSupply * newSupply - currentSupply * currentSupply)) * 100) / 100;
   };
-  const estimatedCost = selectedPosition ? calculateBuyCost(selectedPosition.position, partsNum) : 0;
+
+  const estimatedShares = selectedPosition ? calculateSharesFromSeed(selectedPosition.position, seedAmountNum) : 0;
+  const estimatedCost = selectedPosition ? calculateBuyCost(selectedPosition.position, estimatedShares) : 0;
   
   const handleBuy = async () => {
     if (!selectedPosition) return;
     
-    if (partsNum <= 0) {
-      toast.error("Nombre de parts invalide");
+    if (seedAmountNum <= 0) {
+      toast.error("Montant en Seeds invalide");
       return;
     }
     
     setIsBuyingMore(true);
     try {
+      const sharesToBuy = calculateSharesFromSeed(selectedPosition.position, seedAmountNum);
+      if (sharesToBuy <= 0) {
+        toast.error("Montant trop faible pour acheter des shares");
+        setIsBuyingMore(false);
+        return;
+      }
+      
       await buyShares({
         decisionId: selectedPosition.decisionId,
         position: selectedPosition.position,
-        shares: partsNum,
+        shares: sharesToBuy,
       });
       
-      toast.success(`${partsNum} part${partsNum > 1 ? "s" : ""} achetée${partsNum > 1 ? "s" : ""} avec succès !`);
+      toast.success(`${formatNumber(seedAmountNum, isMobile)} Seeds investis avec succès !`);
       setDetailSheetOpen(false);
       setBuyMoreAmount("1");
     } catch (error: any) {
@@ -485,8 +563,8 @@ function BuyMoreSectionPortfolio({
             )}
           </div>
         </div>
-        {estimatedCost > 0 && (
-          <div className="pt-2 border-t border-border/30">
+        {estimatedShares > 0 && (
+          <div className="pt-2 border-t border-border/30 space-y-1">
             <p className="text-[9px] text-muted-foreground mb-1">Coût estimé</p>
             <div className="flex items-center justify-center gap-1.5">
               <SeedDisplay 
@@ -496,32 +574,38 @@ function BuyMoreSectionPortfolio({
                 iconSize="size-3"
               />
             </div>
+            <p className="text-[8px] text-muted-foreground">
+              ≈ {estimatedShares.toFixed(2)} shares
+            </p>
           </div>
         )}
       </div>
 
       <div className="space-y-2">
-        <label className="text-[10px] text-muted-foreground font-medium block">Nombre de parts</label>
+        <label className="text-[10px] text-muted-foreground font-medium block">Montant en Seeds</label>
         <div className="flex items-center justify-center gap-3">
           <Button
             variant="outline"
             size="icon"
             onClick={() => {
-              const newValue = Math.max(1, partsNum - 1);
+              const newValue = Math.max(1, seedAmountNum - 1);
               setBuyMoreAmount(newValue.toString());
             }}
-            disabled={partsNum <= 1}
+            disabled={seedAmountNum <= 1}
             className="size-9 rounded-lg"
           >
             <Minus className="size-3.5" />
           </Button>
           
           <div className="flex flex-col items-center min-w-[70px]">
-            <span className="text-2xl font-bold text-foreground leading-none">
-              {partsNum}
-            </span>
+            <div className="flex items-center gap-1">
+              <SolarIcon icon="leaf-bold" className="size-4 text-primary" />
+              <span className="text-2xl font-bold text-foreground leading-none">
+                {seedAmountNum}
+              </span>
+            </div>
             <span className="text-[9px] text-muted-foreground leading-none mt-0.5">
-              part{partsNum > 1 ? "s" : ""}
+              Seeds
             </span>
           </div>
           
@@ -529,10 +613,10 @@ function BuyMoreSectionPortfolio({
             variant="outline"
             size="icon"
             onClick={() => {
-              const newValue = Math.min(1000, partsNum + 1);
+              const newValue = Math.min(10000, seedAmountNum + 1);
               setBuyMoreAmount(newValue.toString());
             }}
-            disabled={partsNum >= 1000}
+            disabled={seedAmountNum >= 10000}
             className="size-9 rounded-lg"
           >
             <Plus className="size-3.5" />
@@ -542,7 +626,7 @@ function BuyMoreSectionPortfolio({
 
       <Button
         onClick={handleBuy}
-        disabled={isBuyingMore || partsNum <= 0}
+        disabled={isBuyingMore || seedAmountNum <= 0}
         className={cn(
           "w-full h-11 text-xs font-bold rounded-lg transition-all",
           selectedPosition.position === "yes"
@@ -558,7 +642,7 @@ function BuyMoreSectionPortfolio({
         ) : (
           <>
             <SolarIcon icon="add-circle-bold" className="size-3.5 mr-1.5" />
-            Acheter {partsNum} part{partsNum > 1 ? "s" : ""} {selectedPosition.position === "yes" ? "OUI" : "NON"}
+            Investir {formatNumber(seedAmountNum, isMobile)} Seeds {selectedPosition.position === "yes" ? "OUI" : "NON"}
           </>
         )}
       </Button>
@@ -634,21 +718,21 @@ function SellMoreSectionPortfolio({
   const handleSell = async () => {
     if (!selectedPosition) return;
     
-    const partsNum = parseFloat(sellSharesAmount) || 0;
-    if (partsNum <= 0 || partsNum > selectedPosition.sharesOwned) {
-      toast.error("Nombre de parts invalide");
+    const sharesNum = parseFloat(sellSharesAmount) || 0;
+    if (sharesNum <= 0 || sharesNum > selectedPosition.sharesOwned) {
+      toast.error("Nombre de Seeds invalide");
       return;
     }
     
     setIsSelling(true);
     try {
-      await sellShares({
+      const result = await sellShares({
         decisionId: selectedPosition.decisionId,
         position: selectedPosition.position,
-        shares: partsNum,
+        shares: sharesNum,
       });
       
-      toast.success(`${partsNum} part${partsNum > 1 ? "s" : ""} revendue${partsNum > 1 ? "s" : ""} avec succès !`);
+      toast.success(`${formatNumber(result.net, isMobile)} Seeds reçus avec succès !`);
       setDetailSheetOpen(false);
       setSellSharesAmount("1");
       setSellAll(false);
@@ -678,10 +762,10 @@ function SellMoreSectionPortfolio({
         </label>
       </div>
 
-      {/* Slider pour choisir le nombre de parts */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-muted-foreground font-medium">Parts à revendre</span>
+      {/* Slider pour choisir le nombre de Seeds à revendre */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground font-medium">Seeds à revendre</span>
           <span className="text-lg font-bold">
             {formatDetailNumber(parseFloat(sellSharesAmount) || 0)}
           </span>
@@ -926,13 +1010,13 @@ function SellMoreSectionPortfolio({
             {selectedPosition.averageBuyPrice && currentPrice !== undefined && (
               <div className="flex items-center justify-between py-2 border-t border-border/20 pt-2">
                 <span className="text-xs text-muted-foreground">Prix d'achat</span>
-                <span className="text-xs font-semibold">{formatSeedAmount(selectedPosition.averageBuyPrice)}/part</span>
+                <span className="text-xs font-semibold">{formatSeedAmount(selectedPosition.averageBuyPrice)}/Seed</span>
               </div>
             )}
             {currentPrice !== undefined && (
               <div className="flex items-center justify-between py-2">
                 <span className="text-xs text-muted-foreground">Prix actuel</span>
-                <span className="text-xs font-semibold">{formatSeedAmount(currentPrice)}/part</span>
+                <span className="text-xs font-semibold">{formatSeedAmount(currentPrice)}/Seed</span>
               </div>
             )}
           </div>
@@ -960,7 +1044,7 @@ function SellMoreSectionPortfolio({
         ) : (
           <>
             <SolarIcon icon="cart-3-bold" className="size-4 mr-2" />
-            Revendre {formatDetailNumber(parseFloat(sellSharesAmount) || 0)} part{(parseFloat(sellSharesAmount) || 0) > 1 ? "s" : ""}
+            Revendre {formatDetailNumber(parseFloat(sellSharesAmount) || 0)} Seeds
           </>
         )}
       </Button>
@@ -1015,10 +1099,10 @@ export function PortfolioClient() {
     decisionTitle: string;
     imageUrl?: string;
     createdAt?: number; // Date de création de l'anticipation pour calculer la taxe progressive
-    totalInvested?: number; // Investissement total pour toutes les parts
-    averageBuyPrice?: number; // Prix d'achat moyen par part
-    profit?: number; // Profit total pour toutes les parts
-    profitPercentage?: number; // Pourcentage de profit pour toutes les parts
+    totalInvested?: number; // Investissement total en Seeds
+    averageBuyPrice?: number; // Prix d'achat moyen par Seed
+    profit?: number; // Profit total en Seeds
+    profitPercentage?: number; // Pourcentage de profit
   } | null>(null);
   const [sellSharesAmount, setSellSharesAmount] = useState<string>("1");
   const [isSelling, setIsSelling] = useState(false);
@@ -1237,7 +1321,7 @@ export function PortfolioClient() {
 
     const shares = parseFloat(sellSharesAmount);
     if (shares <= 0 || shares > selectedSellItem.sharesOwned) {
-      toast.error("Nombre de parts invalide");
+      toast.error("Nombre de Seeds invalide");
       return;
     }
 
@@ -1264,98 +1348,157 @@ export function PortfolioClient() {
 
   return (
     <div className="pb-20 lg:pb-4">
-      {/* Header épuré - Style glassmorphism */}
-      <div className="px-4 pt-6 pb-4 overflow-x-hidden w-full max-w-full">
-        <div className="max-w-2xl mx-auto w-full min-w-0">
-          <h1 className="text-2xl font-bold mb-6">Mon Portefeuille</h1>
-          
-          {/* Stats simplifiées - Une seule ligne */}
-          <div className="grid grid-cols-3 gap-2 mb-4 min-w-0 w-full">
-            <div className="min-w-0">
-              <p className="text-[10px] text-muted-foreground mb-1 truncate">Investi</p>
-              <div className="flex items-center gap-1 min-w-0">
-                <SolarIcon icon="leaf-bold" className="size-3 text-primary shrink-0" />
-                <p className="text-sm font-bold truncate min-w-0">{formatNumber(totalInvested, isMobile)}</p>
+      {/* Header épuré - Sans cards imbriquées, style simple */}
+      <div className="px-4 md:px-6 lg:px-8 pt-6 pb-4 overflow-x-hidden w-full max-w-full">
+        <div className="max-w-7xl mx-auto w-full">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="space-y-6"
+          >
+            {/* Titre et badge ROI */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold mb-1">Mon Portefeuille</h1>
+                <p className="text-sm text-muted-foreground">
+                  {activePositions.length} position{activePositions.length > 1 ? "s" : ""} active{activePositions.length > 1 ? "s" : ""}
+                </p>
+              </div>
+              {/* Badge ROI */}
+              {totalReturnPercent !== 0 && (
+                <div className={cn(
+                  "px-4 py-2 rounded-xl font-bold text-sm",
+                  "flex items-center gap-2",
+                  totalReturnPercent > 0
+                    ? cn("bg-gradient-to-r", YES_COLORS.gradient.from, YES_COLORS.gradient.via, YES_COLORS.gradient.to, "text-white")
+                    : "bg-red-500/20 text-red-500 border border-red-500/30"
+                )}>
+                  <SolarIcon 
+                    icon={totalReturnPercent > 0 ? "arrow-up-bold" : "arrow-down-bold"} 
+                    className="size-4" 
+                  />
+                  {totalReturnPercent > 0 ? "+" : ""}{totalReturnPercent.toFixed(1)}%
+                </div>
+              )}
+            </div>
+
+            {/* Stats principales - Grid simple sans cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Investi */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <SolarIcon icon="wallet-bold" className="size-4 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground font-medium">Investi</p>
+                </div>
+                <div className="flex items-baseline gap-1.5">
+                  <SolarIcon icon="leaf-bold" className="size-5 text-primary shrink-0" />
+                  <p className="text-2xl md:text-3xl font-bold">{formatNumber(totalInvested, isMobile)}</p>
+                </div>
+              </div>
+
+              {/* Valeur */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <SolarIcon icon="chart-2-bold" className="size-4 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground font-medium">Valeur actuelle</p>
+                </div>
+                <div className="flex items-baseline gap-1.5">
+                  <SolarIcon icon="leaf-bold" className="size-5 text-primary shrink-0" />
+                  <p className="text-2xl md:text-3xl font-bold">{formatNumber(totalValue, isMobile)}</p>
+                </div>
+              </div>
+
+              {/* Gains */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <SolarIcon 
+                    icon={totalProfit > 0 ? "arrow-up-bold" : totalProfit < 0 ? "arrow-down-bold" : "minus-bold"} 
+                    className={cn(
+                      "size-4",
+                      totalProfit > 0 ? "text-green-500" : totalProfit < 0 ? "text-red-500" : "text-muted-foreground"
+                    )} 
+                  />
+                  <p className="text-sm text-muted-foreground font-medium">Gains/Pertes</p>
+                </div>
+                <div className="flex items-baseline gap-1.5">
+                  <SolarIcon icon="leaf-bold" className={cn(
+                    "size-5 shrink-0",
+                    totalProfit > 0 ? "text-green-500" : totalProfit < 0 ? "text-red-500" : "text-primary"
+                  )} />
+                  <p className={cn(
+                    "text-2xl md:text-3xl font-bold",
+                    totalProfit > 0 ? "text-green-500" : 
+                    totalProfit < 0 ? "text-red-500" : 
+                    "text-foreground"
+                  )}>
+                    {totalProfit > 0 ? "+" : ""}{formatNumber(totalProfit, isMobile)}
+                  </p>
+                </div>
               </div>
             </div>
-            <div className="min-w-0">
-              <p className="text-[10px] text-muted-foreground mb-1 truncate">Valeur</p>
-              <div className="flex items-center gap-1 min-w-0">
-                <SolarIcon icon="leaf-bold" className="size-3 text-primary shrink-0" />
-                <p className="text-sm font-bold truncate min-w-0">{formatNumber(totalValue, isMobile)}</p>
+
+            {/* Graphique ROI - Desktop visible, mobile compact */}
+            {activePositions.length > 0 && (
+              <div className="hidden md:block">
+                <PortfolioROIChart />
               </div>
-            </div>
-            <div className="text-right min-w-0">
-              <p className="text-[10px] text-muted-foreground mb-1 truncate">Gains</p>
-              <p className={cn(
-                "text-sm font-bold truncate",
-                totalProfit > 0 ? YES_COLORS.text.light : 
-                totalProfit < 0 ? "text-muted-foreground" : 
-                "text-foreground"
-              )}>
-                {totalProfit > 0 ? "+" : ""}{formatNumber(totalProfit, isMobile)}
-              </p>
-              <p className={cn(
-                "text-[9px] truncate",
-                totalReturnPercent > 0 ? YES_COLORS.text.light : 
-                totalReturnPercent < 0 ? "text-muted-foreground" : 
-                "text-muted-foreground"
-              )}>
-                {totalReturnPercent > 0 ? "+" : ""}{formatNumber(totalReturnPercent, isMobile)}%
-              </p>
-            </div>
-          </div>
+            )}
+          </motion.div>
         </div>
       </div>
 
-      {/* Graphique ROI - Compact mobile */}
+      {/* Graphique ROI - Mobile uniquement (compact) */}
       {activePositions.length > 0 && (
-        <div className="px-4 pt-4">
+        <div className="px-4 md:hidden pt-4">
           <PortfolioROIChart />
         </div>
       )}
 
-      {/* Positions actives - Lignes compactes style assets */}
+      {/* Positions actives - Cards style MarketCard */}
       {activePositions.length > 0 && (
-        <div className="px-4 pt-4">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold">Mes positions</h2>
-            <span className="text-xs text-muted-foreground">
-              {activePositions.length} position{activePositions.length > 1 ? "s" : ""}
-            </span>
-          </div>
-          
-          <div className="space-y-0 border-t border-border/30">
-            {activePositions.map((item: any, index: number) => {
-              const { 
-                decision, 
-                sharesOwned, 
-                position,
-                currentPrice,
-                _id
-              } = item;
-              
-              const profit = ('profit' in item && typeof item.profit === 'number') ? item.profit : 0;
-              const profitPercentage = ('profitPercentage' in item && typeof item.profitPercentage === 'number') ? item.profitPercentage : 0;
+        <div className="px-4 md:px-6 lg:px-8 pt-6">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg md:text-xl font-bold">Mes positions</h2>
+              <span className="text-sm text-muted-foreground">
+                {activePositions.length} position{activePositions.length > 1 ? "s" : ""}
+              </span>
+            </div>
+            
+            {/* Grid responsive : 1 colonne mobile, 2 tablet, 3 desktop */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {activePositions.map((item: any, index: number) => {
+                const { 
+                  decision, 
+                  sharesOwned, 
+                  position,
+                  currentPrice,
+                  _id
+                } = item;
+                
+                const profit = ('profit' in item && typeof item.profit === 'number') ? item.profit : 0;
+                const profitPercentage = ('profitPercentage' in item && typeof item.profitPercentage === 'number') ? item.profitPercentage : 0;
 
-              if (!decision) return null;
+                if (!decision) return null;
 
-              const isProfit = (profit || 0) > 0;
-              const positionValue = position || "yes";
+                const positionValue = position || "yes";
 
-              return (
-                <PositionRow
-                  key={_id}
-                  item={item}
-                  decision={decision}
-                  position={positionValue as "yes" | "no"}
-                  profit={profit}
-                  profitPercentage={profitPercentage}
-                  currentPrice={currentPrice}
-                  onClick={() => handleOpenDetailSheet(item, decision, positionValue as "yes" | "no")}
-                />
-              );
-            })}
+                return (
+                  <PositionCard
+                    key={_id}
+                    item={item}
+                    decision={decision}
+                    position={positionValue as "yes" | "no"}
+                    profit={profit}
+                    profitPercentage={profitPercentage}
+                    currentPrice={currentPrice}
+                    onClick={() => handleOpenDetailSheet(item, decision, positionValue as "yes" | "no")}
+                    isMobile={isMobile}
+                  />
+                );
+              })}
+            </div>
           </div>
         </div>
       )}
@@ -1448,11 +1591,20 @@ export function PortfolioClient() {
         </div>
       )}
 
-      {/* Sheet de détail de position - Design épuré mobile-first */}
-      <Sheet open={detailSheetOpen} onOpenChange={setDetailSheetOpen} side="bottom">
-        <SheetContent side="bottom" className="h-[90vh] rounded-t-3xl p-0 overflow-hidden w-full max-w-full">
+      {/* Sheet de détail de position - Bottom sur mobile, Right sur desktop */}
+      <Sheet open={detailSheetOpen} onOpenChange={setDetailSheetOpen} side={isMobile ? "bottom" : "right"}>
+        <SheetContent 
+          side={isMobile ? "bottom" : "right"} 
+          className={cn(
+            isMobile ? "h-[90vh] rounded-t-3xl" : "w-[500px] max-w-[90vw]",
+            "p-0 overflow-hidden w-full max-w-full"
+          )}
+        >
           {selectedPosition && (
-            <div className="relative h-full flex flex-col overflow-hidden w-full max-w-full min-w-0">
+            <div className={cn(
+              "relative flex flex-col overflow-hidden w-full max-w-full min-w-0",
+              isMobile ? "h-full" : "h-screen"
+            )}>
               {/* Cover progressif partout */}
               {selectedPosition.decision?.imageUrl && (
                 <div className="absolute inset-0 z-0">
@@ -1461,9 +1613,14 @@ export function PortfolioClient() {
                     alt={selectedPosition.decisionTitle}
                     fill
                     className="object-cover"
-                    sizes="100vw"
+                    sizes={isMobile ? "100vw" : "500px"}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-b from-background from-20% via-background/95 to-background" />
+                  <div className={cn(
+                    "absolute inset-0",
+                    isMobile 
+                      ? "bg-gradient-to-b from-background from-20% via-background/95 to-background"
+                      : "bg-gradient-to-l from-background from-10% via-background/95 to-background"
+                  )} />
                 </div>
               )}
 
@@ -1547,6 +1704,7 @@ export function PortfolioClient() {
                         setIsBuyingMore={setIsBuyingMore}
                         buyShares={buyShares}
                         setDetailSheetOpen={setDetailSheetOpen}
+                        isMobile={isMobile}
                       />
                     ) : (
                       <SellMoreSectionPortfolio
@@ -1617,11 +1775,20 @@ export function PortfolioClient() {
         </SheetContent>
       </Sheet>
 
-      {/* Sheet de vente - Design cohérent avec le drawer de détail */}
-      <Sheet open={sellSheetOpen} onOpenChange={setSellSheetOpen} side="bottom">
-        <SheetContent side="bottom" className="h-[90vh] rounded-t-3xl p-0 overflow-hidden w-full max-w-full">
+      {/* Sheet de vente - Bottom sur mobile, Right sur desktop */}
+      <Sheet open={sellSheetOpen} onOpenChange={setSellSheetOpen} side={isMobile ? "bottom" : "right"}>
+        <SheetContent 
+          side={isMobile ? "bottom" : "right"} 
+          className={cn(
+            isMobile ? "h-[90vh] rounded-t-3xl" : "w-[500px] max-w-[90vw]",
+            "p-0 overflow-hidden w-full max-w-full"
+          )}
+        >
           {selectedSellItem && (
-            <div className="relative h-full flex flex-col overflow-hidden w-full max-w-full min-w-0">
+            <div className={cn(
+              "relative flex flex-col overflow-hidden w-full max-w-full min-w-0",
+              isMobile ? "h-full" : "h-screen"
+            )}>
               {/* Cover progressif partout */}
               {selectedSellItem.imageUrl && (
                 <div className="absolute inset-0 z-0">
@@ -1630,9 +1797,14 @@ export function PortfolioClient() {
                     alt={selectedSellItem.decisionTitle}
                     fill
                     className="object-cover"
-                    sizes="100vw"
+                    sizes={isMobile ? "100vw" : "500px"}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-b from-background from-20% via-background/95 to-background" />
+                  <div className={cn(
+                    "absolute inset-0",
+                    isMobile 
+                      ? "bg-gradient-to-b from-background from-20% via-background/95 to-background"
+                      : "bg-gradient-to-l from-background from-10% via-background/95 to-background"
+                  )} />
                 </div>
               )}
 
@@ -1642,7 +1814,7 @@ export function PortfolioClient() {
                 <div className="px-4 pt-3 pb-2 shrink-0">
                   <SheetHeader className="text-left p-0">
                     <SheetTitle className="text-sm font-bold mb-1.5 line-clamp-2">
-                      Revendre des parts
+                      Revendre des Seeds
                     </SheetTitle>
                     <span className={cn(
                       "inline-block px-2.5 py-0.5 rounded-md font-bold text-[10px] w-fit",
@@ -1657,10 +1829,10 @@ export function PortfolioClient() {
 
                 {/* Contenu scrollable compact */}
                 <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-4 space-y-4 max-w-full flex flex-col">
-                  {/* Slider pour choisir le nombre de parts */}
+                  {/* Slider pour choisir le nombre de Seeds à revendre */}
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground font-medium">Parts à revendre</span>
+                      <span className="text-xs text-muted-foreground font-medium">Seeds à revendre</span>
                       <span className="text-lg font-bold">
                         {formatDetailNumber(parseFloat(sellSharesAmount) || 0)}
                       </span>
@@ -1875,11 +2047,11 @@ export function PortfolioClient() {
                           <>
                             <div className="flex items-center justify-between py-2 border-t border-border/20 pt-2">
                               <span className="text-xs text-muted-foreground">Prix d'achat</span>
-                              <span className="text-xs font-semibold">{formatSeedAmount(selectedSellItem.averageBuyPrice)}/part</span>
+                              <span className="text-xs font-semibold">{formatSeedAmount(selectedSellItem.averageBuyPrice)}/Seed</span>
                             </div>
                             <div className="flex items-center justify-between py-2">
                               <span className="text-xs text-muted-foreground">Prix actuel</span>
-                              <span className="text-xs font-semibold">{formatSeedAmount(currentPrice)}/part</span>
+                              <span className="text-xs font-semibold">{formatSeedAmount(currentPrice)}/Seed</span>
                             </div>
                             {(() => {
                               const sharesToSell = parseFloat(sellSharesAmount) || 0;
@@ -1930,7 +2102,7 @@ export function PortfolioClient() {
                     ) : (
                       <>
                         <SolarIcon icon="cart-3-bold" className="size-4 mr-2" />
-                        Revendre {formatDetailNumber(parseFloat(sellSharesAmount) || 0)} part{(parseFloat(sellSharesAmount) || 0) > 1 ? "s" : ""}
+                        Revendre {formatDetailNumber(parseFloat(sellSharesAmount) || 0)} Seeds
                       </>
                     )}
                   </Button>

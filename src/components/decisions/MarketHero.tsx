@@ -235,13 +235,22 @@ export function MarketHero() {
             >
               {/* Image de fond avec scale au hover uniquement */}
               {card.coverImage && (
-                <div className="absolute inset-0 overflow-hidden">
+                <div 
+                  className="absolute inset-0 overflow-hidden" 
+                  style={{ 
+                    aspectRatio: '16/9',
+                    minHeight: card.size === 'large' ? '400px' : '192px', // Hauteur minimale fixe selon la taille
+                  }}
+                >
                   <Image
                     src={card.coverImage}
                     alt={card.coverImageAlt || card.title}
                     fill
                     className="object-cover transition-transform duration-700 group-hover:scale-110 opacity-40"
                     sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                    loading="lazy"
+                    decoding="async"
+                    quality={75}
                   />
                   {/* Overlay gradient avec la couleur du thème */}
                   <div
@@ -384,13 +393,16 @@ export function MarketHero() {
               >
                 {/* Image de fond avec scale au hover uniquement */}
                 {card.coverImage && (
-                  <div className="absolute inset-0 overflow-hidden">
+                  <div className="absolute inset-0 overflow-hidden" style={{ aspectRatio: '16/9' }}>
                     <Image
                       src={card.coverImage}
                       alt={card.coverImageAlt || card.title}
                       fill
                       className="object-cover transition-transform duration-700 group-hover:scale-110 opacity-40"
                       sizes="(max-width: 768px) 280px, 240px"
+                      loading="lazy"
+                      decoding="async"
+                      quality={75}
                     />
                     {/* Overlay gradient avec la couleur du thème */}
                     <div

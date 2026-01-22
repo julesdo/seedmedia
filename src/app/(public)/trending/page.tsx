@@ -1,8 +1,16 @@
 "use client";
 
 import { Suspense } from "react";
-import { DecisionCard } from "@/components/decisions/DecisionCard";
-import { DecisionStories } from "@/components/decisions/DecisionStories";
+import dynamic from "next/dynamic";
+// Lazy load les composants lourds
+const DecisionCard = dynamic(() => import("@/components/decisions/DecisionCard").then(mod => ({ default: mod.DecisionCard })), {
+  ssr: true,
+  loading: () => <div className="h-96 bg-muted/30 animate-pulse rounded-lg" />,
+});
+const DecisionStories = dynamic(() => import("@/components/decisions/DecisionStories").then(mod => ({ default: mod.DecisionStories })), {
+  ssr: false,
+  loading: () => <div className="h-24 bg-muted/30 animate-pulse" />,
+});
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";

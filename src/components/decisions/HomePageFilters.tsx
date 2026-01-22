@@ -57,14 +57,14 @@ export function HomePageFilters() {
   }, [searchParams]);
 
   const statuses = [
-    { value: "announced", label: "Annoncée", icon: "megaphone-bold" },
+    { value: "announced", label: "Annoncée", icon: "bell-bold" },
     { value: "tracking", label: "En suivi", icon: "eye-bold" },
     { value: "resolved", label: "Résolue", icon: "check-circle-bold" },
   ];
 
   const sentiments = [
-    { value: "positive", label: "Positif", icon: "like-bold", color: "text-green-500" },
-    { value: "negative", label: "Négatif", icon: "dislike-bold", color: "text-red-500" },
+    { value: "positive", label: "Positif", icon: "smile-square-bold", color: "text-green-500" },
+    { value: "negative", label: "Négatif", icon: "sad-circle-bold", color: "text-red-500" },
     { value: "neutral", label: "Neutre", icon: "minus-circle-bold", color: "text-gray-500" },
   ];
 
@@ -142,7 +142,10 @@ export function HomePageFilters() {
     (selectedSentiment ? 1 : 0);
 
   return (
-    <div className="sticky top-[calc(var(--header-height,56px)+var(--breaking-news-height,0px))] z-20 bg-background/95 backdrop-blur-xl border-b border-border/50">
+    <div 
+      className="sticky z-20 bg-background/95 backdrop-blur-xl border-b border-border/50 lg:top-[calc(var(--header-height,56px)+var(--breaking-news-height,0px))] top-[calc(var(--header-height,56px)+var(--breaking-news-height,0px)+var(--mobile-categories-height,48px))]"
+      style={{ minHeight: '120px' }} // Hauteur minimale fixe pour éviter le layout shift
+    >
       <div className="w-full px-4 md:px-6 lg:px-8 py-4">
         {/* Barre de recherche principale */}
         <div className="relative mb-4">
@@ -289,7 +292,7 @@ export function HomePageFilters() {
                 size="sm"
                 className="h-9 gap-2"
               >
-                <SolarIcon icon="emoji-smile-circle-bold" className="size-4" />
+                <SolarIcon icon="heart-bold" className="size-4" />
                 <span>Sentiment</span>
                 {selectedSentiment && (
                   <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs">

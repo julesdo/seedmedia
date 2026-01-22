@@ -106,7 +106,7 @@ export function DecisionReelCard({
     >
       {/* Image Background avec Overlay Gradient */}
       {decision.imageUrl && (
-        <div className="absolute inset-0">
+        <div className="absolute inset-0" style={{ aspectRatio: '9/16', minHeight: '400px' }}>
           <Image
             src={decision.imageUrl}
             alt={decision.title}
@@ -114,6 +114,9 @@ export function DecisionReelCard({
             className="object-cover"
             priority
             sizes="100vw"
+            quality={80}
+            placeholder="blur"
+            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
           />
           {/* Overlay gradient progressif style TikTok - Plus foncé vers le bas - Utilise la couleur de bg */}
           {/* Au niveau du titre (50-60%), overlay suffisamment sombre pour la lecture, puis de plus en plus foncé */}

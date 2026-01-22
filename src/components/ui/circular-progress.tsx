@@ -8,6 +8,8 @@ interface CircularProgressProps {
   size?: number;
   strokeWidth?: number;
   className?: string;
+  progressColor?: string; // Couleur personnalisée pour le progress
+  bgColor?: string; // Couleur personnalisée pour le background
   children?: React.ReactNode;
 }
 
@@ -16,6 +18,8 @@ export function CircularProgress({
   size = 48,
   strokeWidth = 4,
   className,
+  progressColor,
+  bgColor,
   children,
 }: CircularProgressProps) {
   const radius = (size - strokeWidth) / 2;
@@ -34,23 +38,25 @@ export function CircularProgress({
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke="currentColor"
+          stroke={bgColor || "currentColor"}
           strokeWidth={strokeWidth}
           fill="none"
-          className="text-border opacity-40"
+          className={bgColor ? "" : "text-border opacity-40"}
+          style={bgColor ? { opacity: 0.2 } : undefined}
         />
         {/* Progress circle */}
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke="currentColor"
+          stroke={progressColor || "currentColor"}
           strokeWidth={strokeWidth}
           fill="none"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           strokeLinecap="round"
-          className="text-primary transition-all duration-300"
+          className={progressColor ? "" : "text-primary transition-all duration-300"}
+          style={progressColor ? { transition: "all 0.3s ease" } : undefined}
         />
       </svg>
       {children && (

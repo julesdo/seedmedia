@@ -95,9 +95,12 @@ export function DecisionReelFeed({
   })();
 
   // Enrichir les décisions avec les champs calculés si manquants
+  // Optimisé avec useMemo pour éviter les recalculs inutiles
   const enrichedDecisions = useMemo(() => {
     if (!decisions) return [];
     
+    // Pour de grandes listes, on pourrait utiliser le yield pattern
+    // Mais ici on a généralement < 50 items, donc map direct est OK
     return decisions.map((decision) => {
       // Calculer badgeColor si manquant
       const badgeColor = (decision as any).badgeColor || calculateBadgeColor(

@@ -905,13 +905,16 @@ export function TradingInterfaceReels({
               
               <div className="relative flex-1 flex flex-col overflow-hidden w-full max-w-full min-w-0">
                 {decision?.imageUrl && (
-                  <div className="absolute inset-0 z-0 pointer-events-none">
+                  <div className="absolute inset-0 z-0 pointer-events-none" style={{ aspectRatio: '9/16', minHeight: '400px' }}>
                     <Image
                       src={decision.imageUrl}
                       alt={decision.title || "Décision"}
                       fill
                       className="object-cover"
                       sizes="100vw"
+                      quality={80}
+                      loading="lazy"
+                      decoding="async"
                     />
                     <div className="absolute inset-0 bg-gradient-to-b from-background from-20% via-background/95 to-background pointer-events-none" />
                   </div>
@@ -977,13 +980,16 @@ export function TradingInterfaceReels({
               <div className="relative flex-1 flex flex-col overflow-hidden w-full max-w-full min-w-0 h-full">
                 {/* Cover progressif partout */}
                 {decision?.imageUrl && (
-                  <div className="absolute inset-0 z-0 pointer-events-none">
+                  <div className="absolute inset-0 z-0 pointer-events-none" style={{ aspectRatio: '9/16', minHeight: '400px' }}>
                     <Image
                       src={decision.imageUrl}
                       alt={decision.title || "Décision"}
                       fill
                       className="object-cover"
                       sizes="100vw"
+                      quality={80}
+                      loading="lazy"
+                      decoding="async"
                     />
                     <div className="absolute inset-0 bg-gradient-to-b from-background from-20% via-background/95 to-background pointer-events-none" />
                   </div>
@@ -1044,13 +1050,16 @@ export function TradingInterfaceReels({
               <div className="relative flex-1 flex flex-col overflow-hidden w-full max-w-full min-w-0">
                 {/* Cover progressif partout */}
                 {decision?.imageUrl && (
-                  <div className="absolute inset-0 z-0 pointer-events-none">
+                  <div className="absolute inset-0 z-0 pointer-events-none" style={{ aspectRatio: '9/16', minHeight: '400px' }}>
                     <Image
                       src={decision.imageUrl}
                       alt={decision.title || "Décision"}
                       fill
                       className="object-cover"
                       sizes="100vw"
+                      quality={80}
+                      loading="lazy"
+                      decoding="async"
                     />
                     <div className="absolute inset-0 bg-gradient-to-b from-background from-20% via-background/95 to-background pointer-events-none" />
                   </div>
@@ -1340,13 +1349,16 @@ export function TradingInterfaceReels({
               <div className="relative flex-1 flex flex-col overflow-hidden w-full max-w-full min-w-0">
                 {/* Cover progressif partout */}
                 {decision?.imageUrl && (
-                  <div className="absolute inset-0 z-0 pointer-events-none">
+                  <div className="absolute inset-0 z-0 pointer-events-none" style={{ aspectRatio: '9/16', minHeight: '400px' }}>
                     <Image
                       src={decision.imageUrl}
                       alt={decision.title || "Décision"}
                       fill
                       className="object-cover"
                       sizes="100vw"
+                      quality={80}
+                      loading="lazy"
+                      decoding="async"
                     />
                     <div className="absolute inset-0 bg-gradient-to-b from-background from-20% via-background/95 to-background pointer-events-none" />
                   </div>

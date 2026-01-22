@@ -6,14 +6,13 @@ import { Link } from "next-view-transitions";
 import { Button } from "@/components/ui/button";
 import { SolarIcon } from "@/components/icons/SolarIcon";
 import { cn } from "@/lib/utils";
-import { TrendingRegionsWidget } from "@/components/widgets/TrendingRegionsWidget";
-import { EventTypesWidget } from "@/components/widgets/EventTypesWidget";
-import { RecentResolutionsWidget } from "@/components/widgets/RecentResolutionsWidget";
-import { WorldMapWidget } from "@/components/widgets/WorldMapWidget";
-import { WordCloudWidget } from "@/components/widgets/WordCloudWidget";
 import { DailyLoginWidget } from "@/components/widgets/DailyLoginWidget";
 import { LeaderboardWidget } from "@/components/widgets/LeaderboardWidget";
 import { ShopPromoWidget } from "@/components/widgets/ShopPromoWidget";
+import { TopPerformersWidget } from "@/components/widgets/TopPerformersWidget";
+import { OpportunityAlertWidget } from "@/components/widgets/OpportunityAlertWidget";
+import { YourPerformanceWidget } from "@/components/widgets/YourPerformanceWidget";
+import { TrendingNowWidget } from "@/components/widgets/TrendingNowWidget";
 import { Separator } from "@/components/ui/separator";
 import { useTranslations } from 'next-intl';
 import { usePathname } from "next/navigation";
@@ -147,40 +146,35 @@ export function DesktopRightSidebar() {
               <ShopPromoWidget />
             </div>
 
-            {/* Widgets pertinents */}
+            {/* Widgets pertinents - Optimisés pour l'engagement UX */}
             <div className="space-y-6">
               {/* Daily Login - En haut pour visibilité */}
               <DailyLoginWidget />
               
               <Separator />
               
-              {/* Leaderboard */}
+              {/* Vos performances - Gamification */}
+              <YourPerformanceWidget />
+              
+              <Separator />
+              
+              {/* Top Performers - Social Proof + FOMO */}
+              <TopPerformersWidget />
+              
+              <Separator />
+              
+              {/* Trending Now - FOMO */}
+              <TrendingNowWidget />
+              
+              <Separator />
+              
+              {/* Opportunity Alert - Scarcity + FOMO */}
+              <OpportunityAlertWidget />
+              
+              <Separator />
+              
+              {/* Leaderboard - Social Proof */}
               <LeaderboardWidget />
-              
-              <Separator />
-              
-              {/* Carte du monde */}
-              <WorldMapWidget />
-              
-              <Separator />
-              
-              {/* Nuage de mots */}
-              <WordCloudWidget />
-              
-              <Separator />
-              
-              {/* Zones actives */}
-              <TrendingRegionsWidget />
-              
-              <Separator />
-              
-              {/* Tendances du jour */}
-              <EventTypesWidget />
-              
-              <Separator />
-              
-              {/* Résolutions récentes */}
-              <RecentResolutionsWidget />
             </div>
           </>
         )}

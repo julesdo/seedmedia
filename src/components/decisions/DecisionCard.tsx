@@ -172,6 +172,9 @@ export function DecisionCard({
               fill
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 614px"
+              loading="lazy"
+              decoding="async"
+              quality={80}
             />
           </div>
         </Link>

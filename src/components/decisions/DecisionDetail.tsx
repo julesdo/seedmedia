@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
@@ -16,10 +15,22 @@ import Link from "next/link";
 import { SaveButton } from "./SaveButton";
 import { EventBadge } from "./EventBadge";
 import { TradingInterface } from "./TradingInterface";
-import { TradingInterfaceReels } from "./TradingInterfaceReels";
 import { useTranslations } from 'next-intl';
 import { TopArgumentsList } from "./TopArgumentsList";
 import { VoteSkinShop } from "@/components/vote-skins/VoteSkinShop";
+import { Suspense, memo } from "react";
+import dynamic from "next/dynamic";
+
+// Lazy load les composants lourds pour améliorer les performances
+const LazyTopArgumentsList = dynamic(() => import("./TopArgumentsList").then(mod => ({ default: mod.TopArgumentsList })), {
+  ssr: false,
+  loading: () => <Skeleton className="h-64 w-full" />,
+});
+
+const LazyVoteSkinShop = dynamic(() => import("@/components/vote-skins/VoteSkinShop").then(mod => ({ default: mod.VoteSkinShop })), {
+  ssr: false,
+  loading: () => null,
+});
 
 interface DecisionDetailProps {
   decisionId: Id<"decisions">;
@@ -32,25 +43,14 @@ const statusColors: Record<string, string> = {
   resolved: "bg-green-500/10 text-green-600 dark:text-green-400",
 };
 
-export function DecisionDetail({
+export const DecisionDetail = memo(function DecisionDetail({
   decisionId,
   className,
 }: DecisionDetailProps) {
   const t = useTranslations('decisions');
-  const [isMobile, setIsMobile] = useState(false);
   const decision = useQuery(api.decisions.getDecisionById, {
     decisionId,
   });
-
-  // Détecter si on est sur mobile
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768); // md breakpoint
-    };
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
 
   const typeLabels: Record<string, string> = {
     law: t('types.law'),
@@ -107,25 +107,14 @@ export function DecisionDetail({
   return (
     <div className={cn("pb-16 lg:pb-24", className)}>
 
-      {/* Trading Interface - Style reels sur mobile, premium amélioré sur desktop */}
+      {/* Trading Interface - Responsive (mobile et desktop) */}
       {decision.status !== "resolved" && (
-        <>
-          {isMobile ? (
-            <TradingInterfaceReels
-              decisionId={decision._id}
-              question={decision.question}
-              answer1={decision.answer1}
-              status={decision.status}
-            />
-          ) : (
-            <TradingInterface
-              decisionId={decision._id}
-              question={decision.question}
-              answer1={decision.answer1}
-              status={decision.status}
-            />
-          )}
-        </>
+        <TradingInterface
+          decisionId={decision._id}
+          question={decision.question}
+          answer1={decision.answer1}
+          status={decision.status}
+        />
       )}
 
 
@@ -173,5 +162,5 @@ export function DecisionDetail({
 
     </div>
   );
-}
+});
 

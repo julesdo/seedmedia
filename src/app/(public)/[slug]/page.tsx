@@ -3,10 +3,9 @@ import { DecisionDetailClient } from "./DecisionDetailClient";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 
-// ISR: Régénérer toutes les 2 minutes (page très visitée, données qui changent fréquemment)
-export const revalidate = 120;
-// Forcer le mode statique pour éviter DYNAMIC_SERVER_USAGE
-export const dynamic = 'force-static';
+// Optimisation : Pas de revalidate/dynamic pour permettre un meilleur streaming
+// Le cache est géré via revalidateTag() dans les Server Actions
+// Cela permet à Next.js de mieux streamer les données dynamiques
 export const dynamicParams = true; // Permettre la génération à la demande pour les nouveaux slugs
 
 export async function generateStaticParams() {
@@ -52,23 +51,6 @@ export default async function DecisionDetailPage({
 }) {
   const { slug } = await params;
   
-  // Précharger les décisions pour le feed reel (au build time avec ISR)
-  // Cela permet un chargement instantané du feed reel sur mobile
-  let initialDecisions: any[] | undefined = undefined;
-  
-  try {
-    const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
-    // @ts-ignore - Type instantiation is deep but works at runtime
-    const decisions = await convex.query(api.decisions.getDecisions, {
-      limit: 20,
-    });
-    initialDecisions = Array.isArray(decisions) ? decisions : undefined;
-  } catch (error) {
-    console.error("Error preloading decisions for reel feed:", error);
-    // En cas d'erreur, DecisionReelFeed chargera les données côté client
-    initialDecisions = undefined;
-  }
-  
-  return <DecisionDetailClient slug={slug} initialDecisions={initialDecisions} />;
+  return <DecisionDetailClient slug={slug} />;
 }
 
